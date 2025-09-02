@@ -1,178 +1,292 @@
 <!-- Navbar principale -->
-<nav class="navbar navbar-expand-lg custom-navbar">
-  <div class="container-fluid">
+<nav class="mb-2 navbar navbar-expand-lg custom-navbar">
+    <div class="container-fluid">
 
-    <!-- Logo -->
-    <a class="navbar-brand " href="#">
-        <img  src="logo.png" alt="logo proxym">
-    </a>
+        <!-- Logo -->
+        <a class="navbar-brand" [routerLink]="['/']">
+            <img src="logo.png" alt="logo proxym">
+        </a>
 
-    <!-- Navigation principale -->
-    <div class="navbar-nav-container">
-      <ul class="navbar-nav me-auto">
+        <!-- Navigation principale -->
+        <div class="navbar-nav-container">
+            <ul class="navbar-nav me-auto">
 
-        <!-- Tableau de bord -->
-        <li class="nav-item">
-          <a class="nav-link" href="#" (click)="navigateToTableauBord()">
-            Tableau de bord
-          </a>
-        </li>
+                <!-- Tableau de bord -->
+                <li class="nav-item">
+                    <a class="nav-link"
+                       [routerLink]="['/dashboard']"
+                       routerLinkActive="nav-active"
+                       (click)="closeAllDropdowns()">
+                        Tableau de bord
+                    </a>
+                </li>
 
-        <!-- Contrats Dropdown -->
-        <li class="nav-item dropdown" [class.show]="isContratsDropdownOpen">
-          <a class="nav-link dropdown-toggle"
-             href="#"
-             role="button"
-             (click)="toggleContratsDropdown()">
-            Contrats
-          </a>
-          <ul class="dropdown-menu" [class.show]="isContratsDropdownOpen">
-            <li><a class="dropdown-item" href="#" (click)="navigateToContratsChauf()">Contrats Chauffeurs</a></li>
-            <li><a class="dropdown-item" href="#" (click)="navigateToContratsPartenaires()">Contrats Partenaires</a></li>
-            <li><a class="dropdown-item" href="#" (click)="navigateToContratBatteries()">Contrat Batteries</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="#" (click)="navigateToChauffeurs()">Chauffeurs</a></li>
-            <li><a class="dropdown-item" href="#" (click)="navigateToGarants()">Garants</a></li>
-            <li><a class="dropdown-item" href="#" (click)="navigateToPartenaires()">Partenaires</a></li>
-            <li><a class="dropdown-item" href="#" (click)="navigateToConges()">Congés</a></li>
-          </ul>
-        </li>
+                <!-- Contrats Dropdown -->
+                <li class="nav-item dropdown"
+                    [class.show]="isOpen('contrats')"
+                    [class.nav-section-active]="isContratSectionActive()">
+                    <a class="nav-link dropdown-toggle"
+                       [class.nav-parent-active]="isContratSectionActive()"
+                       role="button"
+                       aria-haspopup="menu"
+                       [attr.aria-expanded]="isOpen('contrats')"
+                       (click)="toggle('contrats')">
+                        Contrats
+                    </a>
+                    <ul class="dropdown-menu" [class.show]="isOpen('contrats')">
+                        <li>
+                            <a class="dropdown-item"
+                               [class.dropdown-item-active]="isCurrentRoute('/contrat/chauffeur')"
+                               [routerLink]="['/contrat/chauffeur']"
+                               (click)="closeAllDropdowns()">
+                                Contrats Chauffeurs
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item"
+                               [class.dropdown-item-active]="isCurrentRoute('/contrat/partenaire')"
+                               [routerLink]="['/contrat/partenaire']"
+                               (click)="closeAllDropdowns()">
+                                Contrats Partenaires
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item"
+                               [class.dropdown-item-active]="isCurrentRoute('/contrat/batterie')"
+                               [routerLink]="['/contrat/batterie']"
+                               (click)="closeAllDropdowns()">
+                                Contrat Batteries
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item"
+                               [class.dropdown-item-active]="isCurrentRoute('/chauffeurs')"
+                               [routerLink]="['/chauffeurs']"
+                               (click)="closeAllDropdowns()">
+                                Chauffeurs
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item"
+                               [class.dropdown-item-active]="isCurrentRoute('/garants')"
+                               [routerLink]="['/garants']"
+                               (click)="closeAllDropdowns()">
+                                Garants
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item"
+                               [class.dropdown-item-active]="isCurrentRoute('/partenaires')"
+                               [routerLink]="['/partenaires']"
+                               (click)="closeAllDropdowns()">
+                                Partenaires
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item"
+                               [class.dropdown-item-active]="isCurrentRoute('/conges')"
+                               [routerLink]="['/conges']"
+                               (click)="closeAllDropdowns()">
+                                Congés
+                            </a>
+                        </li>
+                    </ul>
+                </li>
 
-        <!-- Paiements Dropdown -->
-        <li class="nav-item dropdown" [class.show]="isPaiementsDropdownOpen">
-          <a class="nav-link dropdown-toggle active-link"
-             href="#"
-             role="button"
-             (click)="togglePaiementsDropdown()">
-            Paiements
-          </a>
-          <ul class="dropdown-menu" [class.show]="isPaiementsDropdownOpen">
-            <li><a class="dropdown-item" href="#" (click)="navigateToPaiementsContrats()">Paiements Contrats</a></li>
-            <li><a class="dropdown-item" href="#" (click)="navigateToHistoriquePaiements()">Historique Paiements</a></li>
-            <li><a class="dropdown-item" href="#" (click)="navigateToPenalites()">Pénalités</a></li>
-            <li><a class="dropdown-item" href="#" (click)="navigateToSwap()">Swap</a></li>
-            <li><a class="dropdown-item" href="#" (click)="navigateToRapports()">Rapports</a></li>
-          </ul>
-        </li>
+                <!-- Paiements Dropdown -->
+                <li class="nav-item dropdown"
+                    [class.show]="isOpen('paiements')"
+                    [class.nav-section-active]="isPaiementSectionActive()">
+                    <a class="nav-link dropdown-toggle"
+                       [class.nav-parent-active]="isPaiementSectionActive()"
+                       role="button"
+                       aria-haspopup="menu"
+                       [attr.aria-expanded]="isOpen('paiements')"
+                       (click)="toggle('paiements')">
+                        Paiements
+                    </a>
+                    <ul class="dropdown-menu" [class.show]="isOpen('paiements')">
+                        <li>
+                            <a class="dropdown-item"
+                               [class.dropdown-item-active]="isCurrentRoute('/paiements/contrats')"
+                               [routerLink]="['/paiements/contrats']"
+                               (click)="closeAllDropdowns()">
+                                Paiements Contrats
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item"
+                               [class.dropdown-item-active]="isCurrentRoute('/paiements/historique')"
+                               [routerLink]="['/paiements/historique']"
+                               (click)="closeAllDropdowns()">
+                                Historique Paiements
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item"
+                               [class.dropdown-item-active]="isCurrentRoute('/paiements/penalites')"
+                               [routerLink]="['/paiements/penalites']"
+                               (click)="closeAllDropdowns()">
+                                Pénalités
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item"
+                               [class.dropdown-item-active]="isCurrentRoute('/swap')"
+                               [routerLink]="['/swap']"
+                               (click)="closeAllDropdowns()">
+                                Swap
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item"
+                               [class.dropdown-item-active]="isCurrentRoute('/rapports')"
+                               [routerLink]="['/rapports']"
+                               (click)="closeAllDropdowns()">
+                                Rapports
+                            </a>
+                        </li>
+                    </ul>
+                </li>
 
-        <!-- Stations Dropdown -->
-        <li class="nav-item dropdown" [class.show]="isStationsDropdownOpen">
-          <a class="nav-link dropdown-toggle"
-             href="#"
-             role="button"
-             (click)="toggleStationsDropdown()">
-            Stations
-          </a>
-          <ul class="dropdown-menu" [class.show]="isStationsDropdownOpen">
-            <li><a class="dropdown-item" href="#" (click)="navigateToListeStations()">Liste des stations</a></li>
-            <li><a class="dropdown-item" href="#" (click)="navigateToGestionCharges()">Gestion des charges</a></li>
-            <li><a class="dropdown-item" href="#" (click)="navigateToRentabiliteStations()">Rentabilité de Stations</a></li>
-          </ul>
-        </li>
+                <!-- Stations Dropdown -->
+                <li class="nav-item dropdown"
+                    [class.show]="isOpen('stations')"
+                    [class.nav-section-active]="isStationSectionActive()">
+                    <a class="nav-link dropdown-toggle"
+                       [class.nav-parent-active]="isStationSectionActive()"
+                       role="button"
+                       aria-haspopup="menu"
+                       [attr.aria-expanded]="isOpen('stations')"
+                       (click)="toggle('stations')">
+                        Stations
+                    </a>
+                    <ul class="dropdown-menu" [class.show]="isOpen('stations')">
+                        <li>
+                            <a class="dropdown-item"
+                               [class.dropdown-item-active]="isCurrentRoute('/stations')"
+                               [routerLink]="['/stations']"
+                               (click)="closeAllDropdowns()">
+                                Liste des stations
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item"
+                               [class.dropdown-item-active]="isCurrentRoute('/stations/charges')"
+                               [routerLink]="['/stations/charges']"
+                               (click)="closeAllDropdowns()">
+                                Gestion des charges
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item"
+                               [class.dropdown-item-active]="isCurrentRoute('/stations/rentabilite')"
+                               [routerLink]="['/stations/rentabilite']"
+                               (click)="closeAllDropdowns()">
+                                Rentabilité de Stations
+                            </a>
+                        </li>
+                    </ul>
+                </li>
 
-        <!-- Investisseurs -->
-        <li class="nav-item">
-          <a class="nav-link" href="#" (click)="navigateToInvestisseurs()">
-            Investisseurs
-          </a>
-        </li>
+                <!-- Investisseurs -->
+                <li class="nav-item">
+                    <a class="nav-link"
+                       [routerLink]="['/investisseurs']"
+                       routerLinkActive="nav-active"
+                       (click)="closeAllDropdowns()">
+                        Investisseurs
+                    </a>
+                </li>
 
-      </ul>
+            </ul>
 
-      <!-- Actions à droite -->
-      <div class="navbar-actions">
+            <!-- Actions à droite -->
+            <div class="navbar-actions">
 
-        <!-- Barre de recherche -->
-        <div class="search-container" [class.search-expanded]="isSearchVisible">
-          <button class="btn-search" (click)="toggleSearch()">
-            <i class="fas fa-search"></i>
-          </button>
-          <input
-            type="text"
-            class="form-control search-input"
-            placeholder="Rechercher..."
-            [class.d-none]="!isSearchVisible"
-            (input)="onSearch($event)"
-            (blur)="isSearchVisible = false">
-        </div>
-
-        <!-- Notifications -->
-        <div class="dropdown notification-dropdown">
-          <button class="btn-notification"
-                  type="button"
-                  data-bs-toggle="dropdown"
-                  aria-expanded="false">
-            <i class="fas fa-bell"></i>
-            @if (notificationCount > 0) {
-              <span class="notification-badge">
-              {{ notificationCount > 9 ? '9+' : notificationCount }}
-            </span>
-            }
-
-          </button>
-          <ul class="dropdown-menu dropdown-menu-end notification-menu">
-            <li class="dropdown-header">
-              <strong>Notifications ({{ notificationCount }})</strong>
-            </li>
-            <li><hr class="dropdown-divider"></li>
-            @for (notification of notifications; track notifications){
-              <li  class="notification-item">
-                <div class="notification-content">
-                  <div class="notification-message">{{ notification.message }}</div>
-                  <div class="notification-time">{{ notification.time }}</div>
-                  <button class="btn-close-notification" (click)="markNotificationAsRead(notification.id)">
-                    <i class="fas fa-times"></i>
-                  </button>
+                <!-- Barre de recherche -->
+                <div class="search-container" [class.search-expanded]="searchVisible()">
+                    <button class="btn-search" (click)="toggleSearch()">
+                        <i class="fas fa-search"></i>
+                    </button>
+                    <input
+                            type="text"
+                            class="form-control search-input"
+                            placeholder="Rechercher..."
+                            [class.d-none]="!searchVisible()"
+                            (blur)="searchVisible.set(false)">
                 </div>
-              </li>
-            }
 
-            @if (notificationCount === 0) {
-              <li class="text-center text-muted p-3">
-                Aucune notification
-              </li>
-            }
+                <!-- Notifications -->
+                <div class="dropdown notification-dropdown">
+                    <button class="btn-notification" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-bell"></i>
+                        @if (notificationCount() > 0) {
+                            <span class="notification-badge">
+                {{ notificationCount() > 9 ? '9+' : notificationCount() }}
+              </span>
+                        }
+                    </button>
 
-          </ul>
-        </div>
+                    <ul class="dropdown-menu dropdown-menu-end notification-menu">
+                        <li class="dropdown-header">
+                            <strong>Notifications ({{ notificationCount() }})</strong>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
 
-        <!-- Profil utilisateur -->
-        <div class="dropdown profile-dropdown" [class.show]="isProfileDropdownOpen">
-          <button class="btn-profile"
-                  type="button"
-                  (click)="toggleProfileDropdown()">
-            <div class="profile-circle">
-              <i class="fas fa-user"></i>
+                        @for (notification of notificationsSig(); track notification.id) {
+                            <li class="notification-item">
+                                <div class="notification-content">
+                                    <div class="notification-message">{{ notification.message }}</div>
+                                    <div class="notification-time">{{ notification.time }}</div>
+                                    <button class="btn-close-notification" (click)="markNotificationAsRead(notification.id)">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </li>
+                        }
+
+                        @if (notificationCount() === 0) {
+                            <li class="text-center text-muted p-3">Aucune notification</li>
+                        }
+                    </ul>
+                </div>
+
+                <!-- Profil utilisateur -->
+                <div class="dropdown profile-dropdown" [class.show]="isOpen('profile')">
+                    <button class="btn-profile" type="button" (click)="toggle('profile')">
+                        <div class="profile-circle"><i class="fas fa-user"></i></div>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" [class.show]="isOpen('profile')">
+                        <li>
+                            <a class="dropdown-item" [routerLink]="['/profile']" (click)="closeAllDropdowns()">
+                                <i class="fas fa-user me-2"></i>Mon profil
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" [routerLink]="['/settings']" (click)="closeAllDropdowns()">
+                                <i class="fas fa-cog me-2"></i>Paramètres
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item text-danger" href="#" (click)="logout()">
+                                <i class="fas fa-sign-out-alt me-2"></i>Déconnexion
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Bouton thème (placeholder) -->
+                <button class="btn-theme"><i class="fas fa-adjust"></i></button>
+
             </div>
-          </button>
-          <ul class="dropdown-menu dropdown-menu-end" [class.show]="isProfileDropdownOpen">
-            <li><a class="dropdown-item" href="#" (click)="navigateToProfile()">
-              <i class="fas fa-user me-2"></i>Mon profil
-            </a></li>
-            <li><a class="dropdown-item" href="#" (click)="navigateToParametres()">
-              <i class="fas fa-cog me-2"></i>Paramètres
-            </a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item text-danger" href="#" (click)="logout()">
-              <i class="fas fa-sign-out-alt me-2"></i>Déconnexion
-            </a></li>
-          </ul>
         </div>
-
-        <!-- Bouton thème (optionnel) -->
-        <button class="btn-theme">
-          <i class="fas fa-adjust"></i>
-        </button>
-
-      </div>
     </div>
-  </div>
 </nav>
 
 <!-- Backdrop pour fermer les dropdowns -->
-@if (isContratsDropdownOpen || isPaiementsDropdownOpen || isStationsDropdownOpen || isProfileDropdownOpen) {
-  <div class="dropdown-backdrop"
-       (click)="closeAllDropdowns()">
-  </div>
+@if (openKey()) {
+    <div class="dropdown-backdrop" (click)="closeAllDropdowns()"></div>
 }
-

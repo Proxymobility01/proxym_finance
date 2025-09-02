@@ -1,186 +1,137 @@
-import { Component } from '@angular/core';
+
+
+
+import { Component, HostListener, inject, signal, computed, OnInit } from '@angular/core';
+import {Router, NavigationEnd, RouterLink, RouterLinkActive} from '@angular/router';
+
+type DropKey = 'contrats' | 'paiements' | 'stations' | 'profile' | null;
+
+interface Notification {
+  id: number;
+  message: string;
+  time: string;
+  type: 'info' | 'success' | 'warning';
+}
 
 @Component({
   selector: 'app-navbar',
-  standalone: true,
-  imports: [],
   templateUrl: './navbar.html',
-  styleUrl: './navbar.css'
+  imports: [
+    RouterLink,
+    RouterLinkActive,
+  ],
+  styleUrls: ['./navbar.css']
 })
-export class Navbar {
+export class Navbar implements OnInit {
 
-  // État des dropdowns
-  isContratsDropdownOpen = false;
-  isPaiementsDropdownOpen = false;
-  isStationsDropdownOpen = false;
-  isProfileDropdownOpen = false;
-  isSearchVisible = false;
+  private readonly router = inject(Router);
 
-  // Données fictives pour les notifications
-  notifications = [
+  // État unifié pour TOUS les dropdowns
+  readonly openKey = signal<DropKey>(null);
+  readonly searchVisible = signal<boolean>(false);
+
+  // Notifications (exemple)
+  readonly notificationsSig = signal<Notification[]>([
     { id: 1, message: 'Nouveau contrat chauffeur en attente', time: '5 min', type: 'info' },
     { id: 2, message: 'Paiement reçu - Station A', time: '1h', type: 'success' },
     { id: 3, message: 'Maintenance programmée - Station B', time: '2h', type: 'warning' }
-  ];
+  ]);
+  readonly notificationCount = computed(() => this.notificationsSig().length);
 
-  notificationCount = this.notifications.length;
-
-  constructor() { }
-
-  // Méthodes pour gérer les dropdowns
-  toggleContratsDropdown() {
-    this.isContratsDropdownOpen = !this.isContratsDropdownOpen;
-    this.closOtherDropdowns('contrats');
+  ngOnInit(): void {
+    // Fermer tout à chaque navigation
+    this.router.events.subscribe(e => {
+      if (e instanceof NavigationEnd) this.closeAllDropdowns();
+    });
   }
 
-  togglePaiementsDropdown() {
-    this.isPaiementsDropdownOpen = !this.isPaiementsDropdownOpen;
-    this.closOtherDropdowns('paiements');
+  // Helpers d’ouverture/fermeture
+  toggle(key: Exclude<DropKey, null>) {
+    this.openKey.update(k => (k === key ? null : key));
   }
-
-  toggleStationsDropdown() {
-    this.isStationsDropdownOpen = !this.isStationsDropdownOpen;
-    this.closOtherDropdowns('stations');
+  isOpen(key: Exclude<DropKey, null>): boolean {
+    return this.openKey() === key;
   }
-
-  toggleProfileDropdown() {
-    this.isProfileDropdownOpen = !this.isProfileDropdownOpen;
-    this.closOtherDropdowns('profile');
-  }
-
-  toggleSearch() {
-    this.isSearchVisible = !this.isSearchVisible;
-  }
-
-  closOtherDropdowns(except: string) {
-    if (except !== 'contrats') this.isContratsDropdownOpen = false;
-    if (except !== 'paiements') this.isPaiementsDropdownOpen = false;
-    if (except !== 'stations') this.isStationsDropdownOpen = false;
-    if (except !== 'profile') this.isProfileDropdownOpen = false;
-  }
-
   closeAllDropdowns() {
-    this.isContratsDropdownOpen = false;
-    this.isPaiementsDropdownOpen = false;
-    this.isStationsDropdownOpen = false;
-    this.isProfileDropdownOpen = false;
-    this.isSearchVisible = false;
+    this.openKey.set(null);
+    this.searchVisible.set(false);
+  }
+  toggleSearch() {
+    this.searchVisible.update(v => !v);
   }
 
-  // Méthodes de navigation
-  navigateToTableauBord() {
-    console.log('Navigation vers Tableau de bord');
+  // Clic hors navbar -> fermeture
+  @HostListener('document:click', ['$event'])
+  onDocClick(ev: MouseEvent) {
+    const target = ev.target as HTMLElement;
+    const navbar = document.querySelector('.custom-navbar');
+    if (navbar && !navbar.contains(target)) this.closeAllDropdowns();
   }
 
-  navigateToInvestisseurs() {
-    console.log('Navigation vers Investisseurs');
-  }
-
-  // Méthodes pour les actions du menu Contrats
-  navigateToContratsChauf() {
-    console.log('Navigation vers Contrats Chauffeurs');
-    this.closeAllDropdowns();
-  }
-
-  navigateToContratsPartenaires() {
-    console.log('Navigation vers Contrats Partenaires');
-    this.closeAllDropdowns();
-  }
-
-  navigateToContratBatteries() {
-    console.log('Navigation vers Contrat Batteries');
-    this.closeAllDropdowns();
-  }
-
-  navigateToChauffeurs() {
-    console.log('Navigation vers Chauffeurs');
-    this.closeAllDropdowns();
-  }
-
-  navigateToGarants() {
-    console.log('Navigation vers Garants');
-    this.closeAllDropdowns();
-  }
-
-  navigateToPartenaires() {
-    console.log('Navigation vers Partenaires');
-    this.closeAllDropdowns();
-  }
-
-  navigateToConges() {
-    console.log('Navigation vers Congés');
-    this.closeAllDropdowns();
-  }
-
-  // Méthodes pour les actions du menu Paiements
-  navigateToPaiementsContrats() {
-    console.log('Navigation vers Paiements Contrats');
-    this.closeAllDropdowns();
-  }
-
-  navigateToHistoriquePaiements() {
-    console.log('Navigation vers Historique Paiements');
-    this.closeAllDropdowns();
-  }
-
-  navigateToPenalites() {
-    console.log('Navigation vers Pénalités');
-    this.closeAllDropdowns();
-  }
-
-  navigateToSwap() {
-    console.log('Navigation vers Swap');
-    this.closeAllDropdowns();
-  }
-
-  navigateToRapports() {
-    console.log('Navigation vers Rapports');
-    this.closeAllDropdowns();
-  }
-
-  // Méthodes pour les actions du menu Stations
-  navigateToListeStations() {
-    console.log('Navigation vers Liste des stations');
-    this.closeAllDropdowns();
-  }
-
-  navigateToGestionCharges() {
-    console.log('Navigation vers Gestion des charges');
-    this.closeAllDropdowns();
-  }
-
-  navigateToRentabiliteStations() {
-    console.log('Navigation vers Rentabilité de Stations');
-    this.closeAllDropdowns();
-  }
-
-  // Méthodes pour les actions du menu Profil
-  navigateToProfile() {
-    console.log('Navigation vers Mon profil');
-    this.closeAllDropdowns();
-  }
-
-  navigateToParametres() {
-    console.log('Navigation vers Paramètres');
-    this.closeAllDropdowns();
-  }
-
-  logout() {
-    console.log('Déconnexion');
-    this.closeAllDropdowns();
-    // Logique de déconnexion ici
-  }
-
-  // Méthode de recherche
-  onSearch(event: any) {
-    const searchTerm = event.target.value;
-    console.log('Recherche:', searchTerm);
-    // Logique de recherche ici
-  }
-
+  // Notifications
   markNotificationAsRead(notificationId: number) {
-    this.notifications = this.notifications.filter(n => n.id !== notificationId);
-    this.notificationCount = this.notifications.length;
+    const next = this.notificationsSig().filter(n => n.id !== notificationId);
+    this.notificationsSig.set(next);
   }
 
+  // Déconnexion (placeholder)
+  logout() {
+    // TODO: logique de déconnexion
+    this.closeAllDropdowns();
+  }
+
+
+
+  /**
+   * Vérifie si la route actuelle correspond exactement à l'URL donnée
+   */
+  isCurrentRoute(url: string): boolean {
+    return this.router.url === url;
+  }
+
+  /**
+   * Vérifie si la section Contrats est active
+   */
+  isContratSectionActive(): boolean {
+    const currentUrl = this.router.url;
+    const contratRoutes = [
+      '/contrat/chauffeur',
+      '/contrat/partenaire',
+      '/contrat/batterie',
+      '/chauffeurs',
+      '/garants',
+      '/partenaires',
+      '/conges'
+    ];
+
+    return contratRoutes.some(route => currentUrl.startsWith(route));
+  }
+
+  /**
+   * Vérifie si la section Paiements est active
+   */
+  isPaiementSectionActive(): boolean {
+    const currentUrl = this.router.url;
+    const paiementRoutes = [
+      '/paiements/contrats',
+      '/paiements/historique',
+      '/paiements/penalites',
+      '/swap',
+      '/rapports'
+    ];
+
+    return paiementRoutes.some(route => currentUrl.startsWith(route));
+  }
+
+  /**
+   * Vérifie si la section Stations est active
+   */
+  isStationSectionActive(): boolean {
+    const currentUrl = this.router.url;
+    const stationRoutes = [
+      '/stations'
+    ];
+
+    return stationRoutes.some(route => currentUrl.startsWith(route));
+  }
 }

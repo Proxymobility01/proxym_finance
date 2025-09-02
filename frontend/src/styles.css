@@ -1,1 +1,24 @@
 /* You can add global styles to this file, and also import other style files */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap');
+:root {
+  --bg-color: #FFFFFF;
+  --bg-secondary: #F5F5F7;
+  --text-color: #333333;
+  --text-secondary: #666666;
+  --border-color: #E0E0E0;
+  --card-bg: #FFFFFF;
+  --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --primary-color: #DCDC34;
+  --primary-light: #EBEB77;
+  --primary-dark: #B8B826;
+  --font-family-body: Arial;
+  --font-Orbitron: 'Orbitron', sans-serif;
+}
+
+body {
+  background-color: var(--bg-secondary);
+  color: var(--text-color);
+  font-family: var(--font-family-body), sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
