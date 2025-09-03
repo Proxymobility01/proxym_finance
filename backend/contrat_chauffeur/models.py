@@ -25,8 +25,13 @@ class ContratBatterie(TimeStampedModel):
         AssociationUserMoto, on_delete=models.PROTECT, related_name="contrats_batteries"
     )
 
+    class Meta:
+        db_table = "contrat_batterie"
+
     def __str__(self):
         return self.reference_contrat or f"ContratBatterie #{self.pk}"
+
+
 
 
 class ContratChauffeur(TimeStampedModel):
@@ -66,10 +71,13 @@ class ContratChauffeur(TimeStampedModel):
     contrat_batt = models.ForeignKey(
         ContratBatterie, on_delete=models.SET_NULL, null=True, blank=True, related_name="contrats_chauffeur"
     )
-    # Use string app_label.ModelName to avoid circular import
     regle_penalite = models.ForeignKey(
         "penalite.ReglePenalite", on_delete=models.SET_NULL, null=True, blank=True, related_name="contrats"
     )
+
+
+    class Meta:
+        db_table = "contrat_chauffeur"
 
     def __str__(self):
         return self.reference_contrat or f"ContratChauffeur #{self.pk}"

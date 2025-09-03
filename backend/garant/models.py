@@ -19,5 +19,8 @@ class Garant(TimeStampedModel):
     justif_adresse = models.CharField(max_length=255, blank=True,null=True)
     profession = models.CharField(max_length=150, blank=True,null=True)
 
+    class Meta:
+        db_table = "garant"
+
     def __str__(self):
         return f"{self.nom} {self.prenom}"

@@ -16,3 +16,6 @@ class Conge(TimeStampedModel):
 
     def __str__(self):
         return f"Congé #{self.id} - contrat {self.contrat_id}"
+
+    class Meta:
+        db_table = "conge"
