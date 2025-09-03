@@ -46,6 +46,12 @@ INSTALLED_APPS = [
     'corsheaders',
     'shared',
     'accounts',
+    'contrat_chauffeur',
+    'paiement_lease',
+    'penalite',
+    'garant',
+    'conge',
+    'app_legacy'
 ]
 
 MIDDLEWARE = [
