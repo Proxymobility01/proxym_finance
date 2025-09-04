@@ -8,12 +8,12 @@ class AssociationUserMoto(models.Model):
 
 
     class Meta:
-        # managed = False
+        managed = False
         db_table = "association_user_moto"
 
 
 class Agences(models.Model):
     id = models.IntegerField(primary_key=True)
     class Meta:
-        # managed = False
+        managed = False
         db_table = "users_agences"
