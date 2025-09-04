@@ -9,11 +9,11 @@ class AssociationUserMoto(models.Model):
 
     class Meta:
         managed = False
-        db_table = "association_user_moto"
+        db_table = "association_user_motos"
 
 
 class Agences(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.PositiveBigIntegerField(primary_key=True)
     class Meta:
         managed = False
         db_table = "users_agences"

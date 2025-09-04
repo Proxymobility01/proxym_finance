@@ -19,13 +19,13 @@ class PaiementLease(TimeStampedModel):
     type_contrat = models.CharField(max_length=50)
 
     contrat_chauffeur = models.ForeignKey(
-        ContratChauffeur, on_delete=models.CASCADE, related_name="paiements_lease"
+        ContratChauffeur, on_delete=models.CASCADE, related_name="paiements_lease", db_column='contrat_chauffeur_id'
     )
 
     date_enregistrement = models.DateTimeField()
     statut = models.CharField(max_length=50)
-    employe_id = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    user_agence_id = models.ForeignKey(Agences, on_delete=models.PROTECT)
+    employe = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user_agence = models.ForeignKey(Agences, on_delete=models.PROTECT, db_column='user_agence_id')
 
     class Meta:
         db_table = "paiement_lease"
