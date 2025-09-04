@@ -1,0 +1,34 @@
+from django.db import models
+
+from app_legacy.models import  Agences
+from django.conf import settings
+from contrat_chauffeur.models import ContratChauffeur
+from shared.models import TimeStampedModel
+
+
+# Create your models here.
+
+class PaiementLease(TimeStampedModel):
+    reference_paiement = models.CharField(max_length=100,null=True,blank=True)
+    montant_moto = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    montant_batt = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    montant_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    date_paiement = models.DateField()
+    methode_paiement = models.CharField(max_length=50)
+    reference_transaction = models.CharField(max_length=100, blank=True)
+    type_contrat = models.CharField(max_length=50)
+
+    contrat_chauffeur = models.ForeignKey(
+        ContratChauffeur, on_delete=models.CASCADE, related_name="paiements_lease", db_column='contrat_chauffeur_id'
+    )
+
+    date_enregistrement = models.DateTimeField()
+    statut = models.CharField(max_length=50)
+    employe = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user_agence = models.ForeignKey(Agences, on_delete=models.PROTECT, db_column='user_agence_id')
+
+    class Meta:
+        db_table = "paiement_lease"
+
+    def __str__(self):
+        return self.reference_paiement

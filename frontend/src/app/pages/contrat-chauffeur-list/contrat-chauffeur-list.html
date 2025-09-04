@@ -1,0 +1,207 @@
+<div class="container-fluid">
+  <!-- Header -->
+  <div class="page-header d-flex align-items-center justify-content-between flex-wrap mb-4">
+    <h2 class="page-title">Liste des Contrats Chauffeur</h2>
+    <button class="btn btn-nouveau">
+      <i class="fas fa-plus me-2"></i>
+      Nouveau contrat
+    </button>
+  </div>
+
+  <!-- Filtres -->
+  <div class="custom-card">
+    <div class="card-body">
+      <div class="row g-3 align-items-end">
+        <!-- Recherche -->
+        <div class="col-md-4">
+          <label class="form-label">Recherche</label>
+          <input class="form-control"
+                 placeholder="Référence, chauffeur…"
+                 [ngModel]="search()" (ngModelChange)="search.set($event); goToPage(1)">
+        </div>
+
+        <!-- Statut -->
+        <div class="col-md-3">
+          <label class="form-label">Statut</label>
+          <select class="form-select"
+                  [ngModel]="status()" (ngModelChange)="status.set($event); goToPage(1)">
+            <option value="">Tous</option>
+            <option value="true">Terminés</option>
+            <option value="false">En cours</option>
+            <option value="false">Suspendu</option>
+
+          </select>
+        </div>
+
+        <!-- Période -->
+        <div class="col-md-3">
+          <label class="form-label">Période</label>
+          <select class="form-select"
+                  [ngModel]="dateMode()"
+                  (ngModelChange)="setDateMode($event)">
+            <option value="today">Aujourd'hui</option>
+            <option value="week">Cette semaine</option>
+            <option value="month">Ce mois</option>
+            <option value="year">Cette année</option>
+            <option value="specific">Date spécifique</option>
+            <option value="range">Plage de dates</option>
+            <option value="all">Tout l'historique</option>
+          </select>
+        </div>
+
+        <!-- Actions exports -->
+        <div class="col-md-2 text-end">
+          <div class="btn-group">
+            <button class=" btn btn-export" (click)="exportCSV()">
+              <i class="fas fa-file-csv me-1"></i>
+              CSV
+            </button>
+            <button class="btn btn-export" (click)="exportExcel()">
+              <i class="fas fa-file-excel me-1"></i>
+              Excel
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Champs dynamiques selon période -->
+      <div class="row g-3 mt-2">
+        <!-- Date spécifique -->
+        @if (dateMode() === 'specific') {
+          <div class="col-md-3">
+            <label class="form-label">Date</label>
+            <input type="date" class="form-control"
+                   [ngModel]="dateSpecific()"
+                   (ngModelChange)="dateSpecific.set($event); goToPage(1)">
+          </div>
+        }
+
+        <!-- Plage de dates -->
+        @if (dateMode() === 'range') {
+          <div class="col-md-3">
+            <label class="form-label">Début</label>
+            <input type="date" class="form-control"
+                   [ngModel]="dateStart()"
+                   (ngModelChange)="dateStart.set($event); goToPage(1)">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Fin</label>
+            <input type="date" class="form-control"
+                   [ngModel]="dateEnd()"
+                   (ngModelChange)="dateEnd.set($event); goToPage(1)">
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Tableau -->
+  <div class="table-container">
+    <div class="table-responsive">
+      <table class="table custom-table table-hover mb-0">
+        <thead>
+        <tr>
+          <th class="text-center">Référence</th>
+          <th class="text-center">Chauffeur</th>
+          <th class="text-center">Date Signature</th>
+          <th class="text-center">Paiement</th>
+          <th class="text-center">Statut</th>
+          <th class="text-center">Action</th>
+        </tr>
+        </thead>
+
+        <tbody>
+          @if (isLoadingContrat()) {
+            <tr>
+              <td colspan="6" class="loading-state">
+                <div class="spinner-border spinner-custom" role="status"></div>
+                <div class="mt-2">Chargement des contrats…</div>
+              </td>
+            </tr>
+          } @else if (error() && !isLoadingContrat()) {
+            <tr>
+              <td colspan="6" class="error-state">
+                <div class="text-danger mb-3">
+                  <i class="fas fa-exclamation-triangle error-icon"></i>
+                  <div>{{ error() }}</div>
+                </div>
+                <button class="btn retry-btn" (click)="goToPage(page())">
+                  <i class="fas fa-refresh me-1"></i> Actualiser
+                </button>
+              </td>
+            </tr>
+          } @else if (!isLoadingContrat() && !error() && contrats().length === 0) {
+            <tr>
+              <td colspan="6" class="empty-state">
+                <i class="fas fa-search empty-icon"></i>
+                <h6 class="text-muted mb-2">Aucun contrat trouvé</h6>
+                <p class="text-muted mb-0">Aucun élément ne correspond aux critères.</p>
+              </td>
+            </tr>
+          } @else {
+            @for (c of contrats(); track $index; let i = $index) {
+              <tr class="contrat-row" (click)="toggleDetailsAt(i)"
+                  [ngClass]="{ 'table-active': isRowExpanded(i) }">
+                <td class="text-center fw-bold" [innerHTML]="(c.reference || '') | highlight:search()"></td>
+                <td class="text-center" [innerHTML]="(c.nom_chauffeur || '') | highlight:search()"></td>
+                <td class="text-center">{{ c.date_signature | date:'dd/MM/yyyy' }}</td>
+                <td class="text-center payment-info">
+                  <span class="amount-paye">{{ c.montant_paye | noGroupNumber }}</span>
+                  /
+                  <span class="amount-restant">{{ c.montant_restant | noGroupNumber }}</span>
+                  /
+                  <span class="amount-total">{{ c.montant_total | noGroupNumber }}</span>
+                  FCFA
+                </td>
+                <td class="text-center">
+                  <span class="status-badge" [class]="c.status ? 'status-termine' : 'status-encours'">
+                    {{ c.status ? 'Terminé' : 'En cours' }}
+                  </span>
+                </td>
+                <td class="text-center" (click)="$event.stopPropagation()">
+                  <button class="action-btn me-1" title="Détails">
+                    <i class="fas fa-info-circle"></i>
+                  </button>
+                  <button class="action-btn" title="Modifier">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Footer pagination -->
+    <div class="pagination-container">
+      <div class="pagination-info">
+        <small>Affichage de {{ contrats().length }} contrat(s) sur {{ total() }}</small>
+      </div>
+
+      @if (pageCount() > 1) {
+        <nav aria-label="Pagination des contrats">
+          <ul class="pagination pagination-sm mb-0">
+            <li class="page-item" [class.disabled]="page() === 1">
+              <a class="page-link" style="cursor:pointer" (click)="goToPreviousPage()">
+                <i class="fas fa-chevron-left"></i>
+              </a>
+            </li>
+
+            @for (p of [].constructor(pageCount()); track p; let i = $index) {
+              <li class="page-item" [class.active]="page() === (i+1)">
+                <a class="page-link" style="cursor:pointer" (click)="goToPage(i+1)">{{ i+1 }}</a>
+              </li>
+            }
+
+            <li class="page-item" [class.disabled]="page() === pageCount()">
+              <a class="page-link" style="cursor:pointer" (click)="goToNextPage()">
+                <i class="fas fa-chevron-right"></i>
+              </a>
+            </li>
+          </ul>
+        </nav>
+      }
+    </div>
+  </div>
+</div>
