@@ -1,35 +1,34 @@
-from rest_framework import generics, status
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from django.shortcuts import get_object_or_404
-from .serializers import ContractCreateSerializer, ContractActivateSerializer
-from .models import ContratChauffeur
+from rest_framework import generics
+from django.db.models import Q
+from .models import ContratBatterie
+from .serializers import (
+    ContratBatterieListSerializer,
+    ContratBatterieDetailSerializer,
+    ContratBatterieCreateSerializer,
+    ContratBatterieUpdateSerializer,
+)
 
-class ContractCreateView(generics.CreateAPIView):
-    serializer_class = ContractCreateSerializer
-    def create(self, request, *args, **kwargs):
-        ser = self.get_serializer(data=request.data)
-        ser.is_valid(raise_exception=True)
-        contract = ser.save()
-        return Response({
-            "id": contract.id,
-            "reference_contrat": contract.reference_contrat,
-            "statut": contract.statut,
-            "association_user_moto_id": contract.association_user_moto_id,
-            "garant_id": contract.garant_id,
-            "montant_total": str(contract.montant_total),
-            "montant_paye": str(contract.montant_paye),
-            "montant_restant": str(contract.montant_restant),
-            "frequence_paiement": contract.frequence_paiement,
-            "montant_par_paiement": str(contract.montant_par_paiement),
-            "date_debut": contract.date_debut,
-            "date_fin": contract.date_fin,
-        }, status=status.HTTP_201_CREATED)
+class ContratBatterieListCreateView(generics.ListCreateAPIView):
+    queryset = ContratBatterie.objects.all().order_by("-created")
 
-class ContractActivateView(APIView):
-    def post(self, request, pk):
-        contract = get_object_or_404(ContratChauffeur, pk=pk)
-        ser = ContractActivateSerializer(contract, data=request.data or {}, partial=True)
-        ser.is_valid(raise_exception=True)
-        contract = ser.save()
-        return Response({"id": contract.id, "statut": contract.statut, "updated": contract.updated})
+    def get_serializer_class(self):
+        return ContratBatterieCreateSerializer if self.request.method == "POST" else ContratBatterieListSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        chauffeur_id = self.request.query_params.get("chauffeur_id")
+        q = self.request.query_params.get("q")
+        if chauffeur_id:
+            qs = qs.filter(chauffeur_id=chauffeur_id)
+        if q:
+            qs = qs.filter(Q(reference_contrat__icontains=q) | Q(statut__icontains=q))
+        return qs
+
+
+class ContratBatterieDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = ContratBatterie.objects.all()
+
+    def get_serializer_class(self):
+        if self.request.method in ("PUT", "PATCH"):
+            return ContratBatterieUpdateSerializer
+        return ContratBatterieDetailSerializer

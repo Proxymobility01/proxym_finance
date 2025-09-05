@@ -1,12 +1,10 @@
 from django.db import models
 
-# Create your models here.
 class TimeStampedModel(models.Model):
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True)  # fills on insert
+    updated = models.DateTimeField(auto_now=True)      # updates on save
 
     class Meta:
         abstract = True
-
 
 

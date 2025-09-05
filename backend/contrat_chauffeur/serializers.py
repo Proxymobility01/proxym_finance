@@ -1,57 +1,149 @@
+from datetime import datetime, timedelta
+from django.db import transaction, models as dj_models
 from rest_framework import serializers
-from django.utils import timezone
-from django.db import transaction
-from .models import ContratChauffeur
-from app_legacy.models import AssociationUserMoto
-from garant.models import Garant
+from .models import ContratBatterie
 
-class ContractCreateSerializer(serializers.Serializer):
-    association_user_moto_id = serializers.IntegerField()
-    garant_id = serializers.IntegerField()
-    reference_contrat = serializers.CharField(required=False, allow_blank=True)
-    frequence_paiement = serializers.CharField()
-    montant_par_paiement = serializers.DecimalField(max_digits=14, decimal_places=2)
-    montant_total = serializers.DecimalField(max_digits=14, decimal_places=2)
-    date_debut = serializers.DateField()
-    date_fin = serializers.DateTimeField(required=False)
-    montant_caution_batt = serializers.DecimalField(max_digits=14, decimal_places=2, required=False)
-    montant_engage = serializers.DecimalField(max_digits=14, decimal_places=2, required=False)
+STATUS_CHOICES = ("DRAFT", "ACTIVE", "SUSPENDED", "TERMINATED", "COMPLETED")
+_ANCHOR = datetime(1970, 1, 1)  # used to encode integer days into your DATETIME column
+
+
+def _encode_days_as_datetime(days: int) -> datetime:
+    return _ANCHOR + timedelta(days=days)
+
+
+def _compute_days(date_debut, date_fin):
+    if date_debut and date_fin:
+        delta = (date_fin - date_debut).days
+        if delta < 0:
+            raise serializers.ValidationError({"date_fin": "date_fin must be on or after date_debut"})
+        return delta
+    return None
+
+
+class _DureeJourOutMixin(serializers.ModelSerializer):
+    """Expose integer days and hide the raw DATETIME field in responses."""
+    duree_jour_jours = serializers.SerializerMethodField()
+
+    def get_duree_jour_jours(self, obj):
+        return _compute_days(obj.date_debut, obj.date_fin)
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # Hide the internal DATETIME storage; show only the integer days
+        data.pop("duree_jour", None)
+        return data
+
+
+class ContratBatterieListSerializer(_DureeJourOutMixin):
+    class Meta:
+        model = ContratBatterie
+        fields = [
+            "id", "reference_contrat",
+            "montant_total", "montant_paye", "montant_restant",
+            "date_signature", "date_enregistrement", "date_debut", "date_fin",
+            "duree_jour", "duree_jour_jours",
+            "statut", "montant_engage", "montant_caution",
+            "chauffeur_id", "created", "updated",
+        ]
+
+
+class ContratBatterieDetailSerializer(ContratBatterieListSerializer):
+    pass
+
+
+class ContratBatterieCreateSerializer(_DureeJourOutMixin):
+    class Meta:
+        model = ContratBatterie
+        fields = [
+            "reference_contrat",
+            "montant_total", "montant_paye", "montant_restant",
+            "date_signature", "date_enregistrement", "date_debut", "duree_jour", "date_fin",
+            "statut", "montant_engage", "montant_caution",
+            "chauffeur_id",
+            # response-only helper:
+            "duree_jour_jours",
+        ]
+        extra_kwargs = {
+            "montant_total": {"required": True},
+            "date_signature": {"required": True},
+            "date_enregistrement": {"required": True},
+            "date_debut": {"required": True},
+            "montant_engage": {"required": True},
+            "montant_caution": {"required": True},
+            "chauffeur_id": {"required": True},
+            "montant_paye": {"required": False},
+            "montant_restant": {"required": False},
+            "statut": {"required": False},
+            "duree_jour": {"required": False},  # computed
+            "date_fin": {"required": False},
+        }
+        read_only_fields = ("duree_jour",)  # client shouldn't send it
+
+    def validate_statut(self, value):
+        if value and value.upper() not in STATUS_CHOICES:
+            raise serializers.ValidationError(f"statut must be one of {STATUS_CHOICES}")
+        return value
 
     def validate(self, attrs):
-        if not AssociationUserMoto.objects.filter(id=attrs["association_user_moto_id"]).exists():
-            raise serializers.ValidationError("association_user_moto_id not found.")
-        if not Garant.objects.filter(id=attrs["garant_id"]).exists():
-            raise serializers.ValidationError("garant_id not found.")
-        if attrs["frequence_paiement"].lower() not in ("daily", "weekly", "monthly"):
-            raise serializers.ValidationError("frequence_paiement must be: daily|weekly|monthly")
+        # amounts
+        mt = attrs.get("montant_total")
+        mp = attrs.get("montant_paye", 0)
+        mr = attrs.get("montant_restant")
+        if "montant_paye" not in attrs:
+            attrs["montant_paye"] = 0
+        if mr is None and mt is not None:
+            attrs["montant_restant"] = mt - mp
+
+        # duration
+        days = _compute_days(attrs.get("date_debut"), attrs.get("date_fin"))
+        if days is not None:
+            if isinstance(ContratBatterie._meta.get_field("duree_jour"), dj_models.DateTimeField):
+                attrs["duree_jour"] = _encode_days_as_datetime(days)
+            else:
+                attrs["duree_jour"] = days
+        else:
+            attrs.pop("duree_jour", None)
         return attrs
 
     @transaction.atomic
-    def create(self, data):
-        now = timezone.now()
-        c = ContratChauffeur(
-            created=now, updated=now,
-            association_user_moto_id=data["association_user_moto_id"],
-            garant_id=data["garant_id"],
-            reference_contrat=data.get("reference_contrat") or None,
-            frequence_paiement=data["frequence_paiement"],
-            montant_par_paiement=data["montant_par_paiement"],
-            montant_total=data["montant_total"],
-            montant_paye=0, montant_restant=data["montant_total"],
-            date_debut=data["date_debut"],
-            date_fin=data.get("date_fin"),
-            statut="DRAFT",
-            montant_caution_batt=data.get("montant_caution_batt"),
-            montant_engage=data.get("montant_engage"),
-        )
-        c.full_clean()
-        c.save(force_insert=True)
-        return c
+    def create(self, validated_data):
+        return ContratBatterie.objects.create(**validated_data)
 
-class ContractActivateSerializer(serializers.Serializer):
-    def update(self, instance: ContratChauffeur, validated_data):
-        instance.statut = "ACTIVE"
-        instance.updated = timezone.now()
-        instance.full_clean()
-        instance.save(update_fields=["statut", "updated"])
-        return instance
+
+class ContratBatterieUpdateSerializer(_DureeJourOutMixin):
+    class Meta:
+        model = ContratBatterie
+        fields = [
+            "reference_contrat",
+            "montant_total", "montant_paye", "montant_restant",
+            "date_signature", "date_enregistrement", "date_debut", "duree_jour", "date_fin",
+            "statut", "montant_engage", "montant_caution",
+            "chauffeur_id",
+            "duree_jour_jours",
+        ]
+        extra_kwargs = {f: {"required": False} for f in fields}
+        read_only_fields = ("duree_jour",)
+
+    def validate_statut(self, value):
+        if value and value.upper() not in STATUS_CHOICES:
+            raise serializers.ValidationError(f"statut must be one of {STATUS_CHOICES}")
+        return value
+
+    def validate(self, attrs):
+        inst = self.instance
+        # amounts
+        mt = attrs.get("montant_total", inst.montant_total)
+        mp = attrs.get("montant_paye", inst.montant_paye)
+        if "montant_restant" not in attrs:
+            attrs["montant_restant"] = mt - mp
+
+        # duration (use updated or existing dates)
+        d_debut = attrs.get("date_debut", inst.date_debut)
+        d_fin = attrs.get("date_fin", inst.date_fin)
+        days = _compute_days(d_debut, d_fin)
+        if days is not None:
+            if isinstance(ContratBatterie._meta.get_field("duree_jour"), dj_models.DateTimeField):
+                attrs["duree_jour"] = _encode_days_as_datetime(days)
+            else:
+                attrs["duree_jour"] = days
+        return attrs
