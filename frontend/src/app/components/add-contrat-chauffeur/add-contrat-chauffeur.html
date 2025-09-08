@@ -1,0 +1,359 @@
+<div class="modal-container-contrat">
+  <div class="modal-header-contrat">
+    <h4 class="modal-title-contrat">
+      <i class="fas fa-file-contract me-2"></i>
+      Création Contrat Chauffeur
+    </h4>
+    <button type="button" class="btn-close-contrat" (click)="cancel()">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+
+  <form class="modal-content-contrat" [formGroup]="form">
+
+    <!-- Section Liaisons -->
+    <div class="form-section-contrat">
+      <h6 class="section-label-contrat">Informations de liaison</h6>
+
+      <div class="form-grid-3-contrat">
+        <div class="form-field-contrat">
+          <label class="field-label-contrat">
+            Association User–Moto <span class="required-mark-contrat">*</span>
+          </label>
+          <select class="field-select-contrat"
+                  formControlName="association_user_moto_id"
+                  [class.input-error-contrat]="aum.invalid && aum.touched">
+            <option [ngValue]="null" disabled>— Sélectionner —</option>
+            @for (opt of aumOptions; track opt.id) {
+              <option [ngValue]="opt.id">{{ opt.label }}</option>
+            }
+          </select>
+          @if (aum.touched && aum.invalid) {
+            <div class="field-error-contrat">Champ requis.</div>
+          }
+        </div>
+
+        <div class="form-field-contrat">
+          <label class="field-label-contrat">
+            Garant <span class="required-mark-contrat">*</span>
+          </label>
+          <select class="field-select-contrat"
+                  formControlName="garant_id"
+                  [class.input-error-contrat]="garant.invalid && garant.touched">
+            <option [ngValue]="null" disabled>— Sélectionner —</option>
+            @for (opt of garantOptions; track opt.id) {
+              <option [ngValue]="opt.id">{{ opt.label }}</option>
+            }
+          </select>
+          @if (garant.touched && garant.invalid) {
+            <div class="field-error-contrat">Champ requis.</div>
+          }
+        </div>
+
+        <div class="form-field-contrat">
+          <label class="field-label-contrat">
+            Contrat Batterie <span class="required-mark-contrat">*</span>
+          </label>
+          <select class="field-select-contrat"
+                  formControlName="contrat_batt_id"
+                  [class.input-error-contrat]="batt.invalid && batt.touched">
+            <option [ngValue]="null" disabled>— Sélectionner —</option>
+            @for (opt of battOptions; track opt.id) {
+              <option [ngValue]="opt.id">{{ opt.label }}</option>
+            }
+          </select>
+          @if (batt.touched && batt.invalid) {
+            <div class="field-error-contrat">Champ requis.</div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Section Montants -->
+    <div class="form-section-contrat">
+      <h6 class="section-label-contrat">Informations financières</h6>
+
+      <div class="form-grid-3-contrat">
+        <div class="form-field-contrat">
+          <label class="field-label-contrat">
+            Montant total <span class="required-mark-contrat">*</span>
+          </label>
+          <div class="input-currency-contrat">
+            <input type="text"
+                   formControlName="montant_total"
+                   class="field-input-contrat"
+                   placeholder="1 200 000"
+                   [class.input-error-contrat]="total.invalid && total.touched">
+            <span class="currency-suffix">FCFA</span>
+          </div>
+          @if (total.touched && total.invalid) {
+            <div class="field-error-contrat">
+              @if (total.hasError('required')) { Champ requis. }
+              @else if (total.hasError('pattern')) { Format: 1000, 1 000, 1 000.50 }
+              @else if (total.hasError('maxlength')) { Valeur trop longue. }
+            </div>
+          }
+        </div>
+
+        <div class="form-field-contrat">
+          <label class="field-label-contrat">
+            Montant engagé <span class="required-mark-contrat">*</span>
+          </label>
+          <div class="input-currency-contrat">
+            <input type="text"
+                   formControlName="montant_engage"
+                   class="field-input-contrat"
+                   placeholder="300 000"
+                   [class.input-error-contrat]="(engage.invalid && engage.touched) || form.hasError('engageAboveTotal')">
+            <span class="currency-suffix">FCFA</span>
+          </div>
+          @if (engage.touched && engage.invalid) {
+            <div class="field-error-contrat">
+              @if (engage.hasError('required')) { Champ requis. }
+              @else if (engage.hasError('pattern')) { Format: 1000, 1 000, 1 000.50 }
+              @else if (engage.hasError('maxlength')) { Valeur trop longue. }
+            </div>
+          }
+          @if (form.hasError('engageAboveTotal')) {
+            <div class="field-error-contrat">Le montant engagé ne peut pas dépasser le montant total.</div>
+          }
+        </div>
+
+        <div class="form-field-contrat">
+          <label class="field-label-contrat">
+            Durée (jours) <span class="required-mark-contrat">*</span>
+          </label>
+          <input type="number"
+                 min="1"
+                 max="200"
+                 placeholder="90"
+                 formControlName="duree_jour"
+                 class="field-input-contrat"
+                 [class.input-error-contrat]="djour.invalid && djour.touched">
+          @if (djour.touched && djour.invalid) {
+            <div class="field-error-contrat">
+              @if (djour.hasError('required')) { Champ requis. }
+              @else if (djour.hasError('min')) { Minimum 1. }
+              @else if (djour.hasError('max')) { Maximum 200. }
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Section Dates -->
+    <div class="form-section-contrat">
+      <h6 class="section-label-contrat">Dates et congés</h6>
+
+      <div class="form-grid-3-contrat">
+        <div class="form-field-contrat">
+          <label class="field-label-contrat">
+            Date de signature <span class="required-mark-contrat">*</span>
+          </label>
+          <input type="date"
+                 formControlName="date_signature"
+                 class="field-input-contrat"
+                 [class.input-error-contrat]="sig.invalid && sig.touched">
+          @if (sig.touched && sig.invalid) {
+            <div class="field-error-contrat">
+              @if (sig.hasError('required')) { Champ requis. }
+              @else if (sig.hasError('pattern')) { Format attendu AAAA-MM-JJ. }
+            </div>
+          }
+        </div>
+
+        <div class="form-field-contrat">
+          <label class="field-label-contrat">
+            Date de début <span class="required-mark-contrat">*</span>
+          </label>
+          <input type="date"
+                 formControlName="date_debut"
+                 class="field-input-contrat"
+                 [class.input-error-contrat]="(deb.invalid && deb.touched) || form.hasError('dateOrder')">
+          @if (deb.touched && deb.invalid) {
+            <div class="field-error-contrat">
+              @if (deb.hasError('required')) { Champ requis. }
+              @else if (deb.hasError('pattern')) { Format attendu AAAA-MM-JJ. }
+            </div>
+          }
+          @if (form.hasError('dateOrder')) {
+            <div class="field-error-contrat">La date de début doit être postérieure ou égale à la date de signature.</div>
+          }
+        </div>
+
+        <div class="form-field-contrat">
+          <label class="field-label-contrat">
+            Jours de congé total <span class="required-mark-contrat">*</span>
+          </label>
+          <input type="number"
+                 formControlName="jour_conge_total"
+                 class="field-input-contrat"
+                 min="0" max="200"
+                 placeholder="4"
+                 [class.input-error-contrat]="conge.invalid && conge.touched">
+          @if (conge.touched && conge.invalid) {
+            <div class="field-error-contrat">
+              @if (conge.hasError('required')) { Champ requis. }
+              @else if (conge.hasError('min')) { Minimum 0. }
+              @else if (conge.hasError('max')) { Maximum 200. }
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Section Documents -->
+    <div class="form-section-contrat">
+      <h6 class="section-label-contrat">Documents contractuels</h6>
+
+      <div class="form-grid-3-contrat">
+        <!-- Contrat Chauffeur -->
+        <div class="form-field-contrat">
+          <label class="field-label-contrat">
+            Contrat physique (chauffeur) <span class="required-mark-contrat">*</span>
+          </label>
+          <div class="file-upload-compact-contrat">
+            <input type="file"
+                   accept=".pdf,.doc,.docx,image/*"
+                   multiple
+                   class="file-input-hidden-contrat"
+                   id="file-chauffeur-contrat"
+                   (change)="onFileChange('contrat_physique_chauffeur', $event)">
+            <label for="file-chauffeur-contrat" class="file-upload-btn-contrat required-file-contrat">
+              <i class="fas fa-file-contract me-1"></i>
+              Chauffeur
+            </label>
+          </div>
+          @if (uploading()['contrat_physique_chauffeur']) {
+            <div class="upload-status-contrat">
+              <i class="fas fa-spinner fa-spin me-1"></i>
+              Upload...
+            </div>
+          }
+          @if (uploadError()['contrat_physique_chauffeur']) {
+            <div class="field-error-contrat">{{ uploadError()['contrat_physique_chauffeur'] }}</div>
+          }
+          @if (physChauffArr.length > 0) {
+            <div class="file-list-compact-contrat">
+              @for (ctrl of physChauffArr.controls; let i = $index; track i) {
+                <div class="file-item-compact-contrat">
+                  <span class="file-name-contrat">{{ ctrl.value }}</span>
+                  <button type="button" class="file-remove-contrat" (click)="removeFile('contrat_physique_chauffeur', i)">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+              }
+            </div>
+          }
+          @if (physChauffArr.invalid && (physChauffArr.touched || form.touched)) {
+            <div class="field-error-contrat">Au moins un fichier est requis.</div>
+          }
+        </div>
+
+        <!-- Contrat Moto/Garant -->
+        <div class="form-field-contrat">
+          <label class="field-label-contrat">
+            Contrat physique (garant) <span class="required-mark-contrat">*</span>
+          </label>
+          <div class="file-upload-compact-contrat">
+            <input type="file"
+                   accept=".pdf,.doc,.docx,image/*"
+                   multiple
+                   class="file-input-hidden-contrat"
+                   id="file-moto-contrat"
+                   (change)="onFileChange('contrat_physique_moto_garant', $event)">
+            <label for="file-moto-contrat" class="file-upload-btn-contrat required-file-contrat">
+              <i class="fas fa-motorcycle me-1"></i>
+              Moto/Garant
+            </label>
+          </div>
+          @if (uploading()['contrat_physique_moto_garant']) {
+            <div class="upload-status-contrat">
+              <i class="fas fa-spinner fa-spin me-1"></i>
+              Upload...
+            </div>
+          }
+          @if (uploadError()['contrat_physique_moto_garant']) {
+            <div class="field-error-contrat">{{ uploadError()['contrat_physique_moto_garant'] }}</div>
+          }
+          @if (physMotoArr.length > 0) {
+            <div class="file-list-compact-contrat">
+              @for (ctrl of physMotoArr.controls; let i = $index; track i) {
+                <div class="file-item-compact-contrat">
+                  <span class="file-name-contrat">{{ ctrl.value }}</span>
+                  <button type="button" class="file-remove-contrat" (click)="removeFile('contrat_physique_moto_garant', i)">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+              }
+            </div>
+          }
+          @if (physMotoArr.invalid && (physMotoArr.touched || form.touched)) {
+            <div class="field-error-contrat">Au moins un fichier est requis.</div>
+          }
+        </div>
+
+        <!-- Contrat Batterie/Garant -->
+        <div class="form-field-contrat">
+          <label class="field-label-contrat">
+            Contrat physique (garant) <span class="required-mark-contrat">*</span>
+          </label>
+          <div class="file-upload-compact-contrat">
+            <input type="file"
+                   accept=".pdf,.doc,.docx,image/*"
+                   multiple
+                   class="file-input-hidden-contrat"
+                   id="file-batt-contrat"
+                   (change)="onFileChange('contrat_physique_batt_garant', $event)">
+            <label for="file-batt-contrat" class="file-upload-btn-contrat required-file-contrat">
+              <i class="fas fa-battery-full me-1"></i>
+              Batt/Garant
+            </label>
+          </div>
+          @if (uploading()['contrat_physique_batt_garant']) {
+            <div class="upload-status-contrat">
+              <i class="fas fa-spinner fa-spin me-1"></i>
+              Upload...
+            </div>
+          }
+          @if (uploadError()['contrat_physique_batt_garant']) {
+            <div class="field-error-contrat">{{ uploadError()['contrat_physique_batt_garant'] }}</div>
+          }
+          @if (physBattArr.length > 0) {
+            <div class="file-list-compact-contrat">
+              @for (ctrl of physBattArr.controls; let i = $index; track i) {
+                <div class="file-item-compact-contrat">
+                  <span class="file-name-contrat">{{ ctrl.value }}</span>
+                  <button type="button" class="file-remove-contrat" (click)="removeFile('contrat_physique_batt_garant', i)">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+              }
+            </div>
+          }
+          @if (physBattArr.invalid && (physBattArr.touched || form.touched)) {
+            <div class="field-error-contrat">Au moins un fichier est requis.</div>
+          }
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <div class="modal-footer-contrat">
+    <button type="button" class="btn-cancel-contrat" (click)="cancel()">
+      <i class="fas fa-times me-1"></i>
+      Annuler
+    </button>
+    <button type="button"
+            class="btn-save-contrat"
+            (click)="submit()"
+            [disabled]="isLoading() || form.invalid">
+      @if (isLoading()) {
+        <span class="spinner-border spinner-border-sm me-1"></span>
+      } @else {
+        <i class="fas fa-save me-1"></i>
+      }
+      {{ isLoading() ? 'Enregistrement...' : 'Enregistrer' }}
+    </button>
+  </div>
+</div>

@@ -1,19 +1,19 @@
 /* Modal Container */
-.modal-container-garant {
+.modal-container-contrat {
   background-color: var(--card-bg);
   border-radius: 10px;
   box-shadow: var(--shadow);
-  max-height: 85vh;
+  max-height: 75vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   font-family: var(--font-family-body), sans-serif;
   width: 100%;
-  max-width: 750px;
+  max-width: 850px;
 }
 
 /* Modal Header */
-.modal-header-garant {
+.modal-header-contrat {
   background: linear-gradient(135deg, var(--text-color), var(--text-secondary));
   color: var(--bg-color);
   padding: 7px;
@@ -23,7 +23,7 @@
   border-radius: 10px 10px 0 0;
 }
 
-.modal-title-garant {
+.modal-title-contrat {
   font-family: var(--font-Orbitron), sans-serif;
   font-weight: 600;
   font-size: 1.1rem;
@@ -32,7 +32,7 @@
   align-items: center;
 }
 
-.btn-close-garant {
+.btn-close-contrat {
   background: none;
   border: none;
   color: var(--bg-color);
@@ -44,13 +44,13 @@
   opacity: 0.8;
 }
 
-.btn-close-garant:hover {
+.btn-close-contrat:hover {
   opacity: 1;
   background-color: rgba(255, 255, 255, 0.1);
 }
 
 /* Modal Content */
-.modal-content-garant {
+.modal-content-contrat {
   padding: 1.5rem;
   overflow-y: auto;
   flex: 1;
@@ -58,7 +58,7 @@
 }
 
 /* Form Sections */
-.form-section-garant {
+.form-section-contrat {
   margin-bottom: 1.5rem;
   padding: 1rem;
   background-color: var(--card-bg);
@@ -66,7 +66,7 @@
   border-radius: 8px;
 }
 
-.section-label {
+.section-label-contrat {
   font-weight: 700;
   color: var(--text-color);
   margin-bottom: 1rem;
@@ -78,25 +78,19 @@
 }
 
 /* Form Grids */
-.form-grid-3 {
+.form-grid-3-contrat {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
 }
 
-.form-grid-2 {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
-}
-
 /* Form Fields */
-.form-field {
+.form-field-contrat {
   display: flex;
   flex-direction: column;
 }
 
-.field-label {
+.field-label-contrat {
   font-weight: 600;
   color: var(--text-color);
   margin-bottom: 0.4rem;
@@ -105,13 +99,13 @@
   align-items: center;
 }
 
-.required-mark {
+.required-mark-contrat {
   color: #dc3545;
   margin-left: 0.2rem;
 }
 
-/* Form Inputs */
-.field-input {
+/* Form Inputs & Selects */
+.field-input-contrat, .field-select-contrat {
   padding: 0.5rem 0.75rem;
   border: 1px solid var(--border-color);
   border-radius: 6px;
@@ -123,34 +117,56 @@
   height: 2.2rem;
 }
 
-.field-input:focus {
+.field-input-contrat:focus, .field-select-contrat:focus {
   outline: none;
   border-color: var(--text-secondary);
   box-shadow: 0 0 0 0.15rem rgba(102, 102, 102, 0.15);
 }
 
-.field-input:hover {
+.field-input-contrat:hover, .field-select-contrat:hover {
   border-color: var(--text-secondary);
 }
 
-.field-input.input-error {
+.field-input-contrat.input-error-contrat, .field-select-contrat.input-error-contrat {
   border-color: #dc3545;
   background-color: rgba(220, 53, 69, 0.05);
 }
 
+/* Currency Input */
+.input-currency-contrat {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.currency-suffix {
+  position: absolute;
+  right: 0.75rem;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  background-color: var(--bg-color);
+  padding: 0 0.2rem;
+  pointer-events: none;
+}
+
+.input-currency-contrat .field-input-contrat {
+  padding-right: 3.5rem;
+}
+
 /* File Upload */
-.file-upload-compact {
+.file-upload-compact-contrat {
   margin-bottom: 0.5rem;
 }
 
-.file-input-hidden {
+.file-input-hidden-contrat {
   position: absolute;
   opacity: 0;
   width: 0;
   height: 0;
 }
 
-.file-upload-btn {
+.file-upload-btn-contrat {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -167,34 +183,22 @@
   height: 2.2rem;
 }
 
-.file-upload-btn:hover {
+.file-upload-btn-contrat:hover {
   background-color: var(--border-color);
   border-color: var(--text-secondary);
 }
 
-.file-upload-btn.required-file {
+.file-upload-btn-contrat.required-file-contrat {
   border-color: var(--text-secondary);
   background-color: rgba(102, 102, 102, 0.05);
 }
 
-.file-upload-btn.small {
-  padding: 0.3rem 0.6rem;
-  font-size: 0.75rem;
-  height: 1.8rem;
-}
-
-/* CNI Upload Group */
-.cni-upload-group {
-  display: flex;
-  gap: 0.5rem;
-}
-
 /* File Lists */
-.file-list-compact {
+.file-list-compact-contrat {
   margin-top: 0.5rem;
 }
 
-.file-item-compact {
+.file-item-compact-contrat {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -206,7 +210,7 @@
   font-size: 0.75rem;
 }
 
-.file-name {
+.file-name-contrat {
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -214,7 +218,7 @@
   color: var(--text-color);
 }
 
-.file-remove {
+.file-remove-contrat {
   background: none;
   border: none;
   color: #dc3545;
@@ -225,30 +229,12 @@
   font-size: 0.7rem;
 }
 
-.file-remove:hover {
+.file-remove-contrat:hover {
   background-color: rgba(220, 53, 69, 0.1);
 }
 
-/* CNI Files */
-.cni-files {
-  margin-top: 0.5rem;
-}
-
-.cni-section {
-  margin-bottom: 0.5rem;
-}
-
-.cni-label {
-  font-weight: 600;
-  color: var(--text-secondary);
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  margin-bottom: 0.2rem;
-  display: block;
-}
-
 /* Upload Status */
-.upload-status {
+.upload-status-contrat {
   font-size: 0.75rem;
   color: var(--text-secondary);
   margin-top: 0.3rem;
@@ -257,7 +243,7 @@
 }
 
 /* Error Messages */
-.field-error {
+.field-error-contrat {
   color: #dc3545;
   font-size: 0.7rem;
   padding: 0.2rem 0.4rem;
@@ -265,7 +251,7 @@
 }
 
 /* Modal Footer */
-.modal-footer-garant {
+.modal-footer-contrat {
   padding: 1rem 1.5rem;
   background-color: var(--bg-secondary);
   border-top: 1px solid var(--border-color);
@@ -276,7 +262,7 @@
 }
 
 /* Buttons */
-.btn-cancel-garant {
+.btn-cancel-contrat {
   padding: 0.5rem 1rem;
   background-color: var(--bg-color);
   color: var(--text-secondary);
@@ -290,13 +276,13 @@
   font-size: 0.85rem;
 }
 
-.btn-cancel-garant:hover {
+.btn-cancel-contrat:hover {
   background-color: var(--bg-secondary);
   border-color: var(--text-secondary);
   color: var(--text-color);
 }
 
-.btn-save-garant {
+.btn-save-contrat {
   padding: 0.5rem 1rem;
   background-color: var(--text-color);
   color: var(--bg-color);
@@ -310,13 +296,13 @@
   font-size: 0.85rem;
 }
 
-.btn-save-garant:hover:not(:disabled) {
+.btn-save-contrat:hover:not(:disabled) {
   background-color: var(--text-secondary);
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.btn-save-garant:disabled {
+.btn-save-contrat:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
@@ -332,59 +318,64 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .modal-container-garant {
+  .modal-container-contrat {
     margin: 0.5rem;
-    max-height: 90vh;
+    max-height: 75vh;
     max-width: none;
   }
 
-  .modal-header-garant,
-  .modal-content-garant,
-  .modal-footer-garant {
+  .modal-header-contrat,
+  .modal-content-contrat,
+  .modal-footer-contrat {
     padding: 7px;
   }
 
-  .modal-title-garant {
+  .modal-title-contrat {
     font-size: 1rem;
   }
 
-  .form-grid-3,
-  .form-grid-2 {
+  .form-grid-3-contrat {
     grid-template-columns: 1fr;
     gap: 0.75rem;
   }
 
-  .form-section-garant {
+  .form-section-contrat {
     padding: 0.75rem;
     margin-bottom: 1rem;
   }
 
-  .modal-footer-garant {
+  .modal-footer-contrat {
     flex-direction: column-reverse;
   }
 
-  .btn-cancel-garant,
-  .btn-save-garant {
+  .btn-cancel-contrat,
+  .btn-save-contrat {
     width: 100%;
     justify-content: center;
-  }
-
-  .cni-upload-group {
-    flex-direction: column;
   }
 }
 
 @media (max-width: 480px) {
-  .section-label {
+  .section-label-contrat {
     font-size: 0.8rem;
   }
 
-  .field-label {
-    font-size: 0.75rem;
+  .field-label-contrat {
+    font-size: 0.7rem;
   }
 
-  .field-input,
-  .file-upload-btn {
+  .field-input-contrat,
+  .field-select-contrat,
+  .file-upload-btn-contrat {
     font-size: 0.8rem;
   }
+}
+
+/* Global Modal Panel Class for Angular Material */
+::ng-deep .contrat_chauffeur .mat-mdc-dialog-container {
+  padding: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 10px !important;
+  overflow: hidden !important;
 }

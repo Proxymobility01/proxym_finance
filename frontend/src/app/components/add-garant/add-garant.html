@@ -1,1 +1,338 @@
-<p>add-garant works!</p>
+
+<div class="modal-container-garant">
+  <div class="modal-header-garant">
+    <h4 class="modal-title-garant">
+      <i class="fas fa-user-plus me-2"></i>
+      Enregistrement Garant
+    </h4>
+    <button type="button" class="btn-close-garant" (click)="cancel()">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+
+  <form class="modal-content-garant" [formGroup]="form">
+
+    <!-- Section Identité -->
+    <div class="form-section-garant">
+      <h6 class="section-label">Identité</h6>
+
+      <div class="form-grid-3">
+        <div class="form-field">
+          <label class="field-label">
+            Nom <span class="required-mark">*</span>
+          </label>
+          <input class="field-input"
+                 formControlName="nom"
+                 placeholder="NOM"
+                 [class.input-error]="nom.invalid && nom.touched"
+                 autocomplete="off">
+          @if (nom.touched && nom.invalid) {
+            <div class="field-error">
+              @if (nom.hasError('required')) { Le nom est obligatoire. }
+              @else if (nom.hasError('minlength')) { Minimum 3 caractères. }
+              @else if (nom.hasError('maxlength')) { Maximum 30 caractères. }
+              @else if (nom.hasError('pattern')) { Caractères non autorisés. }
+            </div>
+          }
+        </div>
+
+        <div class="form-field">
+          <label class="field-label">Prénom</label>
+          <input class="field-input"
+                 formControlName="prenom"
+                 placeholder="Prénom"
+                 [class.input-error]="prenom.invalid && prenom.touched"
+                 autocomplete="off">
+          @if (prenom.touched && prenom.invalid) {
+            <div class="field-error">
+              @if (prenom.hasError('minlength')) { Minimum 3 caractères. }
+              @else if (prenom.hasError('maxlength')) { Maximum 30 caractères. }
+              @else if (prenom.hasError('pattern')) { Caractères non autorisés. }
+            </div>
+          }
+        </div>
+
+        <div class="form-field">
+          <label class="field-label">Téléphone</label>
+          <input class="field-input"
+                 formControlName="tel"
+                 placeholder="699000000"
+                 inputmode="numeric"
+                 autocomplete="off"
+                 [class.input-error]="tel.invalid && tel.touched">
+          @if (tel.touched && tel.invalid) {
+            <div class="field-error">Chiffres uniquement.</div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Section Localisation -->
+    <div class="form-section-garant">
+      <h6 class="section-label">Localisation</h6>
+
+      <div class="form-grid-3">
+        <div class="form-field">
+          <label class="field-label">
+            Ville <span class="required-mark">*</span>
+          </label>
+          <input class="field-input"
+                 formControlName="ville"
+                 placeholder="Ville"
+                 [class.input-error]="ville.invalid && ville.touched"
+                 autocomplete="off">
+          @if (ville.touched && ville.invalid) {
+            <div class="field-error">
+              @if (ville.hasError('required')) { Ville obligatoire. }
+              @else if (ville.hasError('minlength')) { Minimum 3 caractères. }
+              @else if (ville.hasError('maxlength')) { Maximum 30 caractères. }
+              @else if (ville.hasError('pattern')) { Caractères non autorisés. }
+            </div>
+          }
+        </div>
+
+        <div class="form-field">
+          <label class="field-label">
+            Quartier <span class="required-mark">*</span>
+          </label>
+          <input class="field-input"
+                 formControlName="quartier"
+                 placeholder="Quartier"
+                 [class.input-error]="quartier.invalid && quartier.touched"
+                 autocomplete="off">
+          @if (quartier.touched && quartier.invalid) {
+            <div class="field-error">
+              @if (quartier.hasError('required')) { Quartier obligatoire. }
+              @else if (quartier.hasError('minlength')) { Minimum 3 caractères. }
+              @else if (quartier.hasError('maxlength')) { Maximum 30 caractères. }
+              @else if (quartier.hasError('pattern')) { Caractères non autorisés. }
+            </div>
+          }
+        </div>
+
+        <div class="form-field">
+          <label class="field-label">Profession</label>
+          <input class="field-input"
+                 formControlName="profession"
+                 placeholder="Profession"
+                 [class.input-error]="profession.invalid && profession.touched"
+                 autocomplete="off">
+          @if (profession.touched && profession.invalid) {
+            <div class="field-error">
+              @if (profession.hasError('minlength')) { Minimum 3 caractères. }
+              @else if (profession.hasError('maxlength')) { Maximum 30 caractères. }
+              @else if (profession.hasError('pattern')) { Caractères non autorisés. }
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Section Documents -->
+    <div class="form-section-garant">
+      <h6 class="section-label">Documents</h6>
+
+      <div class="form-grid-2">
+        <!-- Photo -->
+        <div class="form-field">
+          <label class="field-label">Photo</label>
+          <div class="file-upload-compact">
+            <input type="file"
+                   class="file-input-hidden"
+                   accept=".pdf,.doc,.docx,image/*"
+                   multiple
+                   id="photo-input"
+                   (change)="onFileChange('photo', $event)">
+            <label for="photo-input" class="file-upload-btn">
+              <i class="fas fa-camera me-1"></i>
+              Choisir photos
+            </label>
+          </div>
+          @if (uploading()['photo']) {
+            <div class="upload-status">
+              <i class="fas fa-spinner fa-spin me-1"></i>
+              Upload...
+            </div>
+          }
+          @if (uploadError()['photo']) {
+            <div class="field-error">{{ uploadError()['photo'] }}</div>
+          }
+          @if (photoArr.length > 0) {
+            <div class="file-list-compact">
+              @for (f of photoArr.controls; let i = $index; track i) {
+                <div class="file-item-compact">
+                  <span class="file-name">{{ f.value }}</span>
+                  <button type="button" class="file-remove" (click)="removeFile('photo', i)">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Plan de localisation -->
+        <div class="form-field">
+          <label class="field-label">Plan de localisation</label>
+          <div class="file-upload-compact">
+            <input type="file"
+                   class="file-input-hidden"
+                   accept=".pdf,.doc,.docx,image/*"
+                   multiple
+                   id="plan-input"
+                   (change)="onFileChange('plan_localisation', $event)">
+            <label for="plan-input" class="file-upload-btn">
+              <i class="fas fa-map me-1"></i>
+              Choisir plans
+            </label>
+          </div>
+          @if (uploading()['plan_localisation']) {
+            <div class="upload-status">
+              <i class="fas fa-spinner fa-spin me-1"></i>
+              Upload...
+            </div>
+          }
+          @if (uploadError()['plan_localisation']) {
+            <div class="field-error">{{ uploadError()['plan_localisation'] }}</div>
+          }
+          @if (planArr.length > 0) {
+            <div class="file-list-compact">
+              @for (f of planArr.controls; let i = $index; track i) {
+                <div class="file-item-compact">
+                  <span class="file-name">{{ f.value }}</span>
+                  <button type="button" class="file-remove" (click)="removeFile('plan_localisation', i)">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Justificatif d'activité -->
+        <div class="form-field">
+          <label class="field-label">
+            Justificatif d'activité <span class="required-mark">*</span>
+          </label>
+          <div class="file-upload-compact">
+            <input type="file"
+                   class="file-input-hidden"
+                   accept=".pdf,.doc,.docx,image/*"
+                   multiple
+                   id="justif-input"
+                   (change)="onFileChange('justif_activite', $event)">
+            <label for="justif-input" class="file-upload-btn required-file">
+              <i class="fas fa-file-alt me-1"></i>
+              Choisir justificatifs
+            </label>
+          </div>
+          @if (uploading()['justif_activite']) {
+            <div class="upload-status">
+              <i class="fas fa-spinner fa-spin me-1"></i>
+              Upload...
+            </div>
+          }
+          @if (uploadError()['justif_activite']) {
+            <div class="field-error">{{ uploadError()['justif_activite'] }}</div>
+          }
+          @if (justifArr.length > 0) {
+            <div class="file-list-compact">
+              @for (f of justifArr.controls; let i = $index; track i) {
+                <div class="file-item-compact">
+                  <span class="file-name">{{ f.value }}</span>
+                  <button type="button" class="file-remove" (click)="removeFile('justif_activite', i)">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+              }
+            </div>
+          }
+          @if (justifArr.invalid && (justifArr.touched || form.touched)) {
+            <div class="field-error">Le justificatif d'activité est obligatoire.</div>
+          }
+        </div>
+
+        <!-- CNI -->
+        <div class="form-field">
+          <label class="field-label">CNI (Recto/Verso)</label>
+          <div class="cni-upload-group">
+            <div class="file-upload-compact">
+              <input type="file"
+                     class="file-input-hidden"
+                     accept=".pdf,.doc,.docx,image/*"
+                     multiple
+                     id="cni-recto-input"
+                     (change)="onFileChange('cni_recto', $event)">
+              <label for="cni-recto-input" class="file-upload-btn small">
+                <i class="fas fa-id-card me-1"></i>
+                Recto
+              </label>
+            </div>
+            <div class="file-upload-compact">
+              <input type="file"
+                     class="file-input-hidden"
+                     accept=".pdf,.doc,.docx,image/*"
+                     multiple
+                     id="cni-verso-input"
+                     (change)="onFileChange('cni_verso', $event)">
+              <label for="cni-verso-input" class="file-upload-btn small">
+                <i class="fas fa-id-card me-1"></i>
+                Verso
+              </label>
+            </div>
+          </div>
+
+          <!-- CNI Files Display -->
+          @if (cniRectoArr.length > 0 || cniVersoArr.length > 0) {
+            <div class="cni-files">
+              @if (cniRectoArr.length > 0) {
+                <div class="cni-section">
+                  <small class="cni-label">Recto:</small>
+                  @for (f of cniRectoArr.controls; let i = $index; track i) {
+                    <div class="file-item-compact">
+                      <span class="file-name">{{ f.value }}</span>
+                      <button type="button" class="file-remove" (click)="removeFile('cni_recto', i)">
+                        <i class="fas fa-times"></i>
+                      </button>
+                    </div>
+                  }
+                </div>
+              }
+              @if (cniVersoArr.length > 0) {
+                <div class="cni-section">
+                  <small class="cni-label">Verso:</small>
+                  @for (f of cniVersoArr.controls; let i = $index; track i) {
+                    <div class="file-item-compact">
+                      <span class="file-name">{{ f.value }}</span>
+                      <button type="button" class="file-remove" (click)="removeFile('cni_verso', i)">
+                        <i class="fas fa-times"></i>
+                      </button>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <div class="modal-footer-garant">
+    <button type="button" class="btn-cancel-garant" (click)="cancel()">
+      <i class="fas fa-times me-1"></i>
+      Annuler
+    </button>
+    <button type="button"
+            class="btn-save-garant"
+            (click)="submit()"
+            [disabled]="form.invalid || isLoading()">
+      @if (isLoading()) {
+        <span class="spinner-border spinner-border-sm me-1"></span>
+      } @else {
+        <i class="fas fa-save me-1"></i>
+      }
+      {{ isLoading() ? 'Enregistrement...' : 'Enregistrer' }}
+    </button>
+  </div>
+</div>

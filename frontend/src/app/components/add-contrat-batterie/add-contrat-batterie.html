@@ -1,0 +1,232 @@
+
+
+<div class="modal-container-batterie">
+  <div class="modal-header-batterie">
+    <h4 class="modal-title-batterie">
+      <i class="fas fa-battery-full me-2"></i>
+      Création Contrat Batterie
+    </h4>
+    <button type="button" class="btn-close-batterie" (click)="cancel()">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+
+  <form class="modal-content-batterie" [formGroup]="form">
+
+    <!-- Section Montants -->
+    <div class="form-section-batterie">
+      <h6 class="section-label-batterie">Informations financières</h6>
+
+      <div class="form-grid-3-batterie">
+        <div class="form-field-batterie">
+          <label class="field-label-batterie">
+            Montant total <span class="required-mark-batterie">*</span>
+          </label>
+          <div class="input-currency-batterie">
+            <input type="text"
+                   class="field-input-batterie"
+                   placeholder="1 200 000"
+                   formControlName="montant_total"
+                   [class.input-error-batterie]="total.invalid && total.touched">
+            <span class="currency-suffix-batterie">FCFA</span>
+          </div>
+          @if (total.touched && total.invalid) {
+            <div class="field-error-batterie">
+              @if (total.hasError('required')) { Champ requis. }
+              @else if (total.hasError('pattern')) { Format: 1000, 1 000, 1 000.50 }
+              @else if (total.hasError('maxlength')) { Valeur trop longue. }
+            </div>
+          }
+        </div>
+
+        <div class="form-field-batterie">
+          <label class="field-label-batterie">Montant engagé</label>
+          <div class="input-currency-batterie">
+            <input type="text"
+                   class="field-input-batterie"
+                   placeholder="300 000"
+                   formControlName="montant_engage"
+                   [class.input-error-batterie]="engage.touched && engage.invalid || form.hasError('engageAboveTotal')">
+            <span class="currency-suffix-batterie">FCFA</span>
+          </div>
+          @if (engage.touched && engage.invalid) {
+            <div class="field-error-batterie">
+              @if (engage.hasError('pattern')) { Format: 1000, 1 000, 1 000.50 }
+              @else if (engage.hasError('maxlength')) { Valeur trop longue. }
+            </div>
+          }
+          @if (form.hasError('engageAboveTotal')) {
+            <div class="field-error-batterie">Le montant engagé ne peut pas dépasser le montant total.</div>
+          }
+        </div>
+
+        <div class="form-field-batterie">
+          <label class="field-label-batterie">
+            Montant caution <span class="required-mark-batterie">*</span>
+          </label>
+          <div class="input-currency-batterie">
+            <input type="text"
+                   class="field-input-batterie"
+                   placeholder="150 000"
+                   formControlName="montant_caution"
+                   [class.input-error-batterie]="caution.invalid && caution.touched">
+            <span class="currency-suffix-batterie">FCFA</span>
+          </div>
+          @if (caution.touched && caution.invalid) {
+            <div class="field-error-batterie">
+              @if (caution.hasError('required')) { Champ requis. }
+              @else if (caution.hasError('pattern')) { Format: 1000, 1 000, 1 000.50 }
+              @else if (caution.hasError('maxlength')) { Valeur trop longue. }
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Section Dates -->
+    <div class="form-section-batterie">
+      <h6 class="section-label-batterie">Période contractuelle</h6>
+
+      <div class="form-grid-4-batterie">
+        <div class="form-field-batterie">
+          <label class="field-label-batterie">
+            Date de signature <span class="required-mark-batterie">*</span>
+          </label>
+          <input type="date"
+                 class="field-input-batterie"
+                 formControlName="date_signature"
+                 [class.input-error-batterie]="sig.invalid && sig.touched">
+          @if (sig.touched && sig.invalid) {
+            <div class="field-error-batterie">
+              @if (sig.hasError('required')) { Champ requis. }
+              @else if (sig.hasError('pattern')) { Format attendu AAAA-MM-JJ. }
+            </div>
+          }
+        </div>
+
+        <div class="form-field-batterie">
+          <label class="field-label-batterie">
+            Date de début <span class="required-mark-batterie">*</span>
+          </label>
+          <input type="date"
+                 class="field-input-batterie"
+                 formControlName="date_debut"
+                 [class.input-error-batterie]="(deb.invalid && deb.touched) || form.hasError('signatureAfterStart')">
+          @if (deb.touched && deb.invalid) {
+            <div class="field-error-batterie">
+              @if (deb.hasError('required')) { Champ requis. }
+              @else if (deb.hasError('pattern')) { Format attendu AAAA-MM-JJ. }
+            </div>
+          }
+          @if (form.hasError('signatureAfterStart')) {
+            <div class="field-error-batterie">La date de début doit être postérieure ou égale à la date de signature.</div>
+          }
+        </div>
+
+        <div class="form-field-batterie">
+          <label class="field-label-batterie">
+            Date de fin <span class="required-mark-batterie">*</span>
+          </label>
+          <input type="date"
+                 class="field-input-batterie"
+                 formControlName="date_fin"
+                 [class.input-error-batterie]="(fin.invalid && fin.touched) || form.hasError('startAfterEnd')">
+          @if (fin.touched && fin.invalid) {
+            <div class="field-error-batterie">
+              @if (fin.hasError('required')) { Champ requis. }
+              @else if (fin.hasError('pattern')) { Format attendu AAAA-MM-JJ. }
+            </div>
+          }
+          @if (form.hasError('startAfterEnd')) {
+            <div class="field-error-batterie">La date de fin doit être postérieure ou égale à la date de début.</div>
+          }
+        </div>
+
+        <div class="form-field-batterie">
+          <label class="field-label-batterie">
+            Durée (jours) <span class="required-mark-batterie">*</span>
+          </label>
+          <input type="text"
+                 class="field-input-batterie"
+                 placeholder="90"
+                 formControlName="duree_jour"
+                 [class.input-error-batterie]="djour.invalid && djour.touched">
+          @if (djour.touched && djour.invalid) {
+            <div class="field-error-batterie">
+              @if (djour.hasError('required')) { Champ requis. }
+              @else if (djour.hasError('pattern')) { Valeur attendue: nombre entier positif. }
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Section Documents -->
+    <div class="form-section-batterie">
+      <h6 class="section-label-batterie">Documents contractuels</h6>
+
+      <div class="form-grid-1-batterie">
+        <div class="form-field-batterie">
+          <label class="field-label-batterie">
+            Contrat physique (batterie) <span class="required-mark-batterie">*</span>
+          </label>
+          <div class="file-upload-compact-batterie">
+            <input type="file"
+                   id="file-contrat-batt"
+                   class="file-input-hidden-batterie"
+                   accept=".pdf,.doc,.docx,image/*"
+                   multiple
+                   (change)="onFileChange($event)">
+            <label for="file-contrat-batt" class="file-upload-btn-batterie required-file-batterie">
+              <i class="fas fa-file-contract me-1"></i>
+              Joindre fichier(s)
+            </label>
+          </div>
+          @if (uploading()) {
+            <div class="upload-status-batterie">
+              <i class="fas fa-spinner fa-spin me-1"></i>
+              Upload...
+            </div>
+          }
+          @if (uploadError()) {
+            <div class="field-error-batterie">{{ uploadError() }}</div>
+          }
+          @if (physBattArr.length > 0) {
+            <div class="file-list-compact-batterie">
+              @for (ctrl of physBattArr.controls; let i = $index; track i) {
+                <div class="file-item-compact-batterie">
+                  <span class="file-name-batterie">{{ ctrl.value }}</span>
+                  <button type="button" class="file-remove-batterie" (click)="removeFile(i)">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+              }
+            </div>
+          }
+          @if (physBattArr.invalid && (physBattArr.touched || form.touched)) {
+            <div class="field-error-batterie">Au moins un fichier est requis.</div>
+          }
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <div class="modal-footer-batterie">
+    <button type="button" class="btn-cancel-batterie" (click)="cancel()">
+      <i class="fas fa-times me-1"></i>
+      Annuler
+    </button>
+    <button type="button"
+            class="btn-save-batterie"
+            (click)="submit()"
+            [disabled]="isLoading() || form.invalid">
+      @if (isLoading()) {
+        <span class="spinner-border spinner-border-sm me-1"></span>
+        Enregistrement...
+      } @else {
+        <i class="fas fa-save me-1"></i>
+        Enregistrer
+      }
+    </button>
+  </div>
+</div>
