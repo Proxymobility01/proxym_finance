@@ -52,7 +52,8 @@ INSTALLED_APPS = [
     'penalite',
     'garant',
     'conge',
-    'app_legacy'
+    'app_legacy',
+    'django_filters',
 ]
 
 MIDDLEWARE = [
@@ -63,6 +64,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'backend.middleware.APILogMiddleware',
 ]
 
 

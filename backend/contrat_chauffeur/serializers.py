@@ -1,7 +1,10 @@
 from datetime import datetime, timedelta
 from django.db import transaction, models as dj_models
-from rest_framework import serializers
 from .models import ContratBatterie
+from rest_framework import serializers
+from .models import ContratChauffeur, StatutContrat, FrequencePaiement
+
+
 
 STATUS_CHOICES = ("DRAFT", "ACTIVE", "SUSPENDED", "TERMINATED", "COMPLETED")
 _ANCHOR = datetime(1970, 1, 1)  # used to encode integer days into your DATETIME column
@@ -21,7 +24,6 @@ def _compute_days(date_debut, date_fin):
 
 
 class _DureeJourOutMixin(serializers.ModelSerializer):
-    """Expose integer days and hide the raw DATETIME field in responses."""
     duree_jour_jours = serializers.SerializerMethodField()
 
     def get_duree_jour_jours(self, obj):
@@ -147,3 +149,68 @@ class ContratBatterieUpdateSerializer(_DureeJourOutMixin):
             else:
                 attrs["duree_jour"] = days
         return attrs
+    
+    
+    
+    
+class ContractChauffeurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ContratChauffeur
+        read_only_fields = (
+            "id",
+            "created",
+            "updated",
+            "montant_restant",
+            "jour_conge_restant",
+            "reference_contrat",
+            "date_enregistrement",  # auto set when activated
+        )
+        fields = (
+            "id",
+            "created",
+            "updated",
+            "reference_contrat",
+            "montant_total",
+            "montant_paye",
+            "montant_restant",
+            "frequence_paiement",
+            "montant_par_paiement",
+            "date_signature",
+            "date_enregistrement",
+            "date_debut",
+            "duree_jour",
+            "date_fin",
+            "statut",
+            "montant_engage",
+            "contrat_physique_chauffeur",
+            "contrat_physique_batt",
+            "contrat_physique_moto_garant",
+            "contrat_physique_batt_garant",
+            "montant_caution_batt",
+            "montant_engage_batt",
+            "duree_caution_batt",
+            "jour_conge_total",
+            "jour_conge_utilise",
+            "jour_conge_restant",
+            "association_user_moto_id",
+            "contrat_batt",
+            "garant",
+            "regle_penalite",
+        )
+
+    def validate(self, attrs):
+        # extra business rules at API layer if needed
+        mt = attrs.get("montant_total", getattr(self.instance, "montant_total", 0))
+        mp = attrs.get("montant_paye", getattr(self.instance, "montant_paye", 0))
+        if mt is not None and mp is not None and mp > mt:
+            raise serializers.ValidationError("Le montant payé ne peut pas dépasser le montant total.")
+        return attrs
+
+
+class ContractChauffeurStateSerializer(serializers.ModelSerializer):
+    """Slim serializer for state transitions (PATCH actions)."""
+
+    class Meta:
+        model = ContratChauffeur
+        fields = ("id", "statut", "date_enregistrement", "montant_restant")
+        read_only_fields = fields

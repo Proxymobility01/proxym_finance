@@ -41,5 +41,5 @@ class AssociationUserMoto(models.Model):
     swap_bloque = models.CharField(max_length=10, null=True, blank=True)
 
     class Meta:
-        db_table = "association_user_motos"  # confirm actual name
+        db_table = "association_user_motos"  
         managed = False
