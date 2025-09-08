@@ -1,6 +1,6 @@
 from django.db import models
 
-from app_legacy.models import Employe, Agences
+from app_legacy.models import Agences
 from contrat_chauffeur.models import ContratChauffeur
 from shared.models import TimeStampedModel
 
@@ -23,8 +23,8 @@ class PaiementLease(TimeStampedModel):
 
     date_enregistrement = models.DateTimeField()
     statut = models.CharField(max_length=50)
-    employe_id = models.ForeignKey(Employe, on_delete=models.CASCADE)
-    user_agence_id = models.ForeignKey(Agences, on_delete=models.PROTECT)
+    # employe_id = models.ForeignKey(Employe, on_delete=models.CASCADE)
+    user_agence = models.ForeignKey(Agences, on_delete=models.PROTECT)
 
     def __str__(self):
         return self.reference_paiement
