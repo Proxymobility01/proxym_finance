@@ -82,7 +82,7 @@
             <input type="text"
                    formControlName="montant_total"
                    class="field-input-contrat"
-                   placeholder="1 200 000"
+                   placeholder="1 302 000"
                    [class.input-error-contrat]="total.invalid && total.touched">
             <span class="currency-suffix">FCFA</span>
           </div>
@@ -103,7 +103,7 @@
             <input type="text"
                    formControlName="montant_engage"
                    class="field-input-contrat"
-                   placeholder="300 000"
+                   placeholder="5 000"
                    [class.input-error-contrat]="(engage.invalid && engage.touched) || form.hasError('engageAboveTotal')">
             <span class="currency-suffix">FCFA</span>
           </div>
@@ -121,12 +121,12 @@
 
         <div class="form-field-contrat">
           <label class="field-label-contrat">
-            Durée (jours) <span class="required-mark-contrat">*</span>
+            Durée (semaines) <span class="required-mark-contrat">*</span>
           </label>
           <input type="number"
                  min="1"
                  max="200"
-                 placeholder="90"
+                 placeholder="62"
                  formControlName="duree_jour"
                  class="field-input-contrat"
                  [class.input-error-contrat]="djour.invalid && djour.touched">

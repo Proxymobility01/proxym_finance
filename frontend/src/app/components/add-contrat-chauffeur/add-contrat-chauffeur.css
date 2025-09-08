@@ -80,7 +80,7 @@
 /* Form Grids */
 .form-grid-3-contrat {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1rem;
 }
 
@@ -115,6 +115,9 @@
   transition: all 0.3s ease;
   font-family: var(--font-family-body), sans-serif;
   height: 2.2rem;
+  min-width: 0;
+  width: 100%;
+
 }
 
 .field-input-contrat:focus, .field-select-contrat:focus {
