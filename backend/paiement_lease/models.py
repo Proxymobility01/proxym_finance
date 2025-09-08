@@ -1,7 +1,7 @@
+from django.conf import settings
 from django.db import models
 
-from app_legacy.models import  Agences
-from django.conf import settings
+from app_legacy.models import Agences
 from contrat_chauffeur.models import ContratChauffeur
 from shared.models import TimeStampedModel
 
@@ -19,16 +19,13 @@ class PaiementLease(TimeStampedModel):
     type_contrat = models.CharField(max_length=50)
 
     contrat_chauffeur = models.ForeignKey(
-        ContratChauffeur, on_delete=models.CASCADE, related_name="paiements_lease", db_column='contrat_chauffeur_id'
+        ContratChauffeur, on_delete=models.CASCADE, related_name="paiements_lease"
     )
 
     date_enregistrement = models.DateTimeField()
     statut = models.CharField(max_length=50)
     employe = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     user_agence = models.ForeignKey(Agences, on_delete=models.PROTECT, db_column='user_agence_id')
-
-    class Meta:
-        db_table = "paiement_lease"
 
     def __str__(self):
         return self.reference_paiement
