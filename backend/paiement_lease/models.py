@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 
 from app_legacy.models import Agences
@@ -23,8 +24,8 @@ class PaiementLease(TimeStampedModel):
 
     date_enregistrement = models.DateTimeField()
     statut = models.CharField(max_length=50)
-    # employe_id = models.ForeignKey(Employe, on_delete=models.CASCADE)
-    user_agence = models.ForeignKey(Agences, on_delete=models.PROTECT)
+    employe = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user_agence = models.ForeignKey(Agences, on_delete=models.PROTECT, db_column='user_agence_id')
 
     def __str__(self):
         return self.reference_paiement
