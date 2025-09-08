@@ -1,6 +1,7 @@
+from django.conf import settings
 from django.db import models
 
-from app_legacy.models import Employe, Agences
+from app_legacy.models import  Agences
 
 from shared.models import TimeStampedModel
 
@@ -50,8 +51,11 @@ class PaiementPenalite(TimeStampedModel):
     date_paiement = models.DateTimeField()
     methode_paiement = models.CharField(max_length=50)
     reference_transaction = models.CharField(max_length=100, blank=True)
-    employe_id = models.ForeignKey(Employe, on_delete=models.CASCADE)
-    user_agence_id = models.ForeignKey(Agences, on_delete=models.PROTECT)
+    employe = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user_agence = models.ForeignKey(Agences, on_delete=models.PROTECT, db_column='user_agence_id')
+
+    class Meta:
+        db_table = "paiement_penalite"
 
     def __str__(self):
         return self.reference
