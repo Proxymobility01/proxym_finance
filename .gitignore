@@ -27,8 +27,6 @@ api.http
 
 # Environment files
 .env
-.env.*
-.env.dev
 .env.prod
 
 # Local overrides
