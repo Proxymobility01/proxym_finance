@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, date  # already imported
 from django.utils import timezone
 from django.conf import settings
 
-
+from app_legacy.models import AssociationUserMoto
 
 # Optional shared timestamp base
 try:
@@ -118,9 +118,10 @@ class ContratChauffeur(models.Model):
     jour_conge_utilise = models.PositiveIntegerField(default=0)
     jour_conge_restant = models.PositiveIntegerField(default=0, editable=False)
 
-    # Foreign keys / external refs
-    association_user_moto_id = models.BigIntegerField(db_index=True)  # cross-service id; plain bigint for now
-
+    association_user_moto = models.ForeignKey(
+        AssociationUserMoto, on_delete=models.PROTECT, related_name="contrats_chauffeur",
+        db_column="association_user_moto_id"
+    )
 
     contrat_batt = models.ForeignKey(
         "contrat_chauffeur.ContratBatterie",

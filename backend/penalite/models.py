@@ -34,10 +34,9 @@ class Penalite(TimeStampedModel):
     montant_paye = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     montant_restant = models.DecimalField(max_digits=12, decimal_places=2, default=0)
 
-    # String reference to avoid circular import
-    contrat_chauffeur = models.ForeignKey(
-        "contrat_chauffeur.ContratChauffeur", on_delete=models.CASCADE, related_name="penalites"
-    )
+    # contrat_chauffeur = models.ForeignKey(
+    #     "contrat_chauffeur.ContratChauffeur", on_delete=models.CASCADE, related_name="penalites"
+    # )
 
     def __str__(self):
         return f"Penalite #{self.id} ({self.type_penalite})"

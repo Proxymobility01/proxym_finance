@@ -22,15 +22,15 @@ class GarantDetailSerializer(serializers.ModelSerializer):
         fields = [
             "id", "nom", "prenom", "tel", "ville", "quartier", "profession",
             "photo", "plan_localisation", "cni_recto", "cni_verso",
-            "justif_adresse", "created", "updated"
+            "justif_activite", "created", "updated"
         ]
 
 
 class GarantCreateSerializer(serializers.Serializer):
     # text
     nom = serializers.CharField()
-    prenom = serializers.CharField()
-    tel = serializers.CharField()
+    prenom = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    tel = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     ville = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     quartier = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     profession = serializers.CharField(required=False, allow_blank=True, allow_null=True)
@@ -39,12 +39,12 @@ class GarantCreateSerializer(serializers.Serializer):
     plan_localisation = serializers.FileField(required=False, allow_null=True)
     cni_recto = serializers.FileField(required=False, allow_null=True)
     cni_verso = serializers.FileField(required=False, allow_null=True)
-    justif_adresse = serializers.FileField(required=False, allow_null=True)
+    justif_activite = serializers.FileField(required=False, allow_null=True)
 
     def create(self, validated_data):
         # pull files
         file_fields = {}
-        for key in ["photo", "plan_localisation", "cni_recto", "cni_verso", "justif_adresse"]:
+        for key in ["photo", "plan_localisation", "cni_recto", "cni_verso", "justif_activite"]:
             upload = validated_data.pop(key, None)
             if upload:
                 file_fields[key] = _save_upload(upload)
@@ -73,11 +73,11 @@ class GarantUpdateSerializer(serializers.Serializer):
     plan_localisation = serializers.FileField(required=False, allow_null=True)
     cni_recto = serializers.FileField(required=False, allow_null=True)
     cni_verso = serializers.FileField(required=False, allow_null=True)
-    justif_adresse = serializers.FileField(required=False, allow_null=True)
+    justif_activite = serializers.FileField(required=False, allow_null=True)
 
     def update(self, instance: Garant, validated_data):
         # file fields first (if provided)
-        for key in ["photo", "plan_localisation", "cni_recto", "cni_verso", "justif_adresse"]:
+        for key in ["photo", "plan_localisation", "cni_recto", "cni_verso", "justif_activite"]:
             upload = validated_data.pop(key, None)
             if upload is not None:
                 setattr(instance, key, _save_upload(upload))

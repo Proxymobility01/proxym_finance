@@ -43,8 +43,8 @@ class GarantListCreateView(generics.ListCreateAPIView):
             "cni_recto_url": _abs_url(request, garant.cni_recto),
             "cni_verso": garant.cni_verso,
             "cni_verso_url": _abs_url(request, garant.cni_verso),
-            "justif_adresse": garant.justif_adresse,
-            "justif_adresse_url": _abs_url(request, garant.justif_adresse),
+            "justif_activite": garant.justif_activite,
+            "justif_activite_url": _abs_url(request, garant.justif_activite),
             "created": garant.created,
             "updated": garant.updated,
         }, status=status.HTTP_201_CREATED)
@@ -68,6 +68,6 @@ class GarantDetailView(generics.RetrieveUpdateDestroyAPIView):
             "plan_localisation_url": _abs_url(request, instance.plan_localisation),
             "cni_recto_url": _abs_url(request, instance.cni_recto),
             "cni_verso_url": _abs_url(request, instance.cni_verso),
-            "justif_adresse_url": _abs_url(request, instance.justif_adresse),
+            "justif_activite_url": _abs_url(request, instance.justif_activite),
         })
         return Response(data)

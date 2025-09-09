@@ -7,7 +7,7 @@ from shared.models import TimeStampedModel
 
 
 class Garant(TimeStampedModel):
-    nom = models.CharField(max_length=150,null=True,blank=True)
+    nom = models.CharField(max_length=150)
     prenom = models.CharField(max_length=150,null=True,blank=True)
     tel = models.CharField(max_length=50,null=True,blank=True)
     ville = models.CharField(max_length=100,null=True,blank=True)
@@ -16,7 +16,7 @@ class Garant(TimeStampedModel):
     plan_localisation = models.CharField(max_length=255, blank=True,null=True)
     cni_recto = models.CharField(max_length=255, blank=True,null=True)
     cni_verso = models.CharField(max_length=255, blank=True,null=True)
-    justif_adresse = models.CharField(max_length=255, blank=True,null=True)
+    justif_activite = models.CharField(max_length=255, blank=True,null=True)
     profession = models.CharField(max_length=150, blank=True,null=True)
 
     class Meta:
