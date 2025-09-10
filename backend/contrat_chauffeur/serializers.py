@@ -7,7 +7,7 @@ from .models import ContratChauffeur, StatutContrat, FrequencePaiement
 
 
 STATUS_CHOICES = ("DRAFT", "ACTIVE", "SUSPENDED", "TERMINATED", "COMPLETED")
-_ANCHOR = datetime(1970, 1, 1)  # used to encode integer days into your DATETIME column
+_ANCHOR = datetime(1970, 1, 1)
 
 
 def _encode_days_as_datetime(days: int) -> datetime:
@@ -45,7 +45,7 @@ class ContratBatterieListSerializer(_DureeJourOutMixin):
             "date_signature", "date_enregistrement", "date_debut", "date_fin",
             "duree_jour", "duree_jour_jours",
             "statut", "montant_engage", "montant_caution",
-            "chauffeur_id", "created", "updated",
+             "created", "updated",
         ]
 
 
@@ -61,8 +61,6 @@ class ContratBatterieCreateSerializer(_DureeJourOutMixin):
             "montant_total", "montant_paye", "montant_restant",
             "date_signature", "date_enregistrement", "date_debut", "duree_jour", "date_fin",
             "statut", "montant_engage", "montant_caution",
-            "chauffeur_id",
-            # response-only helper:
             "duree_jour_jours",
         ]
         extra_kwargs = {
@@ -72,14 +70,13 @@ class ContratBatterieCreateSerializer(_DureeJourOutMixin):
             "date_debut": {"required": True},
             "montant_engage": {"required": True},
             "montant_caution": {"required": True},
-            "chauffeur_id": {"required": True},
             "montant_paye": {"required": False},
             "montant_restant": {"required": False},
             "statut": {"required": False},
             "duree_jour": {"required": False},  # computed
             "date_fin": {"required": False},
         }
-        read_only_fields = ("duree_jour",)  # client shouldn't send it
+        read_only_fields = ("duree_jour",)
 
     def validate_statut(self, value):
         if value and value.upper() not in STATUS_CHOICES:
@@ -120,7 +117,6 @@ class ContratBatterieUpdateSerializer(_DureeJourOutMixin):
             "montant_total", "montant_paye", "montant_restant",
             "date_signature", "date_enregistrement", "date_debut", "duree_jour", "date_fin",
             "statut", "montant_engage", "montant_caution",
-            "chauffeur_id",
             "duree_jour_jours",
         ]
         extra_kwargs = {f: {"required": False} for f in fields}

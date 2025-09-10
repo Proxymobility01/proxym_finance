@@ -8,43 +8,29 @@ from django.utils import timezone
 from django.conf import settings
 
 from app_legacy.models import AssociationUserMoto
-
-# Optional shared timestamp base
-try:
-    from shared.models import TimeStampedModel
-except Exception:
-    class TimeStampedModel(models.Model):
-        created = models.DateTimeField(auto_now_add=True)
-        updated = models.DateTimeField(auto_now=True)
-        class Meta:
-            abstract = True
+from shared.models import TimeStampedModel
 
 
 # ------- Existing battery contract table (read-only mapping) -------
 class ContratBatterie(TimeStampedModel):
     reference_contrat = models.CharField(max_length=100, null=True, blank=True)
-
-    montant_total = models.DecimalField(max_digits=14, decimal_places=2)               # NOT NULL
-    montant_paye = models.DecimalField(max_digits=14, decimal_places=2, default=0)     # NOT NULL
-    montant_restant = models.DecimalField(max_digits=14, decimal_places=2, default=0)  # NOT NULL
-
-    date_signature = models.DateField()        # NOT NULL
-    date_enregistrement = models.DateField()   # NOT NULL
-    date_debut = models.DateField()            # NOT NULL
+    montant_total = models.DecimalField(max_digits=14, decimal_places=2)
+    montant_paye = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    montant_restant = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    date_signature = models.DateField()
+    date_enregistrement = models.DateField()
+    date_debut = models.DateField()
     duree_jour = models.IntegerField(null=True, blank=True)
     date_fin = models.DateField(null=True, blank=True)
 
     statut = models.CharField(max_length=50, null=True, blank=True)
 
-    montant_engage = models.DecimalField(max_digits=14, decimal_places=2)   # NOT NULL
-    montant_caution = models.DecimalField(max_digits=14, decimal_places=2)  # NOT NULL
-
-    # Plain integer, matches DB column name 'chauffeur_id_id'
-    chauffeur_id = models.IntegerField(db_column="chauffeur_id_id")
+    montant_engage = models.DecimalField(max_digits=14, decimal_places=2, blank=True, null=True)
+    montant_caution = models.DecimalField(max_digits=14, decimal_places=2)
 
     class Meta:
         db_table = "contrat_batterie"
-        managed = False  # mapping existing table
+
 
     def __str__(self):
         return self.reference_contrat or f"ContratBatterie #{self.pk}"
@@ -72,13 +58,8 @@ class StatutContrat(models.TextChoices):
 
 
 # ---------------- Chauffeur contract (managed by Django) ----------------
-class ContratChauffeur(models.Model):
-    # Core
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
-
+class ContratChauffeur(TimeStampedModel):
     reference_contrat = models.CharField(max_length=100, unique=True, null=True, blank=True, db_index=True)
-
     montant_total = models.DecimalField(max_digits=14, decimal_places=2, default=0)
     montant_paye = models.DecimalField(max_digits=14, decimal_places=2, default=0)
     montant_restant = models.DecimalField(max_digits=14, decimal_places=2, default=0, editable=False)

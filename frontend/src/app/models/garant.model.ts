@@ -1,16 +1,17 @@
 export interface GarantPayload {
   id: number;
-  nom: string;
-  prenom: string;
-  tel: string;
-  ville: string;
-  quartier: string;
-  photo: string[];
-  plan_localisation:string[];
-  cni_recto:string[];
-  cni_verso:string[];
-  justif_activite:string[];
-  profession:string;
+  nom: string | null;
+  prenom: string | null;
+  tel: string | null;
+  ville: string | null;
+  quartier: string | null;
+
+  photo: string | null;
+  plan_localisation: string | null;
+  cni_recto: string | null;
+  cni_verso: string | null;
+  justif_activite: string | null;
+  profession: string | null;
 }
 
 export interface Garant{

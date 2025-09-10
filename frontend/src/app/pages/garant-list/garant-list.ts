@@ -121,7 +121,7 @@ export class GarantList implements OnInit {
     });
     ref.afterClosed().subscribe(result => {
       if (result) {
-        // call GarantService.create(result) ou rafraîchir la liste
+        this.garantService.fetchGarants();
       }
     });
   }

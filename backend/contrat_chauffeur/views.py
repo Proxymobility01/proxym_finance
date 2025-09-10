@@ -23,7 +23,7 @@ class ContratBatterieListCreateView(generics.ListCreateAPIView):
     queryset = ContratBatterie.objects.all().order_by("-created")
     permission_classes = [AllowAny]
     authentication_classes = []
-    parser_classes = (JSONParser, MultiPartParser, FormParser)  # ✅ accept JSON + form-data
+    parser_classes = (JSONParser, MultiPartParser, FormParser)
 
     def get_serializer_class(self):
         return (

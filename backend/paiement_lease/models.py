@@ -27,5 +27,10 @@ class PaiementLease(TimeStampedModel):
     employe = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     user_agence = models.ForeignKey(Agences, on_delete=models.PROTECT, db_column='user_agence_id')
 
+
+    class Meta:
+        db_table = "paiement_lease"
+
     def __str__(self):
         return self.reference_paiement
+

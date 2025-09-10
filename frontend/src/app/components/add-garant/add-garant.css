@@ -51,7 +51,7 @@
 
 /* Modal Content */
 .modal-content-garant {
-  padding: 1.5rem;
+  padding: 1rem;
   overflow-y: auto;
   flex: 1;
   background-color: var(--bg-color);

@@ -1,5 +1,6 @@
 from django.conf import settings
 from rest_framework import generics, status
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
@@ -16,6 +17,7 @@ def _abs_url(request, rel_path):
     return request.build_absolute_uri(f"{settings.MEDIA_URL}{rel_path}")
 
 class GarantListCreateView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     queryset = Garant.objects.all().order_by("-created")
     parser_classes = [MultiPartParser, FormParser, JSONParser]  # accept files & JSON
 

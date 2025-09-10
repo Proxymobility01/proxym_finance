@@ -11,25 +11,30 @@ class Command(BaseCommand):
     help = 'Initialize roles'
 
     def handle(self, *args, **kwargs):
-        # Recreation automatique des permissions manquantes
+        # Recréation automatique des permissions manquantes
         for app_config in apps.get_app_configs():
-            create_permissions(app_config,verbosity=0,using=DEFAULT_DB_ALIAS)
-        roles ={
-            "GestionnaireFinancier":{
-                "permissions":[]
-            },
+            create_permissions(app_config, verbosity=0, using=DEFAULT_DB_ALIAS)
 
-            "Administrateur":{
+        roles = {
+            "GestionnaireFinancier": {
+                "permissions": []
+            },
+            "Administrateur": {
                 "permissions": "__all__"
             }
         }
 
         for nom, config in roles.items():
-            role,created = Role.objects.get_or_create(nomRole=nom)
+            role, created = Role.objects.get_or_create(nomRole=nom)
             perms = []
 
             if config["permissions"] == "__all__":
                 perms = Permission.objects.all()
+            elif nom == "GestionnaireFinancier":
+                # Tous les permissions sauf celles liées à la gestion utilisateurs
+                all_perms = Permission.objects.all()
+                # Exclusion des permissions liées à l'app 'accounts' (gestion users)
+                perms = all_perms.exclude(content_type__app_label='accounts')
             else:
                 for code in config["permissions"]:
                     matching_perms = Permission.objects.filter(codename=code)
