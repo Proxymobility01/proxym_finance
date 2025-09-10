@@ -5,7 +5,6 @@ export interface GarantPayload {
   tel: string | null;
   ville: string | null;
   quartier: string | null;
-
   photo: string | null;
   plan_localisation: string | null;
   cni_recto: string | null;
@@ -14,14 +13,29 @@ export interface GarantPayload {
   profession: string | null;
 }
 
+export type Mode = 'create' | 'edit';
+
+export interface GarantDialogData {
+  mode: Mode;
+  id?: number;
+  garant?: Partial<Garant>;
+}
+
 export interface Garant{
   id: number;
   nom: string;
-  prenom: string;
-  tel: string;
-  ville: string;
-  quartier: string;
-  profession: string;
+  prenom: string | null;
+  tel: string | null;
+  ville: string | null;
+  quartier: string | null;
+  profession: string | null;
+
+  // chemins relatifs (stockés en base)
+  photo: string | null;
+  plan_localisation: string | null;
+  cni_recto: string | null;
+  cni_verso: string | null;
+  justif_activite: string | null;
 }
 
 export const VALIDATION = {

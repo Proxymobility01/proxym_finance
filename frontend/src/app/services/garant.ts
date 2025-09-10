@@ -75,4 +75,37 @@ export class GarantService {
       .subscribe();
   }
 
+
+  updateGarant(id: number, fd: FormData, onSuccess?: (res: Garant) => void) {
+    this._isGarantSubmitting.set(true);
+    this._isGarantSubmitError.set(null);
+
+    this.http.put<Garant>(`${this.config.apiUrl}/garants/${id}/`, fd)
+      .pipe(
+        tap(res => {
+          // mets à jour la liste locale
+          const current = this._garants();
+          const updated = current.map(g => g.id === id ? res : g);
+          this._garants.set(updated);
+          onSuccess?.(res);
+        }),
+        catchError(err => {
+          let msg = 'Erreur lors de la mise à jour du garant.';
+          const e = err?.error;
+          if (e?.detail) msg = e.detail;
+          else if (e && typeof e === 'object') {
+            msg = Object.entries(e)
+              .map(([k, v]: any) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`)
+              .join(' | ');
+          }
+          this._isGarantSubmitError.set(msg);
+          console.error('[GARANT API ERROR]:', err);
+          return of(null);
+        }),
+        finalize(() => this._isGarantSubmitting.set(false))
+      )
+      .subscribe();
+  }
+
+
 }

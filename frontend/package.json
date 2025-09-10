@@ -7,6 +7,7 @@
     "start:api": "json-server data.json",
     "start:garant": "json-server garant.json",
     "start:batterie": "json-server batterie.json",
+    "start:conge": "json-server conge.json --port 8000",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"

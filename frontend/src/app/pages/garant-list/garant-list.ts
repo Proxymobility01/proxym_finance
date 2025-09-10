@@ -111,6 +111,21 @@ export class GarantList implements OnInit {
   prev() { this.goToPage(this.pageIndex() - 1); }
   next() { this.goToPage(this.pageIndex() + 1); }
 
+  // openGarantDialog() {
+  //   const ref = this.dialog.open(AddGarant, {
+  //     width: '90vw',
+  //     maxWidth: '750px',
+  //     maxHeight: 'none',
+  //     panelClass: 'garant_modal',
+  //     disableClose: true,
+  //   });
+  //   ref.afterClosed().subscribe(result => {
+  //     if (result) {
+  //       this.garantService.fetchGarants();
+  //     }
+  //   });
+  // }
+
   openGarantDialog() {
     const ref = this.dialog.open(AddGarant, {
       width: '90vw',
@@ -118,6 +133,7 @@ export class GarantList implements OnInit {
       maxHeight: 'none',
       panelClass: 'garant_modal',
       disableClose: true,
+      data: { mode: 'create' }   // 👈 important
     });
     ref.afterClosed().subscribe(result => {
       if (result) {
@@ -125,6 +141,28 @@ export class GarantList implements OnInit {
       }
     });
   }
+
+  openGarantEditDialog(garant: Garant) {
+    const ref = this.dialog.open(AddGarant, {
+      width: '90vw',
+      maxWidth: '750px',
+      maxHeight: 'none',
+      panelClass: 'garant_modal',
+      disableClose: true,
+      data: { mode: 'edit', id: garant.id, garant }
+    });
+    ref.afterClosed().subscribe(result => {
+      if (result) {
+        this.garantService.fetchGarants();
+      }
+    });
+  }
+
+  refresh(){
+    this.garantService.fetchGarants();
+  }
+
+
 
 
 

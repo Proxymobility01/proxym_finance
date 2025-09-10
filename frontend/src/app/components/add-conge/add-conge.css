@@ -1,0 +1,336 @@
+/* Modal Container */
+.modal-container-conge {
+  background-color: var(--card-bg);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  max-height: 85vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-family-body), sans-serif;
+  width: 100%;
+  max-width: 600px;
+  box-sizing: border-box;
+}
+
+/* Modal Header */
+.modal-header-conge {
+  background: linear-gradient(135deg, var(--text-color), var(--text-secondary));
+  color: var(--bg-color);
+  padding: 7px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 10px 10px 0 0;
+}
+
+.modal-title-conge {
+  font-family: var(--font-Orbitron), sans-serif;
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin: 0;
+  display: flex;
+  align-items: center;
+}
+
+.btn-close-conge {
+  background: none;
+  border: none;
+  color: var(--bg-color);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.3rem;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  opacity: 0.8;
+}
+
+.btn-close-conge:hover {
+  opacity: 1;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Modal Content */
+.modal-content-conge {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+  background-color: var(--bg-color);
+}
+
+/* Submit Error */
+.submit-error-conge {
+  background-color: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  border-left: 3px solid #dc3545;
+  margin-bottom: 1.5rem;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+}
+
+/* Form Sections */
+.form-section-conge {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+
+.section-label-conge {
+  font-weight: 700;
+  color: var(--text-color);
+  margin-bottom: 1rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Form Grid */
+.form-grid-conge {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+/* Form Fields */
+.form-field-conge {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.form-field-full-conge {
+  grid-column: 1 / -1;
+}
+
+.field-label-conge {
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 0.4rem;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+}
+
+.required-mark-conge {
+  color: #dc3545;
+  margin-left: 0.2rem;
+}
+
+/* Form Inputs & Selects */
+.field-input-conge, .field-select-conge {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: all 0.3s ease;
+  font-family: var(--font-family-body), sans-serif;
+  height: 2.2rem;
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.field-input-conge:focus, .field-select-conge:focus {
+  outline: none;
+  border-color: var(--text-secondary);
+  box-shadow: 0 0 0 0.15rem rgba(102, 102, 102, 0.15);
+}
+
+.field-input-conge:hover, .field-select-conge:hover {
+  border-color: var(--text-secondary);
+}
+
+.field-input-conge:disabled, .field-select-conge:disabled {
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.field-input-conge.input-error-conge, .field-select-conge.input-error-conge {
+  border-color: #dc3545;
+  background-color: rgba(220, 53, 69, 0.05);
+}
+
+/* Textarea */
+.field-textarea-conge {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: all 0.3s ease;
+  font-family: var(--font-family-body), sans-serif;
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+  resize: vertical;
+  min-height: 4rem;
+}
+
+.field-textarea-conge:focus {
+  outline: none;
+  border-color: var(--text-secondary);
+  box-shadow: 0 0 0 0.15rem rgba(102, 102, 102, 0.15);
+}
+
+.field-textarea-conge:hover {
+  border-color: var(--text-secondary);
+}
+
+.field-textarea-conge.input-error-conge {
+  border-color: #dc3545;
+  background-color: rgba(220, 53, 69, 0.05);
+}
+
+.field-textarea-conge::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
+/* Error Messages */
+.field-error-conge {
+  color: #dc3545;
+  font-size: 0.7rem;
+  margin-top: 0.2rem;
+  padding: 0.2rem 0.4rem;
+
+
+}
+
+/* Modal Footer */
+.modal-footer-conge {
+  padding: 1rem 1.5rem;
+  background-color: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  border-radius: 0 0 10px 10px;
+}
+
+/* Buttons */
+.btn-cancel-conge {
+  padding: 0.5rem 1rem;
+  background-color: var(--bg-color);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.btn-cancel-conge:hover {
+  background-color: var(--bg-secondary);
+  border-color: var(--text-secondary);
+  color: var(--text-color);
+}
+
+.btn-save-conge {
+  padding: 0.5rem 1rem;
+  background-color: var(--text-color);
+  color: var(--bg-color);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.btn-save-conge:hover:not(:disabled) {
+  background-color: var(--text-secondary);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-save-conge:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Spinner */
+.spinner-border-sm {
+  width: 0.875rem;
+  height: 0.875rem;
+  border-width: 0.125em;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .modal-container-conge {
+    margin: 0.5rem;
+    max-height: 90vh;
+    max-width: none;
+  }
+
+  .modal-header-conge,
+  .modal-content-conge,
+  .modal-footer-conge {
+    padding: 7px;
+  }
+
+  .modal-title-conge {
+    font-size: 1rem;
+  }
+
+  .form-grid-conge {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .form-section-conge {
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .modal-footer-conge {
+    flex-direction: column-reverse;
+  }
+
+  .btn-cancel-conge,
+  .btn-save-conge {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .section-label-conge {
+    font-size: 0.8rem;
+  }
+
+  .field-label-conge {
+    font-size: 0.75rem;
+  }
+
+  .field-input-conge,
+  .field-select-conge,
+  .field-textarea-conge {
+    font-size: 0.8rem;
+  }
+
+  .modal-title-conge {
+    font-size: 0.95rem;
+  }
+}

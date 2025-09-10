@@ -1,0 +1,236 @@
+<div class="container-fluid">
+  <!-- Header -->
+  <div class="page-header d-flex align-items-center justify-content-between flex-wrap mb-4">
+    <h2 class="page-title">Liste des Congés</h2>
+    <div class="header-actions">
+      <button class="btn btn-nouveau" (click)="openCongeDialog()">
+        <i class="fas fa-plus me-2"></i>
+        Nouveau congé
+      </button>
+      <div class="btn-group ms-2">
+        <button class="btn btn-export" (click)="exportCSV()">
+          <i class="fas fa-file-csv me-1"></i>
+          CSV
+        </button>
+        <button class="btn btn-export" (click)="exportExcel()">
+          <i class="fas fa-file-excel me-1"></i>
+          Excel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtres -->
+  <div class="custom-card">
+    <div class="card-body">
+      <div class="row g-3 align-items-end">
+        <!-- Recherche -->
+        <div class="col-md-4">
+          <label class="form-label">Recherche</label>
+          <input class="form-control"
+                 placeholder="Titulaire, référence…"
+                 [ngModel]="query()"
+                 (ngModelChange)="query.set($event)">
+        </div>
+
+        <!-- Statut -->
+        <div class="col-md-3">
+          <label class="form-label">Statut</label>
+          <select class="form-select"
+                  [ngModel]="statut()"
+                  (ngModelChange)="statut.set($event)">
+            <option value="">Tous</option>
+            <option value="annule">Annulé</option>
+            <option value="en attente">En attente</option>
+            <option value="approuve">Approuvé</option>
+            <option value="rejette">Rejeté</option>
+            <option value="en cours">En cours</option>
+            <option value="termine">Terminé</option>
+          </select>
+        </div>
+
+        <!-- Période -->
+        <div class="col-md-3">
+          <label class="form-label">Période</label>
+          <select class="form-select"
+                  [ngModel]="dateMode()"
+                  (ngModelChange)="dateMode.set($event)">
+            <option value="today">Aujourd'hui</option>
+            <option value="week">Cette semaine</option>
+            <option value="month">Ce mois</option>
+            <option value="year">Cette année</option>
+            <option value="specific">Date spécifique</option>
+            <option value="range">Plage de dates</option>
+            <option value="all" selected>Tout l'historique</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Champs dynamiques selon période -->
+      <div class="row g-3 mt-2">
+        @if (dateMode() === 'specific') {
+          <div class="col-md-3">
+            <label class="form-label">Date</label>
+            <input type="date" class="form-control"
+                   [ngModel]="dateSpecific()"
+                   (ngModelChange)="dateSpecific.set($event)">
+          </div>
+        }
+
+        @if (dateMode() === 'range') {
+          <div class="col-md-3">
+            <label class="form-label">Début</label>
+            <input type="date" class="form-control"
+                   [ngModel]="dateStart()"
+                   (ngModelChange)="dateStart.set($event)">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Fin</label>
+            <input type="date" class="form-control"
+                   [ngModel]="dateEnd()"
+                   (ngModelChange)="dateEnd.set($event)">
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Tableau -->
+  <div class="table-container">
+    <div class="table-responsive">
+      <table class="table custom-table table-hover mb-0">
+        <thead>
+        <tr>
+          <th class="text-center">Titulaire</th>
+          <th class="text-center">Référence contrat</th>
+          <th class="text-center">Statut</th>
+          <th class="text-center">Date début</th>
+          <th class="text-center">Date fin</th>
+          <th class="text-center">Nb jours</th>
+          <th class="text-center">Actions</th>
+        </tr>
+        </thead>
+
+        <tbody>
+          @if (isLoading()) {
+            <tr>
+              <td colspan="7" class="loading-state">
+                <div class="spinner-border spinner-custom" role="status"></div>
+                <div class="mt-2">Chargement des congés…</div>
+              </td>
+            </tr>
+          } @else if (error() && !isLoading()) {
+            <tr>
+              <td colspan="7" class="error-state">
+                <div class="text-danger mb-3">
+                  <i class="fas fa-exclamation-triangle error-icon"></i>
+                  <div>{{ error() }}</div>
+                </div>
+                <button class="btn retry-btn" (click)="ngOnInit()">
+                  <i class="fas fa-refresh me-1"></i> Réessayer
+                </button>
+              </td>
+            </tr>
+          } @else if (!isLoading() && !error() && filtered().length === 0) {
+            <tr>
+              <td colspan="7" class="empty-state">
+                <i class="fas fa-calendar-times empty-icon"></i>
+                <h6 class="text-muted mb-2">Aucun congé trouvé</h6>
+                <p class="text-muted mb-0">Aucun élément ne correspond aux critères de recherche.</p>
+              </td>
+            </tr>
+          } @else {
+            @for (c of paged(); track c.id) {
+              <tr class="conge-row">
+                <td class="text-center">
+                  <div class="titulaire-info">
+                    <span class="titulaire-name" [innerHTML]="(c.titulaire_contrat) | highlight: query()"></span>
+                  </div>
+                </td>
+                <td class="text-center">
+                  <span class="reference-badge" [innerHTML]="(c.reference_contrat) | highlight: query()"></span>
+                </td>
+                <td class="text-center">
+                  <span class="status-badge"
+                        [class]="
+                          (c.statut === 'approuve') ? 'status-approve' :
+                          (c.statut === 'en cours') ? 'status-progress' :
+                          (c.statut === 'en attente') ? 'status-pending' :
+                          (c.statut === 'rejette') ? 'status-reject' :
+                          (c.statut === 'annule') ? 'status-cancel' :
+                          (c.statut === 'termine') ? 'status-done' : 'status-default'
+                        ">
+                    {{ c.statut }}
+                  </span>
+                </td>
+                <td class="text-center">
+                  <div class="date-info">
+                    <i class="fas fa-calendar-day me-1"></i>
+                    {{ c.date_debut | date:'dd/MM/yyyy' }}
+                  </div>
+                </td>
+                <td class="text-center">
+                  <div class="date-info">
+                    <i class="fas fa-calendar-check me-1"></i>
+                    {{ c.date_fin | date:'dd/MM/yyyy' }}
+                  </div>
+                </td>
+                <td class="text-center">
+                  <span class="days-count">{{ countDays(c) }} jour(s)</span>
+                </td>
+                <td class="text-center" (click)="$event.stopPropagation()">
+                  <button class="action-btn me-1" title="Détails">
+                    <i class="fas fa-info-circle"></i>
+                  </button>
+                  <button class="action-btn" title="Modifier" (click)="openCongeEditDialog(c)">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Footer pagination -->
+    <div class="pagination-container">
+      <div class="pagination-info">
+        <small>
+          Affichage de {{ total() ? (pageStart() + 1) : 0 }}
+          à {{ pageEnd() }} sur {{ total() }} congé(s)
+        </small>
+      </div>
+
+      @if (totalPages() > 1) {
+        <nav aria-label="Pagination des congés">
+          <ul class="pagination pagination-sm mb-0">
+            <li class="page-item" [class.disabled]="pageIndex() === 0">
+              <button class="page-link" (click)="prev()" [disabled]="pageIndex() === 0">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+            </li>
+
+            @for (p of visiblePages(); track p) {
+              <li class="page-item"
+                  [class.disabled]="p.type === 'dots'"
+                  [class.active]="p.type === 'page' && p.index === pageIndex()">
+                @if (p.type === 'dots') {
+                  <span class="page-link">…</span>
+                } @else {
+                  <button class="page-link" (click)="goToPage(p.index)">{{ p.index + 1 }}</button>
+                }
+              </li>
+            }
+
+            <li class="page-item" [class.disabled]="pageIndex() >= totalPages() - 1">
+              <button class="page-link" (click)="next()" [disabled]="pageIndex() >= totalPages() - 1">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </li>
+          </ul>
+        </nav>
+      }
+    </div>
+  </div>
+</div>

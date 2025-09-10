@@ -1,0 +1,119 @@
+<div class="modal-container-conge">
+  <div class="modal-header-conge">
+    <h4 class="modal-title-conge">
+      <i class="fas me-2" [ngClass]="mode()==='create' ? 'fa-plane-departure' : 'fa-edit'"></i>
+      {{ mode() === 'create' ? 'Enregistrement d\'un congé' : 'Modification du congé' }}
+    </h4>
+    <button type="button" class="btn-close-conge" (click)="cancel()">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+
+  <form class="modal-content-conge" [formGroup]="form">
+    @if (submitError()) {
+      <div class="submit-error-conge">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        {{ submitError() }}
+      </div>
+    }
+
+    <!-- Section Informations congé -->
+    <div class="form-section-conge">
+      <h6 class="section-label-conge">Informations du congé</h6>
+
+      <div class="form-grid-conge">
+        <!-- Contrat -->
+        <div class="form-field-conge">
+          <label class="field-label-conge">
+            Contrat <span class="required-mark-conge">*</span>
+          </label>
+          <select class="field-select-conge"
+                  formControlName="contrat_id"
+                  [disabled]="mode()==='edit'"
+                  [class.input-error-conge]="contrat_id.invalid && contrat_id.touched">
+            <option [ngValue]="null" disabled>— Sélectionner —</option>
+            @for (c of contratsCh(); track c.id) {
+              <option [ngValue]="c.id">{{ contratLabel(c) }}</option>
+            }
+          </select>
+          @if (contrat_id.touched && contrat_id.invalid) {
+            <div class="field-error-conge">
+              @if (contrat_id.hasError('required')) { Le contrat est obligatoire. }
+            </div>
+          }
+        </div>
+
+        <!-- Date début -->
+        <div class="form-field-conge">
+          <label class="field-label-conge">
+            Date de début <span class="required-mark-conge">*</span>
+          </label>
+          <input type="date"
+                 class="field-input-conge"
+                 formControlName="date_debut"
+                 [class.input-error-conge]="date_debut.invalid && date_debut.touched">
+          @if (date_debut.touched && date_debut.invalid) {
+            <div class="field-error-conge">
+              @if (date_debut.hasError('required')) { La date de début est obligatoire. }
+            </div>
+          }
+        </div>
+
+        <!-- Date fin -->
+        <div class="form-field-conge">
+          <label class="field-label-conge">
+            Date de fin <span class="required-mark-conge">*</span>
+          </label>
+          <input type="date"
+                 class="field-input-conge"
+                 formControlName="date_fin"
+                 [class.input-error-conge]="(date_fin.invalid && date_fin.touched) || form.hasError('dateRange')">
+          @if (date_fin.touched && date_fin.invalid) {
+            <div class="field-error-conge">
+              @if (date_fin.hasError('required')) { La date de fin est obligatoire. }
+            </div>
+          }
+          @if (form.hasError('dateRange')) {
+            <div class="field-error-conge">La date de fin doit être supérieure ou égale à la date de début.</div>
+          }
+        </div>
+
+        <!-- Motif (facultatif) - Span sur 2 colonnes -->
+        <div class="form-field-conge form-field-full-conge">
+          <label class="field-label-conge">Motif (facultatif)</label>
+          <textarea class="field-textarea-conge"
+                    formControlName="motif"
+                    rows="3"
+                    placeholder="Ex: Congé annuel, motif personnel…"
+                    [class.input-error-conge]="motif.touched && motif.invalid"></textarea>
+          @if (motif.touched && motif.invalid) {
+            <div class="field-error-conge">
+              @if (motif.hasError('maxlength')) { 500 caractères maximum. }
+              @else if (motif.hasError('pattern')) { Uniquement lettres, chiffres et ponctuation simple. }
+              @else if (motif.hasError('unsafeChars')) { Caractères < et > interdits. }
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <div class="modal-footer-conge">
+    <button type="button" class="btn-cancel-conge" (click)="cancel()">
+      <i class="fas fa-times me-1"></i>
+      Annuler
+    </button>
+    <button type="button"
+            class="btn-save-conge"
+            (click)="submit()"
+            [disabled]="form.invalid || isSubmitting()">
+      @if (isSubmitting()) {
+        <span class="spinner-border spinner-border-sm me-1"></span>
+        Enregistrement...
+      } @else {
+        <i class="fas fa-save me-1"></i>
+        Enregistrer
+      }
+    </button>
+  </div>
+</div>
