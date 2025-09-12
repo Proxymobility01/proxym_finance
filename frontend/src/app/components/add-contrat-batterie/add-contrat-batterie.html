@@ -1,5 +1,3 @@
-
-
 <div class="modal-container-batterie">
   <div class="modal-header-batterie">
     <h4 class="modal-title-batterie">
@@ -12,7 +10,6 @@
   </div>
 
   <form class="modal-content-batterie" [formGroup]="form">
-
     <!-- Section Montants -->
     <div class="form-section-batterie">
       <h6 class="section-label-batterie">Informations financières</h6>
@@ -175,13 +172,13 @@
                    id="file-contrat-batt"
                    class="file-input-hidden-batterie"
                    accept=".pdf,.doc,.docx,image/*"
-                   multiple
                    (change)="onFileChange($event)">
             <label for="file-contrat-batt" class="file-upload-btn-batterie required-file-batterie">
               <i class="fas fa-file-contract me-1"></i>
-              Joindre fichier(s)
+              Joindre le fichier
             </label>
           </div>
+
           @if (uploading()) {
             <div class="upload-status-batterie">
               <i class="fas fa-spinner fa-spin me-1"></i>
@@ -191,23 +188,28 @@
           @if (uploadError()) {
             <div class="field-error-batterie">{{ uploadError() }}</div>
           }
-          @if (physBattArr.length > 0) {
-            <div class="file-list-compact-batterie">
-              @for (ctrl of physBattArr.controls; let i = $index; track i) {
-                <div class="file-item-compact-batterie">
-                  <span class="file-name-batterie">{{ ctrl.value }}</span>
-                  <button type="button" class="file-remove-batterie" (click)="removeFile(i)">
-                    <i class="fas fa-times"></i>
-                  </button>
-                </div>
-              }
+
+          @if (physBattCtrl.value) {
+            <div class="file-single-compact-batterie">
+              <span class="file-name-batterie">{{ physBattCtrl.value?.name }}</span>
+              <button type="button" class="file-remove-batterie" (click)="clearFile()">
+                <i class="fas fa-times"></i>
+              </button>
             </div>
           }
-          @if (physBattArr.invalid && (physBattArr.touched || form.touched)) {
-            <div class="field-error-batterie">Au moins un fichier est requis.</div>
+
+          @if (physBattCtrl.invalid && (physBattCtrl.touched || form.touched)) {
+            <div class="field-error-batterie">Fichier requis.</div>
           }
         </div>
       </div>
+
+      @if (submitError()) {
+        <div class="field-error-batterie mt-2">
+          <i class="fas fa-exclamation-triangle me-1"></i>
+          {{ submitError() }}
+        </div>
+      }
     </div>
   </form>
 
@@ -219,8 +221,8 @@
     <button type="button"
             class="btn-save-batterie"
             (click)="submit()"
-            [disabled]="isLoading() || form.invalid">
-      @if (isLoading()) {
+            [disabled]="isSubmitting() || form.invalid">
+      @if (isSubmitting()) {
         <span class="spinner-border spinner-border-sm me-1"></span>
         Enregistrement...
       } @else {

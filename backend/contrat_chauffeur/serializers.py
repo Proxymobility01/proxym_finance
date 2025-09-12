@@ -47,7 +47,7 @@ class ContractBatteryListSerializer(serializers.ModelSerializer):
         fields = [
             "id", "reference_contrat",
             "montant_total", "montant_paye", "montant_restant",
-            "date_signature", "date_enregistrement", "date_debut", "date_fin",
+            "date_signature", "date_debut", "date_fin",
             "duree_jour",
             "statut", "montant_engage", "montant_caution",
             "contrat_physique_batt",
@@ -67,7 +67,7 @@ class ContractBatteryCreateSerializer(serializers.ModelSerializer):
         fields = [
             "reference_contrat",
             "montant_total", "montant_paye", "montant_restant",
-            "date_signature", "date_enregistrement", "date_debut", "date_fin",
+            "date_signature", "date_debut", "date_fin",
             "statut", "montant_engage", "montant_caution",
             "contrat_physique_batt",
         ]
@@ -106,7 +106,7 @@ class ContractBatteryUpdateSerializer(serializers.ModelSerializer):
         fields = [
             "reference_contrat",
             "montant_total", "montant_paye", "montant_restant",
-            "date_signature", "date_enregistrement", "date_debut", "date_fin",
+            "date_signature", "date_debut", "date_fin",
             "statut", "montant_engage", "montant_caution",
             "contrat_physique_batt",
         ]

@@ -18,11 +18,9 @@ class ContratBatterie(TimeStampedModel):
     montant_paye = models.DecimalField(max_digits=14, decimal_places=2, default=0)
     montant_restant = models.DecimalField(max_digits=14, decimal_places=2, default=0)
     date_signature = models.DateField()
-    date_enregistrement = models.DateField()
     date_debut = models.DateField()
     duree_jour = models.IntegerField(null=True, blank=True)
     date_fin = models.DateField(null=True, blank=True)
-
     statut = models.CharField(max_length=50, null=True, blank=True)
     contrat_physique_batt =models.CharField(max_length=255, blank=True,null=True)
     montant_engage = models.DecimalField(max_digits=14, decimal_places=2, blank=True, null=True)

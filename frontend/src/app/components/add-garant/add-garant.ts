@@ -158,45 +158,6 @@ export class AddGarant {
     return v ? v : null;
   }
 
-  // submit() {
-  //   if (this.form.invalid) {
-  //     this.form.markAllAsTouched();
-  //     return;
-  //   }
-  //
-  //   if (!this.files().justif_activite) {
-  //     this.uploadError.update(e => ({ ...e, justif_activite: 'Veuillez joindre le justificatif (obligatoire).' }));
-  //     return;
-  //   }
-  //
-  //   const fd = new FormData();
-  //
-  //   // Obligatoire
-  //   fd.append('nom', norm(this.nom.value));
-  //
-  //   // ⚠️ TOUJOURS ENVOYER les clés prenom et tel (même si vides)
-  //   // -> évite "Ce champ est obligatoire."
-  //   fd.append('prenom', this.toNull(this.prenom.value) ? norm(this.prenom.value) : '');
-  //   fd.append('tel', this.toNull(this.tel.value) ? norm((this.tel.value || '').replace(/\s+/g, '')) : '');
-  //
-  //   // Facultatifs : ville, quartier, profession (envoie "" si vide pour garder la clé)
-  //   fd.append('ville', this.toNull(this.ville.value) ? norm(this.ville.value) : '');
-  //   fd.append('quartier', this.toNull(this.quartier.value) ? norm(this.quartier.value) : '');
-  //   fd.append('profession', this.toNull(this.profession.value) ? norm(this.profession.value) : '');
-  //
-  //   // Fichiers
-  //   const F = this.files();
-  //   if (F.photo)             fd.append('photo', F.photo);
-  //   if (F.plan_localisation) fd.append('plan_localisation', F.plan_localisation);
-  //   if (F.cni_recto)         fd.append('cni_recto', F.cni_recto);
-  //   if (F.cni_verso)         fd.append('cni_verso', F.cni_verso);
-  //   fd.append('justif_activite', F.justif_activite as File); // requis côté UI
-  //
-  //   // Utilise bien la version FormData du service
-  //   this.garantService.registerGarant(fd, (res) => {
-  //     this.dialogRef.close(res);
-  //   });
-  // }
 
   private buildFormData(): FormData {
     const fd = new FormData();

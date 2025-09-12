@@ -28,7 +28,7 @@ api.http
 # Environment files
 .env
 .env.prod
-
+.env.dev
 # Local overrides
 docker-compose.override.yml
 

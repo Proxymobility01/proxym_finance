@@ -10,6 +10,7 @@ import {
 } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
 import {ContratBatteriesPayload} from '../../models/contrat-batterie.model';
+import {ContratBatterieService} from '../../services/contrat-batterie';
 
 
 @Component({
@@ -22,6 +23,11 @@ import {ContratBatteriesPayload} from '../../models/contrat-batterie.model';
 export class AddContratBatterie {
   readonly dialogRef = inject(MatDialogRef<AddContratBatterie>);
   readonly isLoading = signal(false);
+  readonly contratBattService = inject(ContratBatterieService)
+
+  // Etats de soumission (issus du service)
+  readonly isSubmitting = this.contratBattService.isContratBattSubmitting;
+  readonly submitError  = this.contratBattService.isContratBattSubmitError;
 
   // Etat upload
   readonly uploading = signal<boolean>(false);
@@ -126,7 +132,7 @@ export class AddContratBatterie {
       ]),
 
       // Fichiers (>=1 requis)
-      contrat_physique_batt: new FormArray<FormControl<string>>([], [this.atLeastOneFile.bind(this)])
+      contrat_physique_batt: new FormControl<File | null>(null, [Validators.required])
     },
     {
       validators: [AddContratBatterie.dateOrderValidator, AddContratBatterie.engagedNotAboveTotal],
@@ -144,7 +150,7 @@ export class AddContratBatterie {
   get fin()     { return this.form.get('date_fin') as FormControl<string | null>; }
   get djour()   { return this.form.get('duree_jour') as FormControl<string | null>; }
 
-  get physBattArr() { return this.form.get('contrat_physique_batt') as FormArray<FormControl<string>>; }
+  get physBattCtrl() { return this.form.get('contrat_physique_batt') as FormControl<File | null>; }
 
   // --- Upload mock (remplace par vrai service FormData + POST) ---
   private async uploadFile(file: File): Promise<string> {
@@ -152,44 +158,48 @@ export class AddContratBatterie {
     return `uploads/${Date.now()}_${file.name}`;
   }
 
-  async onFileChange(event: Event) {
+  onFileChange(event: Event) {
     const input = event.target as HTMLInputElement;
-    const files = input.files;
-    if (!files || files.length === 0) return;
-
-    const allowed = new Set([
-      'application/pdf',
-      'image/png', 'image/jpeg', 'image/jpg',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    ]);
+    const fileList = input.files;
+    const file: File | null = fileList && fileList.length ? fileList.item(0) : null;
 
     this.uploadError.set(null);
     this.uploading.set(true);
 
     try {
-      for (const f of Array.from(files)) {
-        if (!allowed.has(f.type)) {
-          this.uploadError.set('Type de fichier non supporté');
-          continue;
-        }
-        const token = await this.uploadFile(f);
-        this.physBattArr.push(new FormControl<string>(token, { nonNullable: true }));
+      if (!file) {
+        this.physBattCtrl.setValue(null);
+        return;
       }
-      this.physBattArr.updateValueAndValidity();
+      const allowed = new Set([
+        'application/pdf',
+        'image/png', 'image/jpeg', 'image/jpg',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      ]);
+      if (!allowed.has(file.type)) {
+        this.uploadError.set('Type de fichier non supporté');
+        this.physBattCtrl.setValue(null);
+        input.value = '';
+        return;
+      }
+      // Assigner directement le File au FormControl
+      this.physBattCtrl.setValue(file);
+      this.physBattCtrl.markAsDirty();
+      this.physBattCtrl.updateValueAndValidity();
     } catch {
-      this.uploadError.set('Échec de l’upload');
+      this.uploadError.set('Échec de la sélection du fichier');
     } finally {
       this.uploading.set(false);
-      input.value = '';
+      // garder la valeur pour pouvoir remplacer; reset si souhaité:
+      // input.value = '';
     }
   }
 
-  removeFile(index: number) {
-    if (index >= 0 && index < this.physBattArr.length) {
-      this.physBattArr.removeAt(index);
-      this.physBattArr.updateValueAndValidity();
-    }
+  clearFile() {
+    this.physBattCtrl.setValue(null);
+    this.physBattCtrl.markAsDirty();
+    this.physBattCtrl.updateValueAndValidity();
   }
 
   // --- Soumission ---
@@ -198,7 +208,6 @@ export class AddContratBatterie {
       this.form.markAllAsTouched();
       return;
     }
-    // Validations supplémentaires légères (dates ISO)
     if (!this.isValidISODate(this.sig.value!) ||
       !this.isValidISODate(this.deb.value!) ||
       !this.isValidISODate(this.fin.value!)) {
@@ -206,29 +215,30 @@ export class AddContratBatterie {
       return;
     }
 
-    this.isLoading.set(true);
-
     // Normalisations
     const montant_total   = this.toNumberSafe(this.total.value ?? '');
     const montant_engage  = String(this.engage.value ?? '').trim() === '' ? 0 : this.toNumberSafe(this.engage.value!);
     const montant_caution = this.toNumberSafe(this.caution.value ?? '');
+    const file = this.physBattCtrl.value;
 
-    const payload: ContratBatteriesPayload = {
-      id: 0,
-      montant_total,
-      montant_engage,      // 0 si non saisi
-      montant_caution,
-      date_signature: this.sig.value!,  // déjà validées pattern
-      date_debut:     this.deb.value!,
-      duree_jour:     this.djour.value!,// string numérique
-      date_fin:       this.fin.value!,
-      contrat_physique_batt: this.physBattArr.value
-    };
+    if (!file) {
+      this.uploadError.set('Veuillez joindre le contrat physique (obligatoire).');
+      return;
+    }
 
-    // TODO: POST backend via service puis close
-    // this.service.create(payload).subscribe({...})
-    this.isLoading.set(false);
-    this.dialogRef.close(payload);
+    // Construire FormData (multipart/form-data)
+    const fd = new FormData();
+    fd.append('montant_total',   String(montant_total));
+    fd.append('montant_engage',  String(montant_engage));
+    fd.append('montant_caution', String(montant_caution));
+    fd.append('date_signature',  this.sig.value!);
+    fd.append('date_debut',      this.deb.value!);
+    fd.append('date_fin',        this.fin.value!);
+    fd.append('duree_jour',      this.djour.value!);
+    fd.append('contrat_physique_batt', file); // fichier unique
+
+    // Appel service (création) – calqué sur Garant
+    this.contratBattService.registerContratBatterie(fd, (res) => this.dialogRef.close(res));
   }
 
   cancel() { this.dialogRef.close(); }
