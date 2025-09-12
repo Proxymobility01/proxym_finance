@@ -1,1 +1,200 @@
-<p>lease-list works!</p>
+<div class="container-fluid">
+  <!-- Header -->
+  <div class="page-header d-flex align-items-center justify-content-between flex-wrap mb-4">
+    <h2 class="page-title">Gestion des Leases</h2>
+
+    <div class="header-actions">
+      <button class="btn btn-nouveau" >
+        <i class="fas fa-money-bill-wave me-2"></i>
+        Effectuer un paiement
+      </button>
+    </div>
+  </div>
+
+  <!-- Filtres -->
+  <div class="custom-card">
+    <div class="card-body">
+      <div class="row g-3 align-items-end">
+        <!-- Recherche -->
+        <div class="col-md-4">
+          <label class="form-label">Recherche</label>
+          <input
+            class="form-control"
+            placeholder="Chauffeur ID, nom, moto ID, VIN…"
+            [ngModel]="query()"
+            (ngModelChange)="query.set($event)">
+        </div>
+
+        <!-- Statut paiement -->
+        <div class="col-md-2">
+          <label class="form-label">Statut paiement</label>
+          <select class="form-select"
+                  [ngModel]="statutPaiement()"
+                  (ngModelChange)="statutPaiement.set($event)">
+            @for (opt of optionsStatutPaiement(); track opt) {
+              <option [value]="opt">{{ opt || 'Tous' }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Statut pénalité -->
+        <div class="col-md-2">
+          <label class="form-label">Statut pénalité</label>
+          <select class="form-select"
+                  [ngModel]="statutPenalite()"
+                  (ngModelChange)="statutPenalite.set($event)">
+            @for (opt of optionsStatutPenalite(); track opt) {
+              <option [value]="opt">{{ opt || 'Tous' }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Payé par -->
+        <div class="col-md-2">
+          <label class="form-label">Payé par</label>
+          <select class="form-select"
+                  [ngModel]="payePar()"
+                  (ngModelChange)="payePar.set($event)">
+            @for (opt of optionsPayePar(); track opt) {
+              <option [value]="opt">{{ opt || 'Tous' }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Station de paiement -->
+        <div class="col-md-2">
+          <label class="form-label">Station de paiement</label>
+          <select class="form-select"
+                  [ngModel]="stationPaiement()"
+                  (ngModelChange)="stationPaiement.set($event)">
+            @for (opt of optionsStationPaiement(); track opt) {
+              <option [value]="opt">{{ opt || 'Toutes' }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="mt-2 d-flex justify-content-end">
+        <button class="btn btn-light" type="button" (click)="clearFilters()">
+          Réinitialiser les filtres
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tableau -->
+  <div class="table-container">
+    <div class="table-responsive">
+      <table class="table custom-table table-hover mb-0">
+        <thead>
+        <tr>
+          <th class="text-center">Chauffeur ID</th>
+          <th class="text-center">Chauffeur</th>
+          <th class="text-center">Moto ID</th>
+          <th class="text-center">VIN</th>
+          <th class="text-center">Date Concernée paiement</th>
+          <th class="text-center">Date Limite paiement</th>
+          <th class="text-center">Statut paiement</th>
+          <th class="text-center">Statut pénalité</th>
+          <th class="text-center">Paiement effectué par</th>
+          <th class="text-center">Station paiement</th>
+          <th class="text-center">Date paiement</th>
+          <th class="text-center">Actions</th>
+        </tr>
+        </thead>
+
+        <tbody>
+          @if (isLoading()) {
+            <tr>
+              <td colspan="9" class="loading-state text-center py-4">
+                <div class="spinner-border spinner-custom" role="status"></div>
+                <div class="mt-2">Chargement des leases…</div>
+              </td>
+            </tr>
+          } @else if (error() && !isLoading()) {
+            <tr>
+              <td colspan="9" class="error-state text-center py-4">
+                <div class="text-danger mb-3">
+                  <i class="fas fa-exclamation-triangle error-icon"></i>
+                  <div>{{ error() }}</div>
+                </div>
+                <button class="btn retry-btn" (click)="ngOnInit()">
+                  <i class="fas fa-refresh me-1"></i> Réessayer
+                </button>
+              </td>
+            </tr>
+          } @else if (!isLoading() && !error() && filtered().length === 0) {
+            <tr>
+              <td colspan="9" class="empty-state text-center py-4">
+                <i class="fas fa-file-invoice-dollar empty-icon"></i>
+                <h6 class="text-muted mb-2">Aucun lease trouvé</h6>
+                <p class="text-muted mb-0">Aucun élément ne correspond aux critères de recherche.</p>
+              </td>
+            </tr>
+          } @else {
+            @for (l of paged(); track l.id) {
+              <tr class="lease-row">
+                <td class="text-center">{{ l?.chauffeur_unique_id }}</td>
+                <td class="text-center">{{ l?.chauffeur_nom }}</td>
+                <td class="text-center">{{ l?.moto_unique_id }}</td>
+                <td class="text-center">{{ l?.moto_vin }}</td>
+                <td class="text-center">{{ l?.date_concernee }}</td>
+                <td class="text-center">{{ l?.date_limite }}</td>
+                <td class="text-center">{{ l?.statut_paiement }}</td>
+                <td class="text-center">{{ l?.statut_penalite }}</td>
+                <td class="text-center">{{ l?.paye_par }}</td>
+                <td class="text-center">{{ l?.date_paiement }}</td>
+                <td class="text-center">{{ l?.station_paiement }}</td>
+                <td class="text-center" (click)="$event.stopPropagation()">
+                  <button class="action-btn btn btn-sm btn-primary" title="Payer">
+                    <i class="fas fa-credit-card me-1"></i> Payer
+                  </button>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Footer pagination -->
+    <div class="pagination-container d-flex align-items-center justify-content-between mt-2">
+      <div class="pagination-info">
+        <small>
+          Affichage de {{ total() ? (pageStart() + 1) : 0 }}
+          à {{ pageEnd() }} sur {{ total() }} lease(s)
+        </small>
+      </div>
+
+      @if (totalPages() > 1) {
+        <nav aria-label="Pagination des leases">
+          <ul class="pagination pagination-sm mb-0">
+            <li class="page-item" [class.disabled]="pageIndex() === 0">
+              <button class="page-link" (click)="prev()" [disabled]="pageIndex() === 0">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+            </li>
+
+            @for (p of visiblePages(); track p) {
+              <li class="page-item"
+                  [class.disabled]="p.type === 'dots'"
+                  [class.active]="p.type === 'page' && p.index === pageIndex()">
+                @if (p.type === 'dots') {
+                  <span class="page-link">…</span>
+                } @else {
+                  <button class="page-link" (click)="goToPage(p.index)">{{ p.index + 1 }}</button>
+                }
+              </li>
+            }
+
+            <li class="page-item" [class.disabled]="pageIndex() >= totalPages() - 1">
+              <button class="page-link" (click)="next()" [disabled]="pageIndex() >= totalPages() - 1">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </li>
+          </ul>
+        </nav>
+      }
+    </div>
+  </div>
+</div>

@@ -7,12 +7,11 @@ import {ChauffeurList} from './pages/chauffeur-list/chauffeur-list';
 import {GarantList} from './pages/garant-list/garant-list';
 import {Login} from './pages/login/login';
 import {CongeList} from './pages/conge-list/conge-list';
+import {LeaseList} from './pages/lease-list/lease-list';
 
 
 export const routes: Routes = [
   {path: 'login', component: Login},
-
-
 
 
   {
@@ -39,6 +38,10 @@ export const routes: Routes = [
       {
         path:'conges',
         component: CongeList
+      },
+      {
+        path: 'paiements/contrats',
+        component:LeaseList
       }
     ]
   }
