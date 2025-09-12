@@ -36,6 +36,11 @@ class ContratBatterie(TimeStampedModel):
         return self.reference_contrat or f"ContratBatterie #{self.pk}"
 
 
+
+
+
+
+
 def contract_upload_path(instance, filename):
     # e.g. contrats/CC-202509-00017/filename.pdf
     ref = instance.reference_contrat or "UNSET"
