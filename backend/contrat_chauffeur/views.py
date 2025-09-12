@@ -5,10 +5,10 @@ from rest_framework.permissions import AllowAny
 
 from .models import ContratBatterie, ContratChauffeur
 from .serializers import (
-    ContratBatterieListSerializer,
-    ContratBatterieDetailSerializer,
-    ContratBatterieCreateSerializer,
-    ContratBatterieUpdateSerializer,
+    ContractBatteryListSerializer,
+    ContractBatteryDetailSerializer,
+    ContractBatteryCreateSerializer,
+    ContractBatteryUpdateSerializer,
     ContractChauffeurSerializer,
 )
 
@@ -18,7 +18,7 @@ from .serializers import (
 class ContratBatterieListCreateView(generics.ListCreateAPIView):
     """
     GET: list battery contracts (filters: chauffeur_id, q)
-    POST: create battery contract
+    POST: create battery contract with optional file upload
     """
     queryset = ContratBatterie.objects.all().order_by("-created")
     permission_classes = [AllowAny]
@@ -26,11 +26,9 @@ class ContratBatterieListCreateView(generics.ListCreateAPIView):
     parser_classes = (JSONParser, MultiPartParser, FormParser)
 
     def get_serializer_class(self):
-        return (
-            ContratBatterieCreateSerializer
-            if self.request.method == "POST"
-            else ContratBatterieListSerializer
-        )
+        if self.request.method == "POST":
+            return ContractBatteryCreateSerializer
+        return ContractBatteryListSerializer
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -42,22 +40,40 @@ class ContratBatterieListCreateView(generics.ListCreateAPIView):
             qs = qs.filter(Q(reference_contrat__icontains=q) | Q(statut__icontains=q))
         return qs
 
+    def perform_create(self, serializer):
+        # Handle file upload automatically
+        serializer.save()
+
 
 class ContratBatterieDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
     GET: retrieve battery contract
-    PUT/PATCH: update
-    DELETE: delete
+    PUT/PATCH: update battery contract, replacing file if uploaded
+    DELETE: delete battery contract and its file
     """
     queryset = ContratBatterie.objects.all()
     permission_classes = [AllowAny]
     authentication_classes = []
-    parser_classes = (JSONParser, MultiPartParser, FormParser)  # ✅ accept JSON + form-data
+    parser_classes = (JSONParser, MultiPartParser, FormParser)
 
     def get_serializer_class(self):
         if self.request.method in ("PUT", "PATCH"):
-            return ContratBatterieUpdateSerializer
-        return ContratBatterieDetailSerializer
+            return ContractBatteryUpdateSerializer
+        return ContractBatteryDetailSerializer
+
+    def perform_update(self, serializer):
+        instance = self.get_object()
+        # Replace file if a new file is uploaded
+        new_file = self.request.FILES.get("contrat_physique_batt")
+        if new_file and instance.contrat_physique_batt:
+            instance.contrat_physique_batt.delete(save=False)
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        # Delete associated file if exists
+        if instance.contrat_physique_batt:
+            instance.contrat_physique_batt.delete(save=False)
+        instance.delete()
 
 
 # -------------------------------------------------------------------
