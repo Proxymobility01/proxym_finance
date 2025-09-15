@@ -12,6 +12,7 @@ urlpatterns = [
     path("api/auth/", include('accounts.urls')),
     path("api/", include("garant.urls")),
     path("api/", include("contrat_chauffeur.urls")),
+    path("api/", include("app_legacy.urls")),
 ]
 
 
