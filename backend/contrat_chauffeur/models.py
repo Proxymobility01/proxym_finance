@@ -67,11 +67,6 @@ class ContratChauffeur(TimeStampedModel):
     montant_paye = models.DecimalField(max_digits=14, decimal_places=2, default=0)
     montant_restant = models.DecimalField(max_digits=14, decimal_places=2, default=0, editable=False)
 
-    frequence_paiement = models.CharField(
-        max_length=50,
-        choices=FrequencePaiement.choices,
-        default=FrequencePaiement.WEEKLY,
-    )
     montant_par_paiement = models.DecimalField(max_digits=14, decimal_places=2, default=0)
 
     date_signature = models.DateField(null=True, blank=True)

@@ -1,5 +1,7 @@
+from xml import parsers
+
 from django.db.models import Q
-from rest_framework import generics
+from rest_framework import generics, permissions, viewsets
 from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 from rest_framework.permissions import AllowAny
 
@@ -9,7 +11,10 @@ from .serializers import (
     ContractBatteryDetailSerializer,
     ContractBatteryCreateSerializer,
     ContractBatteryUpdateSerializer,
-    ContractChauffeurSerializer,
+    ContractDriverListSerializer,
+    ContractDriverDetailSerializer,
+    ContractDriverCreateSerializer,
+    ContractDriverUpdateSerializer,
 )
 
 # -------------------------------------------------------------------
@@ -81,41 +86,27 @@ class ContratBatterieDetailView(generics.RetrieveUpdateDestroyAPIView):
 # -------------------------------------------------------------------
 class ContractChauffeurListCreateView(generics.ListCreateAPIView):
     """
-    GET: list chauffeur contracts (filters: garant, association_user_moto_id, statut, q)
-    POST: create chauffeur contract (supports multipart for files)
+    GET  /api/contrats-chauffeurs      -> list
+    POST /api/contrats-chauffeurs      -> create (auto-computes date_fin & duree_jour)
     """
     queryset = ContratChauffeur.objects.all().order_by("-created")
-    serializer_class = ContractChauffeurSerializer
     permission_classes = [AllowAny]
-    authentication_classes = []
-    parser_classes = (JSONParser, MultiPartParser, FormParser)  # ✅ accept JSON + form-data
+    parser_classes = [MultiPartParser, FormParser, JSONParser]  # accept JSON + multipart
 
-    def get_queryset(self):
-        qs = super().get_queryset()
-        garant_id = self.request.query_params.get("garant")
-        assoc_id = self.request.query_params.get("association_user_moto_id")
-        statut = self.request.query_params.get("statut")
-        q = self.request.query_params.get("q")
-
-        if garant_id:
-            qs = qs.filter(garant_id=garant_id)
-        if assoc_id:
-            qs = qs.filter(association_user_moto_id=assoc_id)
-        if statut:
-            qs = qs.filter(statut=statut)
-        if q:
-            qs = qs.filter(Q(reference_contrat__icontains=q) | Q(statut__icontains=q))
-        return qs
+    def get_serializer_class(self):
+        return ContractDriverCreateSerializer if self.request.method == "POST" else ContractDriverListSerializer
 
 
 class ContractChauffeurDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
-    GET: retrieve chauffeur contract
-    PUT/PATCH: update (supports multipart for files)
-    DELETE: delete
+    GET    /api/contrats-chauffeurs/<id>  -> retrieve
+    PUT    /api/contrats-chauffeurs/<id>  -> update (recomputes date_fin & duree_jour)
+    PATCH  /api/contrats-chauffeurs/<id>  -> partial update
+    DELETE /api/contrats-chauffeurs/<id>  -> delete
     """
     queryset = ContratChauffeur.objects.all()
-    serializer_class = ContractChauffeurSerializer
     permission_classes = [AllowAny]
-    authentication_classes = []
-    parser_classes = (JSONParser, MultiPartParser, FormParser)  # ✅ accept JSON + form-data
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+
+    def get_serializer_class(self):
+        return ContractDriverUpdateSerializer if self.request.method in ("PUT", "PATCH") else ContractDriverDetailSerializer

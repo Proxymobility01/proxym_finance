@@ -1,4 +1,6 @@
 from datetime import datetime, timedelta
+from math import ceil
+
 from django.db import transaction, models as dj_models
 from .models import ContratBatterie
 from rest_framework import serializers
@@ -6,13 +8,48 @@ from .models import ContratChauffeur, StatutContrat, FrequencePaiement
 
 
 
-STATUS_CHOICES = ("ACTIVE", "SUSPENDED", "TERMINATED", "COMPLETED")
+STATUS_CHOICES = ("ACTIVE", "SUSPENDED", "TERMINATED", "COMPLETED")  # used only if your model uses EN values
 _ANCHOR = datetime(1970, 1, 1)
+
+# Optional mapping if your DB uses FR choices but clients send EN values
+EN_TO_FR = {
+    # frequence_paiement
+    "DAILY": "JOURNALIER",
+    "WEEKLY": "HEBDOMADAIRE",
+    "MONTHLY": "MENSUEL",
+    # statut
+    "ACTIVE": "ACTIF",
+    "SUSPENDED": "SUSPENDU",
+    "TERMINATED": "RESILIE",
+    "COMPLETED": "TERMINE",
+}
+
+
+def _map_choice(value, *, field_name: str | None = None):
+    """Map common English values to French codes if model uses FR choices."""
+    if value is None:
+        return value
+    v = str(value).strip()
+    mapped = EN_TO_FR.get(v.upper(), v)
+
+    # If model has choices, ensure the final value matches one of them
+    if field_name:
+        try:
+            field = ContratChauffeur._meta.get_field(field_name)
+            allowed = {str(code) for code, _ in (field.choices or [])}
+            if allowed and str(mapped) not in allowed:
+                # If not allowed, surface a clear error with allowed values
+                raise serializers.ValidationError(
+                    {field_name: f"Invalid value '{value}'. Allowed: {sorted(allowed)}"}
+                )
+        except Exception:
+            # If anything goes wrong fetching choices, just return mapped silently
+            pass
+    return mapped
 
 
 def _encode_days_as_datetime(days: int) -> datetime:
     return _ANCHOR + timedelta(days=days)
-
 
 
 def _compute_days(date_debut, date_fin):
@@ -24,8 +61,20 @@ def _compute_days(date_debut, date_fin):
     return None
 
 
+def _compute_fin_and_duration(*, date_debut, montant_total, montant_paye=0, montant_par_paiement=3500):
+    """
+    Returns (date_fin, duree_jour_days) based on remaining amount / daily payment.
+    """
+    remaining = max((montant_total or 0) - (montant_paye or 0), 0)
+    days_needed = ceil(remaining / (montant_par_paiement or 3500)) if remaining > 0 else 0
+    date_fin = date_debut + timedelta(days=days_needed) if date_debut else None
+    return date_fin, days_needed
+
+
+
 
 class _DureeJourOutMixin(serializers.ModelSerializer):
+    """Hide internal duree_jour storage and expose the integer days as 'duree_jour_jours'."""
     duree_jour_jours = serializers.SerializerMethodField()
 
     def get_duree_jour_jours(self, obj):
@@ -33,10 +82,8 @@ class _DureeJourOutMixin(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        # Hide the internal DATETIME storage; show only the integer days
         data.pop("duree_jour", None)
         return data
-
 
 
 
@@ -151,34 +198,149 @@ class ContractBatteryUpdateSerializer(serializers.ModelSerializer):
     
 
 
-class ContractChauffeurSerializer(serializers.ModelSerializer):
+# ---------- LIST / DETAIL ----------
+from datetime import datetime, timedelta
+from math import ceil
+
+from django.db import transaction, models as dj_models
+from django.utils import timezone
+from rest_framework import serializers
+
+from .models import ContratChauffeur
+
+# -------------------------------------------------------------------
+# Constants & Helpers
+# -------------------------------------------------------------------
+STATUS_CHOICES = ("ACTIVE", "SUSPENDED", "TERMINATED", "COMPLETED")  # used only if your model uses EN values
+_ANCHOR = datetime(1970, 1, 1)
+
+# Optional mapping if your DB uses FR choices but clients send EN values
+EN_TO_FR = {
+    # frequence_paiement
+    "DAILY": "JOURNALIER",
+    "WEEKLY": "HEBDOMADAIRE",
+    "MONTHLY": "MENSUEL",
+    # statut
+    "ACTIVE": "ACTIF",
+    "SUSPENDED": "SUSPENDU",
+    "TERMINATED": "RESILIE",
+    "COMPLETED": "TERMINE",
+}
+
+
+def _map_choice(value, *, field_name: str | None = None):
+    """Map common English values to French codes if model uses FR choices."""
+    if value is None:
+        return value
+    v = str(value).strip()
+    mapped = EN_TO_FR.get(v.upper(), v)
+
+    # If model has choices, ensure the final value matches one of them
+    if field_name:
+        try:
+            field = ContratChauffeur._meta.get_field(field_name)
+            allowed = {str(code) for code, _ in (field.choices or [])}
+            if allowed and str(mapped) not in allowed:
+                # If not allowed, surface a clear error with allowed values
+                raise serializers.ValidationError(
+                    {field_name: f"Invalid value '{value}'. Allowed: {sorted(allowed)}"}
+                )
+        except Exception:
+            # If anything goes wrong fetching choices, just return mapped silently
+            pass
+    return mapped
+
+
+def _encode_days_as_datetime(days: int) -> datetime:
+    return _ANCHOR + timedelta(days=days)
+
+
+def _compute_days(date_debut, date_fin):
+    if date_debut and date_fin:
+        delta = (date_fin - date_debut).days
+        if delta < 0:
+            raise serializers.ValidationError({"date_fin": "date_fin must be on or after date_debut"})
+        return delta
+    return None
+
+
+def _compute_fin_and_duration(*, date_debut, montant_total, montant_paye=0, montant_par_paiement=3500):
+    """
+    Returns (date_fin, duree_jour_days) based on remaining amount / daily payment.
+    """
+    remaining = max((montant_total or 0) - (montant_paye or 0), 0)
+    days_needed = ceil(remaining / (montant_par_paiement or 3500)) if remaining > 0 else 0
+    date_fin = date_debut + timedelta(days=days_needed) if date_debut else None
+    return date_fin, days_needed
+
+
+
+class _DureeJourOutMixin(serializers.ModelSerializer):
+    """Hide internal duree_jour storage and expose the integer days as 'duree_jour_jours'."""
+    duree_jour_jours = serializers.SerializerMethodField()
+
+    def get_duree_jour_jours(self, obj):
+        return _compute_days(obj.date_debut, obj.date_fin)
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data.pop("duree_jour", None)
+        return data
+
+
+# -------------------------------------------------------------------
+# LIST / DETAIL
+# -------------------------------------------------------------------
+class ContractDriverListSerializer(_DureeJourOutMixin):
     class Meta:
         model = ContratChauffeur
-        read_only_fields = (
-            "id",
-            "created",
-            "updated",
-            "montant_restant",
-            "jour_conge_restant",
-            "reference_contrat",
-            "date_enregistrement",  # auto set when activated
-        )
-        fields = (
-            "id",
-            "created",
-            "updated",
-            "reference_contrat",
-            "montant_total",
-            "montant_paye",
-            "montant_restant",
-            "frequence_paiement",
-            "montant_par_paiement",
-            "date_signature",
-            "date_enregistrement",
-            "date_debut",
+        fields = [
+            "id", "reference_contrat",
+            "montant_total", "montant_paye", "montant_restant",
+             "montant_par_paiement",
+            "date_signature", "date_debut", "date_fin",
             "duree_jour",
-            "date_fin",
-            "statut",
+            "statut", "montant_engage",
+            "contrat_physique_chauffeur",
+            "contrat_physique_batt",
+            "contrat_physique_moto_garant",
+            "contrat_physique_batt_garant",
+            "montant_caution_batt",
+            "montant_engage_batt",
+            "duree_caution_batt",
+            "jour_conge_total",
+            "jour_conge_utilise",
+            "jour_conge_restant",
+            "association_user_moto_id",  # expose FK id in list
+            "contrat_batt",
+            "garant",
+            "regle_penalite",
+            "created", "updated",
+        ]
+
+
+class ContractDriverDetailSerializer(ContractDriverListSerializer):
+    pass
+
+
+# -------------------------------------------------------------------
+# CREATE
+# -------------------------------------------------------------------
+class ContractDriverCreateSerializer(serializers.ModelSerializer):
+    contrat_physique_chauffeur = serializers.FileField(required=False, allow_null=True)
+    contrat_physique_batt = serializers.FileField(required=False, allow_null=True)
+    contrat_physique_moto_garant = serializers.FileField(required=False, allow_null=True)
+    contrat_physique_batt_garant = serializers.FileField(required=False, allow_null=True)
+
+    class Meta:
+        model = ContratChauffeur
+        # NOTE: date_enregistrement intentionally not present here
+        fields = [
+            "reference_contrat",
+            "montant_total", "montant_paye", "montant_restant",
+            "montant_par_paiement",
+            "date_signature", "date_debut", "date_fin",
+            "duree_jour",
             "montant_engage",
             "contrat_physique_chauffeur",
             "contrat_physique_batt",
@@ -190,25 +352,183 @@ class ContractChauffeurSerializer(serializers.ModelSerializer):
             "jour_conge_total",
             "jour_conge_utilise",
             "jour_conge_restant",
-            "association_user_moto_id",
+            "association_user_moto",  # ✅ writable FK
             "contrat_batt",
             "garant",
             "regle_penalite",
-        )
+        ]
+        read_only_fields = ("duree_jour", "date_fin", "montant_restant")
+
+    # keep method to stay compatible if 'statut' is ever passed in POST
+    def validate_statut(self, value):
+        # If your model uses FR codes, map and verify against choices
+        return _map_choice(value, field_name="statut")
 
     def validate(self, attrs):
-        # extra business rules at API layer if needed
-        mt = attrs.get("montant_total", getattr(self.instance, "montant_total", 0))
-        mp = attrs.get("montant_paye", getattr(self.instance, "montant_paye", 0))
+        today = timezone.now().date()
+
+        # ✅ Always allow/clamp date_signature to avoid model clean() errors
+        sig = attrs.get("date_signature")
+        if not sig or sig > today:
+            attrs["date_signature"] = today
+
+        # defaults
+        if attrs.get("montant_paye") is None:
+            attrs["montant_paye"] = 0
+
+        # montant_restant
+        mt = attrs.get("montant_total")
+        mp = attrs.get("montant_paye", 0)
+        if attrs.get("montant_restant") is None and mt is not None:
+            attrs["montant_restant"] = mt - mp
+
+        # date_debut default = today if not provided
+        if not attrs.get("date_debut"):
+            attrs["date_debut"] = today
+
+        # montant_par_paiement default = 3500 if not provided
+        mpp = attrs.get("montant_par_paiement") or 3500
+        attrs["montant_par_paiement"] = mpp
+
+        # auto compute date_fin & duree_jour (days)
+        date_fin, days = _compute_fin_and_duration(
+            date_debut=attrs["date_debut"],
+            montant_total=mt or 0,
+            montant_paye=mp or 0,
+            montant_par_paiement=mpp,
+        )
+        attrs["date_fin"] = date_fin
+
+        # internal duree_jour storage support
+        field = ContratChauffeur._meta.get_field("duree_jour")
+        attrs["duree_jour"] = _encode_days_as_datetime(days) if isinstance(field, dj_models.DateTimeField) else days
+
+        # congés restant
+        jtot = attrs.get("jour_conge_total", 0)
+        juse = attrs.get("jour_conge_utilise", 0)
+        attrs["jour_conge_restant"] = (jtot or 0) - (juse or 0)
+
+        # safety
         if mt is not None and mp is not None and mp > mt:
             raise serializers.ValidationError("Le montant payé ne peut pas dépasser le montant total.")
         return attrs
 
+    @transaction.atomic
+    def create(self, validated_data):
+        return ContratChauffeur.objects.create(**validated_data)
 
-class ContractChauffeurStateSerializer(serializers.ModelSerializer):
-    """Slim serializer for state transitions (PATCH actions)."""
+
+# -------------------------------------------------------------------
+# UPDATE / PATCH
+# -------------------------------------------------------------------
+class ContractDriverUpdateSerializer(serializers.ModelSerializer):
+    contrat_physique_chauffeur = serializers.FileField(required=False, allow_null=True)
+    contrat_physique_batt = serializers.FileField(required=False, allow_null=True)
+    contrat_physique_moto_garant = serializers.FileField(required=False, allow_null=True)
+    contrat_physique_batt_garant = serializers.FileField(required=False, allow_null=True)
 
     class Meta:
         model = ContratChauffeur
-        fields = ("id", "statut", "date_enregistrement", "montant_restant")
+        fields = [
+            "reference_contrat",
+            "montant_total", "montant_paye", "montant_restant",
+             "montant_par_paiement",
+            "date_signature", "date_debut", "date_fin",
+            "duree_jour",
+            "statut", "montant_engage",
+            "contrat_physique_chauffeur",
+            "contrat_physique_batt",
+            "contrat_physique_moto_garant",
+            "contrat_physique_batt_garant",
+            "montant_caution_batt",
+            "montant_engage_batt",
+            "duree_caution_batt",
+            "jour_conge_total",
+            "jour_conge_utilise",
+            "jour_conge_restant",
+            "association_user_moto",  # ✅ writable FK for updates too
+            "contrat_batt",
+            "garant",
+            "regle_penalite",
+        ]
+        read_only_fields = ("duree_jour", "date_fin", "montant_restant")
+
+    def validate_statut(self, value):
+        return _map_choice(value, field_name="statut")
+
+    def validate_frequence_paiement(self, value):
+        return _map_choice(value, field_name="frequence_paiement")
+
+    def validate(self, attrs):
+        inst = self.instance
+        today = timezone.now().date()
+
+        # ✅ clamp date_signature on update as well
+        sig = attrs.get("date_signature", getattr(inst, "date_signature", None))
+        if not sig or sig > today:
+            attrs["date_signature"] = today
+
+        mt = attrs.get("montant_total", inst.montant_total)
+        mp = attrs.get("montant_paye", inst.montant_paye)
+        mpp = attrs.get("montant_par_paiement", getattr(inst, "montant_par_paiement", 3500) or 3500)
+        d_debut = attrs.get("date_debut", inst.date_debut)
+
+        # montant_restant always recomputed unless explicitly provided
+        if "montant_restant" not in attrs:
+            attrs["montant_restant"] = (mt or 0) - (mp or 0)
+
+        # recompute date_fin & duree_jour from updated values
+        date_fin, days = _compute_fin_and_duration(
+            date_debut=d_debut,
+            montant_total=mt or 0,
+            montant_paye=mp or 0,
+            montant_par_paiement=mpp,
+        )
+        attrs["date_fin"] = date_fin
+
+        field = ContratChauffeur._meta.get_field("duree_jour")
+        attrs["duree_jour"] = _encode_days_as_datetime(days) if isinstance(field, dj_models.DateTimeField) else days
+
+        # congés restant
+        jtot = attrs.get("jour_conge_total", inst.jour_conge_total or 0)
+        juse = attrs.get("jour_conge_utilise", inst.jour_conge_utilise or 0)
+        attrs["jour_conge_restant"] = (jtot or 0) - (juse or 0)
+
+        # safety
+        if mt is not None and mp is not None and mp > mt:
+            raise serializers.ValidationError("Le montant payé ne peut pas dépasser le montant total.")
+        return attrs
+
+    def update(self, instance, validated_data):
+        # File replacements (keep same pattern as battery)
+        for f in [
+            "contrat_physique_chauffeur",
+            "contrat_physique_batt",
+            "contrat_physique_moto_garant",
+            "contrat_physique_batt_garant",
+        ]:
+            new_file = validated_data.get(f)
+            if new_file:
+                old = getattr(instance, f, None)
+                if old:
+                    old.delete(save=False)
+                setattr(instance, f, new_file)
+
+        # other fields
+        for attr, value in validated_data.items():
+            if attr not in {
+                "contrat_physique_chauffeur",
+                "contrat_physique_batt",
+                "contrat_physique_moto_garant",
+                "contrat_physique_batt_garant",
+            }:
+                setattr(instance, attr, value)
+        instance.save()
+        return instance
+
+
+class ContractDriverStateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ContratChauffeur
+        fields = ("id", "statut", "montant_restant")
         read_only_fields = fields
