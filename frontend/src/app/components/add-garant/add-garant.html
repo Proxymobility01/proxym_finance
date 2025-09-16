@@ -15,7 +15,7 @@
   <form class="modal-content-garant" [formGroup]="form">
     @if (submitError()) {
       <div class="submit-error mt-2 text-center text-danger">
-        {{ submitError() }}
+        <i class="fas fa-exclamation-triangle me-1"></i> {{ submitError() }}
       </div>
     }
 

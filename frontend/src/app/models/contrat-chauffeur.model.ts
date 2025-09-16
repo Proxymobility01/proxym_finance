@@ -21,9 +21,9 @@ export interface ContratChauffeurPayload{
   date_debut:string;
   duree_jour: number;
   jour_conge_total:number;
-  contrat_physique_chauffeur: string[];
-  contrat_physique_moto_garant: string[];
-  contrat_physique_batt_garant: string[];
+  contrat_physique_chauffeur: string;
+  contrat_physique_moto_garant: string;
+  contrat_physique_batt_garant: string;
 }
 
 

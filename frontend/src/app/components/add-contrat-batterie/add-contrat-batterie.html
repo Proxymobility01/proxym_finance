@@ -8,12 +8,16 @@
       <i class="fas fa-times"></i>
     </button>
   </div>
-
   <form class="modal-content-batterie" [formGroup]="form">
+    @if (submitError()) {
+      <div class="field-error-batterie text-center mt-2">
+        <i class="fas fa-exclamation-triangle me-1"></i>
+        {{ submitError() }}
+      </div>
+    }
     <!-- Section Montants -->
     <div class="form-section-batterie">
       <h6 class="section-label-batterie">Informations financières</h6>
-
       <div class="form-grid-3-batterie">
         <div class="form-field-batterie">
           <label class="field-label-batterie">
@@ -35,7 +39,6 @@
             </div>
           }
         </div>
-
         <div class="form-field-batterie">
           <label class="field-label-batterie">Montant engagé</label>
           <div class="input-currency-batterie">
@@ -56,7 +59,6 @@
             <div class="field-error-batterie">Le montant engagé ne peut pas dépasser le montant total.</div>
           }
         </div>
-
         <div class="form-field-batterie">
           <label class="field-label-batterie">
             Montant caution <span class="required-mark-batterie">*</span>
@@ -79,11 +81,9 @@
         </div>
       </div>
     </div>
-
     <!-- Section Dates -->
     <div class="form-section-batterie">
       <h6 class="section-label-batterie">Période contractuelle</h6>
-
       <div class="form-grid-4-batterie">
         <div class="form-field-batterie">
           <label class="field-label-batterie">
@@ -100,7 +100,6 @@
             </div>
           }
         </div>
-
         <div class="form-field-batterie">
           <label class="field-label-batterie">
             Date de début <span class="required-mark-batterie">*</span>
@@ -119,7 +118,6 @@
             <div class="field-error-batterie">La date de début doit être postérieure ou égale à la date de signature.</div>
           }
         </div>
-
         <div class="form-field-batterie">
           <label class="field-label-batterie">
             Date de fin <span class="required-mark-batterie">*</span>
@@ -138,7 +136,6 @@
             <div class="field-error-batterie">La date de fin doit être postérieure ou égale à la date de début.</div>
           }
         </div>
-
         <div class="form-field-batterie">
           <label class="field-label-batterie">
             Durée (jours) <span class="required-mark-batterie">*</span>
@@ -157,11 +154,9 @@
         </div>
       </div>
     </div>
-
     <!-- Section Documents -->
     <div class="form-section-batterie">
       <h6 class="section-label-batterie">Documents contractuels</h6>
-
       <div class="form-grid-1-batterie">
         <div class="form-field-batterie">
           <label class="field-label-batterie">
@@ -172,13 +167,13 @@
                    id="file-contrat-batt"
                    class="file-input-hidden-batterie"
                    accept=".pdf,.doc,.docx,image/*"
+                   multiple
                    (change)="onFileChange($event)">
             <label for="file-contrat-batt" class="file-upload-btn-batterie required-file-batterie">
               <i class="fas fa-file-contract me-1"></i>
-              Joindre le fichier
+              Joindre fichier(s)
             </label>
           </div>
-
           @if (uploading()) {
             <div class="upload-status-batterie">
               <i class="fas fa-spinner fa-spin me-1"></i>
@@ -188,7 +183,6 @@
           @if (uploadError()) {
             <div class="field-error-batterie">{{ uploadError() }}</div>
           }
-
           @if (physBattCtrl.value) {
             <div class="file-single-compact-batterie">
               <span class="file-name-batterie">{{ physBattCtrl.value?.name }}</span>
@@ -203,16 +197,8 @@
           }
         </div>
       </div>
-
-      @if (submitError()) {
-        <div class="field-error-batterie mt-2">
-          <i class="fas fa-exclamation-triangle me-1"></i>
-          {{ submitError() }}
-        </div>
-      }
     </div>
   </form>
-
   <div class="modal-footer-batterie">
     <button type="button" class="btn-cancel-batterie" (click)="cancel()">
       <i class="fas fa-times me-1"></i>
@@ -221,8 +207,8 @@
     <button type="button"
             class="btn-save-batterie"
             (click)="submit()"
-            [disabled]="isSubmitting() || form.invalid">
-      @if (isSubmitting()) {
+            [disabled]="isLoading() || form.invalid">
+      @if (isLoading()) {
         <span class="spinner-border spinner-border-sm me-1"></span>
         Enregistrement...
       } @else {

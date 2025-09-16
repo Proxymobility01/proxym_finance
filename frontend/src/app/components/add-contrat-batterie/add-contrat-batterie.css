@@ -54,7 +54,7 @@
 
 /* Modal Content */
 .modal-content-batterie {
-  padding: 1.5rem;
+  padding: 1rem;
   overflow-y: auto;
   flex: 1;
   background-color: var(--bg-color);
@@ -280,8 +280,7 @@
 /* Error Messages */
 .field-error-batterie {
   color: #dc3545;
-  font-size: 0.7rem;
-  padding: 0.2rem 0.4rem;
+  font-size: 1rem;
 }
 
 /* Modal Footer */

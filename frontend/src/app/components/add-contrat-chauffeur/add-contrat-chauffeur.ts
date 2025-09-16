@@ -16,6 +16,7 @@ import {
   normalizeFileToken,
   normalizeMoneyString
 } from '../../shared/utils';
+import {ContratChauffeurService} from '../../services/contrat-chauffeur';
 
 type FileKind =
   | 'contrat_physique_chauffeur'
@@ -31,7 +32,11 @@ type FileKind =
 })
 export class AddContratChauffeur {
   readonly dialogRef = inject(MatDialogRef<AddContratChauffeur>);
-  readonly isLoading = signal(false);
+  readonly contratService = inject(ContratChauffeurService);
+
+  // Etats UI issus du service
+  readonly isSubmitting = this.contratService.isContratChSubmitting;
+  readonly submitError  = this.contratService.isContratChSubmitError;
 
   // états upload (par champ)
   readonly uploading = signal<Record<FileKind, boolean>>({
@@ -78,10 +83,10 @@ export class AddContratChauffeur {
       date_signature: new FormControl<string>('', [Validators.required, Validators.pattern(CONTRACT_VALIDATION.DATE_PATTERN)]),
       date_debut:     new FormControl<string>('', [Validators.required, Validators.pattern(CONTRACT_VALIDATION.DATE_PATTERN)]),
 
-      // CONTRATS PHYSIQUES (multi, requis: >= 1 fichier)
-      contrat_physique_chauffeur:   new FormArray<FormControl<string>>([], [this.atLeastOneFile.bind(this)]),
-      contrat_physique_moto_garant: new FormArray<FormControl<string>>([], [this.atLeastOneFile.bind(this)]),
-      contrat_physique_batt_garant: new FormArray<FormControl<string>>([], [this.atLeastOneFile.bind(this)]),
+      // Un fichier par champ (requis)
+      contrat_physique_chauffeur:   new FormControl<File | null>(null, [Validators.required]),
+      contrat_physique_moto_garant: new FormControl<File | null>(null, [Validators.required]),
+      contrat_physique_batt_garant: new FormControl<File | null>(null, [Validators.required]),
 
       // Congés
       jour_conge_total: new FormControl<number | null>(0, [Validators.required, Validators.min(0), Validators.max(200)])
@@ -101,9 +106,9 @@ export class AddContratChauffeur {
   get sig() { return this.form.get('date_signature') as FormControl<string | null>; }
   get deb() { return this.form.get('date_debut') as FormControl<string | null>; }
 
-  get physChauffArr()   { return this.form.get('contrat_physique_chauffeur')   as FormArray<FormControl<string>>; }
-  get physMotoArr()     { return this.form.get('contrat_physique_moto_garant') as FormArray<FormControl<string>>; }
-  get physBattArr()     { return this.form.get('contrat_physique_batt_garant') as FormArray<FormControl<string>>; }
+  get physChauff() { return this.form.get('contrat_physique_chauffeur')   as FormControl<File | null>; }
+  get physMoto()   { return this.form.get('contrat_physique_moto_garant') as FormControl<File | null>; }
+  get physBatt()   { return this.form.get('contrat_physique_batt_garant') as FormControl<File | null>; }
 
   get conge() { return this.form.get('jour_conge_total') as FormControl<number | null>; }
 
@@ -117,59 +122,57 @@ export class AddContratChauffeur {
   aumOptions: any;
   garantOptions: any;
   battOptions: any;
-  async onFileChange(kind: FileKind, event: Event) {
+  onFileChange(kind: FileKind, event: Event) {
     const input = event.target as HTMLInputElement;
-    const files = input.files;
-    if (!files || files.length === 0) return;
-
-    const allowed = new Set([
-      'application/pdf',
-      'image/png', 'image/jpeg', 'image/jpg',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    ]);
-
-    const arrMap: Record<FileKind, FormArray<FormControl<string>>> = {
-      contrat_physique_chauffeur: this.physChauffArr,
-      contrat_physique_moto_garant: this.physMotoArr,
-      contrat_physique_batt_garant: this.physBattArr
-    };
-    const targetArr = arrMap[kind];
+    const fileList = input.files;
+    const file: File | null = fileList && fileList.length ? fileList.item(0) : null;
 
     this.uploadError.update(e => ({ ...e, [kind]: null }));
     this.uploading.update(u => ({ ...u, [kind]: true }));
 
     try {
-      for (const f of Array.from(files)) {
-        if (!allowed.has(f.type)) {
-          this.uploadError.update(e => ({ ...e, [kind]: 'Type de fichier non supporté' }));
-          continue;
-        }
-        const token = await this.uploadFile(kind, f);
-        targetArr.push(new FormControl<string>(token, { nonNullable: true })); // ✅ non-nullable
+      const ctrl = ({
+        contrat_physique_chauffeur: this.physChauff,
+        contrat_physique_moto_garant: this.physMoto,
+        contrat_physique_batt_garant: this.physBatt
+      } as const)[kind];
+
+      if (!file) {
+        ctrl.setValue(null);
+        return;
       }
-      // revalider (requis)
-      targetArr.updateValueAndValidity();
-    } catch {
-      this.uploadError.update(e => ({ ...e, [kind]: 'Échec de l’upload' }));
+
+      const allowed = new Set([
+        'application/pdf',
+        'image/png', 'image/jpeg', 'image/jpg',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      ]);
+
+      if (!allowed.has(file.type)) {
+        this.uploadError.update(e => ({ ...e, [kind]: 'Type de fichier non supporté' }));
+        ctrl.setValue(null);
+        input.value = '';
+        return;
+      }
+
+      ctrl.setValue(file);
+      ctrl.markAsDirty();
+      ctrl.updateValueAndValidity();
     } finally {
       this.uploading.update(u => ({ ...u, [kind]: false }));
-      // reset pour pouvoir réuploader les mêmes noms
-      input.value = '';
     }
   }
 
-  removeFile(kind: FileKind, index: number) {
-    const arr = ({
-      contrat_physique_chauffeur: this.physChauffArr,
-      contrat_physique_moto_garant: this.physMotoArr,
-      contrat_physique_batt_garant: this.physBattArr
+  clearFile(kind: FileKind) {
+    const ctrl = ({
+      contrat_physique_chauffeur: this.physChauff,
+      contrat_physique_moto_garant: this.physMoto,
+      contrat_physique_batt_garant: this.physBatt
     } as const)[kind];
-
-    if (index >= 0 && index < arr.length) {
-      arr.removeAt(index);
-      arr.updateValueAndValidity();
-    }
+    ctrl.setValue(null);
+    ctrl.markAsDirty();
+    ctrl.updateValueAndValidity();
   }
 
   submit() {
@@ -177,37 +180,32 @@ export class AddContratChauffeur {
       this.form.markAllAsTouched();
       return;
     }
-    this.isLoading.set(true);
 
-    // helpers
-    const mapFiles = (arr: FormArray<FormControl<string>>) =>
-      arr.value.map(t => normalizeFileToken(t));
+    // Normalisations
+    const montant_total   = normalizeMoneyString(this.total.value ?? '');
+    const montant_engage  = normalizeMoneyString(this.engage.value ?? '');
 
-    const payload: ContratChauffeurPayload = {
-      id: 0,
-      association_user_moto_id: Number(this.aum.value),
-      garant_id: Number(this.garant.value),
-      contrat_batt_id: Number(this.batt.value),
+    // Construire le FormData attendu (un fichier par champ)
+    const fd = new FormData();
+    fd.append('association_user_moto_id', String(this.aum.value));
+    fd.append('garant_id',                String(this.garant.value));
+    fd.append('contrat_batt_id',          String(this.batt.value));
 
-      montant_total:  normalizeMoneyString(this.total.value ?? ''),
-      montant_engage: normalizeMoneyString(this.engage.value ?? ''),
+    fd.append('montant_total',  montant_total);
+    fd.append('montant_engage', montant_engage);
 
-      date_signature: this.sig.value!, // déjà validées par pattern + validator de cohérence
-      date_debut:     this.deb.value!,
+    fd.append('date_signature', this.sig.value!);
+    fd.append('date_debut',     this.deb.value!);
+    fd.append('duree_jour',     String(this.djour.value ?? 0));
+    fd.append('jour_conge_total', String(this.form.get('jour_conge_total')?.value ?? 0));
 
-      duree_jour: Number(this.djour.value ?? 0),
+    fd.append('contrat_physique_chauffeur',   this.physChauff.value as File);
+    fd.append('contrat_physique_moto_garant', this.physMoto.value   as File);
+    fd.append('contrat_physique_batt_garant', this.physBatt.value   as File);
 
-      // tableaux de tokens (REQUIRED chacun)
-      contrat_physique_chauffeur:   mapFiles(this.physChauffArr),
-      contrat_physique_moto_garant: mapFiles(this.physMotoArr),
-      contrat_physique_batt_garant: mapFiles(this.physBattArr),
-
-      jour_conge_total: Number(this.conge.value ?? 0)
-    };
-
-    // TODO: this.contratService.create(payload)...
-    this.isLoading.set(false);
-    this.dialogRef.close(payload);
+    // Appel service: HttpClient accepte FormData; si la signature TS est stricte, adapter le type en union FormData | Omit<...>
+    // ou caster localement: (fd as any).
+    this.contratService.registerContratChauffeur(fd as any, (res) => this.dialogRef.close(res));
   }
 
   cancel() { this.dialogRef.close(); }

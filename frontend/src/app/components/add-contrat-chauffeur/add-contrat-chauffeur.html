@@ -10,7 +10,12 @@
   </div>
 
   <form class="modal-content-contrat" [formGroup]="form">
-
+    @if (submitError()) {
+      <div class="field-error-contrat mt-2">
+        <i class="fas fa-exclamation-triangle me-1"></i>
+        {{ submitError() }}
+      </div>
+    }
     <!-- Section Liaisons -->
     <div class="form-section-contrat">
       <h6 class="section-label-contrat">Informations de liaison</h6>
@@ -233,20 +238,20 @@
           @if (uploadError()['contrat_physique_chauffeur']) {
             <div class="field-error-contrat">{{ uploadError()['contrat_physique_chauffeur'] }}</div>
           }
-          @if (physChauffArr.length > 0) {
+          @if (physChauff.value) {
             <div class="file-list-compact-contrat">
-              @for (ctrl of physChauffArr.controls; let i = $index; track i) {
+
                 <div class="file-item-compact-contrat">
-                  <span class="file-name-contrat">{{ ctrl.value }}</span>
-                  <button type="button" class="file-remove-contrat" (click)="removeFile('contrat_physique_chauffeur', i)">
+                  <span class="file-name-contrat">{{ physChauff.value?.name }}</span>
+                  <button type="button" class="file-remove-contrat" (click)="clearFile('contrat_physique_chauffeur')">
                     <i class="fas fa-times"></i>
                   </button>
                 </div>
-              }
+
             </div>
           }
-          @if (physChauffArr.invalid && (physChauffArr.touched || form.touched)) {
-            <div class="field-error-contrat">Au moins un fichier est requis.</div>
+          @if (physChauff.invalid && (physChauff.touched || form.touched)) {
+            <div class="field-error-contrat">Fichier requis.</div>
           }
         </div>
 
@@ -276,20 +281,18 @@
           @if (uploadError()['contrat_physique_moto_garant']) {
             <div class="field-error-contrat">{{ uploadError()['contrat_physique_moto_garant'] }}</div>
           }
-          @if (physMotoArr.length > 0) {
+          @if (physMoto.value)  {
             <div class="file-list-compact-contrat">
-              @for (ctrl of physMotoArr.controls; let i = $index; track i) {
                 <div class="file-item-compact-contrat">
-                  <span class="file-name-contrat">{{ ctrl.value }}</span>
-                  <button type="button" class="file-remove-contrat" (click)="removeFile('contrat_physique_moto_garant', i)">
+                  <span class="file-name-contrat">{{ physMoto.value?.name }}</span>
+                  <button type="button" class="file-remove-contrat" (click)="clearFile('contrat_physique_moto_garant')">
                     <i class="fas fa-times"></i>
                   </button>
                 </div>
-              }
             </div>
           }
-          @if (physMotoArr.invalid && (physMotoArr.touched || form.touched)) {
-            <div class="field-error-contrat">Au moins un fichier est requis.</div>
+          @if (physMoto.invalid && (physMoto.touched || form.touched)) {
+            <div class="field-error-contrat">Fichier requis.</div>
           }
         </div>
 
@@ -319,20 +322,19 @@
           @if (uploadError()['contrat_physique_batt_garant']) {
             <div class="field-error-contrat">{{ uploadError()['contrat_physique_batt_garant'] }}</div>
           }
-          @if (physBattArr.length > 0) {
+          @if (physBatt.value) {
             <div class="file-list-compact-contrat">
-              @for (ctrl of physBattArr.controls; let i = $index; track i) {
                 <div class="file-item-compact-contrat">
-                  <span class="file-name-contrat">{{ ctrl.value }}</span>
-                  <button type="button" class="file-remove-contrat" (click)="removeFile('contrat_physique_batt_garant', i)">
+                  <span class="file-name-contrat">{{ physMoto.value?.name }}</span>
+                  <button type="button" class="file-remove-contrat" (click)="clearFile('contrat_physique_batt_garant')">
                     <i class="fas fa-times"></i>
                   </button>
                 </div>
-              }
+
             </div>
           }
-          @if (physBattArr.invalid && (physBattArr.touched || form.touched)) {
-            <div class="field-error-contrat">Au moins un fichier est requis.</div>
+          @if (physBatt.invalid && (physBatt.touched || form.touched)) {
+            <div class="field-error-contrat">Fichier requis.</div>
           }
         </div>
       </div>
@@ -347,13 +349,14 @@
     <button type="button"
             class="btn-save-contrat"
             (click)="submit()"
-            [disabled]="isLoading() || form.invalid">
-      @if (isLoading()) {
+            [disabled]="isSubmitting() || form.invalid">
+      @if (isSubmitting()) {
         <span class="spinner-border spinner-border-sm me-1"></span>
+        Enregistrement...
       } @else {
         <i class="fas fa-save me-1"></i>
+        Enregistrer
       }
-      {{ isLoading() ? 'Enregistrement...' : 'Enregistrer' }}
     </button>
   </div>
 </div>

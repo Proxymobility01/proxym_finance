@@ -220,4 +220,7 @@ export class ContratBatterieList implements OnInit {
   }
 
 
+  refresh() {
+    this.contratBattService.fetchContratBatterie()
+  }
 }

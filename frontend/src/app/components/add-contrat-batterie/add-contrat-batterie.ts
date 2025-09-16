@@ -235,7 +235,7 @@ export class AddContratBatterie {
     fd.append('date_debut',      this.deb.value!);
     fd.append('date_fin',        this.fin.value!);
     fd.append('duree_jour',      this.djour.value!);
-    fd.append('contrat_physique_batt', file); // fichier unique
+    fd.append('contrat_physique_batt', file);
 
     // Appel service (création) – calqué sur Garant
     this.contratBattService.registerContratBatterie(fd, (res) => this.dialogRef.close(res));
