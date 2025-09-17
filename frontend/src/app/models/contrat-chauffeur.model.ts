@@ -1,8 +1,10 @@
 
 export interface ContratChauffeur{
   id: number;
-  reference: string;
+  reference_contrat: string;
   nom_chauffeur: string
+  nom_garant: string;
+  reference_contrat_batt:string;
   date_signature: string;
   montant_total: number;
   montant_restant: number;
@@ -16,7 +18,8 @@ export interface ContratChauffeurPayload{
   garant_id: number;
   contrat_batt_id: number;
   montant_total: string;
-  montant_engage:string
+  montant_engage:string;
+  montant_par_paiement:string;
   date_signature: string;
   date_debut:string;
   duree_jour: number;
@@ -24,6 +27,15 @@ export interface ContratChauffeurPayload{
   contrat_physique_chauffeur: string;
   contrat_physique_moto_garant: string;
   contrat_physique_batt_garant: string;
+}
+
+export interface AssociationUserMoto{
+  association_id: number;
+  validated_user_id: number;
+  moto_validate_id: number;
+  nom:string;
+  prenom:string;
+  vin:string;
 }
 
 

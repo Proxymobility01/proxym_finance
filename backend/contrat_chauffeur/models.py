@@ -25,7 +25,7 @@ class ContratBatterie(TimeStampedModel):
     contrat_physique_batt =models.CharField(max_length=255, blank=True,null=True)
     montant_engage = models.DecimalField(max_digits=14, decimal_places=2, blank=True, null=True)
     montant_caution = models.DecimalField(max_digits=14, decimal_places=2)
-
+    proprietaire = models.CharField(max_length=255, blank=True,null=True)
     class Meta:
         db_table = "contrat_batterie"
 
@@ -75,7 +75,7 @@ class ContratChauffeur(TimeStampedModel):
 
     # Use days as integer
     duree_jour = models.PositiveIntegerField(null=True, blank=True, help_text=_("Durée du contrat en jours"))
-    date_fin = models.DateTimeField(null=True, blank=True)
+    date_fin = models.DateField(null=True, blank=True)
 
     statut = models.CharField(max_length=50, choices=StatutContrat.choices, default=StatutContrat.ACTIVE)
 
@@ -83,14 +83,9 @@ class ContratChauffeur(TimeStampedModel):
 
     # Physical files (stored as file paths/URLs)
     contrat_physique_chauffeur = models.FileField(upload_to=contract_upload_path, null=True, blank=True)
-    contrat_physique_batt = models.FileField(upload_to=contract_upload_path, null=True, blank=True)
     contrat_physique_moto_garant = models.FileField(upload_to=contract_upload_path, null=True, blank=True)
     contrat_physique_batt_garant = models.FileField(upload_to=contract_upload_path, null=True, blank=True)
 
-    # Bloc caution batterie
-    montant_caution_batt = models.DecimalField(max_digits=14, decimal_places=2, default=0)
-    montant_engage_batt = models.DecimalField(max_digits=14, decimal_places=2, default=0)
-    duree_caution_batt = models.DateField(null=True, blank=True)
 
     # Congés
     jour_conge_total = models.PositiveIntegerField(default=0)

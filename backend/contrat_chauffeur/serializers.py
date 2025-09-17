@@ -2,6 +2,9 @@ from datetime import datetime, timedelta
 from math import ceil
 
 from django.db import transaction, models as dj_models
+
+from app_legacy.models import AssociationUserMoto
+from garant.models import Garant
 from .models import ContratBatterie
 from rest_framework import serializers
 from .models import ContratChauffeur, StatutContrat, FrequencePaiement
@@ -94,7 +97,7 @@ class ContractBatteryListSerializer(serializers.ModelSerializer):
         fields = [
             "id", "reference_contrat",
             "montant_total", "montant_paye", "montant_restant",
-            "date_signature", "date_debut", "date_fin",
+            "date_signature", "date_debut", "date_fin","proprietaire",
             "duree_jour",
             "statut", "montant_engage", "montant_caution",
             "contrat_physique_batt",
@@ -302,12 +305,8 @@ class ContractDriverListSerializer(_DureeJourOutMixin):
             "duree_jour",
             "statut", "montant_engage",
             "contrat_physique_chauffeur",
-            "contrat_physique_batt",
             "contrat_physique_moto_garant",
             "contrat_physique_batt_garant",
-            "montant_caution_batt",
-            "montant_engage_batt",
-            "duree_caution_batt",
             "jour_conge_total",
             "jour_conge_utilise",
             "jour_conge_restant",
@@ -346,9 +345,6 @@ class ContractDriverCreateSerializer(serializers.ModelSerializer):
             "contrat_physique_batt",
             "contrat_physique_moto_garant",
             "contrat_physique_batt_garant",
-            "montant_caution_batt",
-            "montant_engage_batt",
-            "duree_caution_batt",
             "jour_conge_total",
             "jour_conge_utilise",
             "jour_conge_restant",
@@ -415,7 +411,36 @@ class ContractDriverCreateSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def create(self, validated_data):
-        return ContratChauffeur.objects.create(**validated_data)
+        contrat = ContratChauffeur.objects.create(**validated_data)
+
+        # --- Attribuer le proprietaire de la batterie si vide
+        batt: ContratBatterie | None = contrat.contrat_batt
+        if batt and not (batt.proprietaire and batt.proprietaire.strip()):
+            # 1) priorité: le titulaire (validated_user) de l'association
+            owner = ""
+            assoc: AssociationUserMoto | None = contrat.association_user_moto
+            if assoc and assoc.validated_user:
+                vu = assoc.validated_user
+                owner = " ".join(filter(None, [(vu.nom or "").strip(), (vu.prenom or "").strip()]))
+
+            # 2) sinon: le garant s'il existe
+            if not owner and contrat.garant:
+                g: Garant = contrat.garant
+                owner = " ".join(filter(None, [(g.nom or "").strip(), (g.prenom or "").strip()]))
+
+            # 3) fallback éventuel (ex: VIN)
+            if not owner and assoc and assoc.moto_valide:
+                vin = (assoc.moto_valide.vin or "").strip()
+                if vin:
+                    owner = vin  # ou f"Proprio VIN {vin}"
+
+            if owner:
+                # évite les conditions de course et n’écrase pas si déjà rempli
+                ContratBatterie.objects.filter(pk=batt.pk, proprietaire__isnull=True).update(proprietaire=owner)
+                # si la colonne permet vide mais pas null:
+                ContratBatterie.objects.filter(pk=batt.pk, proprietaire="").update(proprietaire=owner)
+
+        return contrat
 
 
 # -------------------------------------------------------------------
@@ -440,9 +465,6 @@ class ContractDriverUpdateSerializer(serializers.ModelSerializer):
             "contrat_physique_batt",
             "contrat_physique_moto_garant",
             "contrat_physique_batt_garant",
-            "montant_caution_batt",
-            "montant_engage_batt",
-            "duree_caution_batt",
             "jour_conge_total",
             "jour_conge_utilise",
             "jour_conge_restant",

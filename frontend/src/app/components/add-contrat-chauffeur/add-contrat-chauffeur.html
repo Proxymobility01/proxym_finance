@@ -29,7 +29,7 @@
                   formControlName="association_user_moto_id"
                   [class.input-error-contrat]="aum.invalid && aum.touched">
             <option [ngValue]="null" disabled>— Sélectionner —</option>
-            @for (opt of aumOptions; track opt.id) {
+            @for (opt of associationOptions(); track opt.id) {
               <option [ngValue]="opt.id">{{ opt.label }}</option>
             }
           </select>
@@ -46,7 +46,7 @@
                   formControlName="garant_id"
                   [class.input-error-contrat]="garant.invalid && garant.touched">
             <option [ngValue]="null" disabled>— Sélectionner —</option>
-            @for (opt of garantOptions; track opt.id) {
+            @for (opt of garantOptions(); track opt.id) {
               <option [ngValue]="opt.id">{{ opt.label }}</option>
             }
           </select>
@@ -63,7 +63,7 @@
                   formControlName="contrat_batt_id"
                   [class.input-error-contrat]="batt.invalid && batt.touched">
             <option [ngValue]="null" disabled>— Sélectionner —</option>
-            @for (opt of battOptions; track opt.id) {
+            @for (opt of battOptions(); track opt.id) {
               <option [ngValue]="opt.id">{{ opt.label }}</option>
             }
           </select>
@@ -78,7 +78,7 @@
     <div class="form-section-contrat">
       <h6 class="section-label-contrat">Informations financières</h6>
 
-      <div class="form-grid-3-contrat">
+      <div class="form-grid-4-contrat">
         <div class="form-field-contrat">
           <label class="field-label-contrat">
             Montant total <span class="required-mark-contrat">*</span>
@@ -102,7 +102,7 @@
 
         <div class="form-field-contrat">
           <label class="field-label-contrat">
-            Montant engagé <span class="required-mark-contrat">*</span>
+            Montant engagé
           </label>
           <div class="input-currency-contrat">
             <input type="text"
@@ -114,13 +114,33 @@
           </div>
           @if (engage.touched && engage.invalid) {
             <div class="field-error-contrat">
-              @if (engage.hasError('required')) { Champ requis. }
-              @else if (engage.hasError('pattern')) { Format: 1000, 1 000, 1 000.50 }
+              @if (engage.hasError('pattern')) { Format: 1000, 1 000, 1 000.50 }
               @else if (engage.hasError('maxlength')) { Valeur trop longue. }
             </div>
           }
           @if (form.hasError('engageAboveTotal')) {
             <div class="field-error-contrat">Le montant engagé ne peut pas dépasser le montant total.</div>
+          }
+        </div>
+
+        <div class="form-field-contrat">
+          <label class="field-label-contrat">
+            Montant par paiement <span class="required-mark-contrat">*</span>
+          </label>
+          <div class="input-currency-contrat">
+            <input type="text"
+                   formControlName="montant_par_paiement"
+                   class="field-input-contrat"
+                   placeholder="5 000"
+                   [class.input-error-contrat]="mpp.invalid && mpp.touched">
+            <span class="currency-suffix">FCFA</span>
+          </div>
+          @if (mpp.touched && mpp.invalid) {
+            <div class="field-error-contrat">
+              @if (mpp.hasError('required')) { Champ requis. }
+              @else if (mpp.hasError('pattern')) { Format: 1000, 1 000, 1 000.50 }
+              @else if (mpp.hasError('maxlength')) { Valeur trop longue. }
+            </div>
           }
         </div>
 

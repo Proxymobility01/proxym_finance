@@ -100,6 +100,8 @@
         <tr>
           <th class="text-center">Référence</th>
           <th class="text-center">Chauffeur</th>
+          <th class="text-center">Garant</th>
+          <th class="text-center">Reference batterie</th>
           <th class="text-center">Date Signature</th>
           <th class="text-center">Paiement</th>
           <th class="text-center">Statut</th>
@@ -139,11 +141,19 @@
             @for (c of pagedContrats(); track $index) {
               <tr class="contrat-row">
                 <td class="text-center fw-bold"
-                    [innerHTML]="(c.reference) | highlight: query()">
+                    [innerHTML]="(c.reference_contrat) | highlight: query()">
                 </td>
 
                 <td class="text-center"
                     [innerHTML]="(c.nom_chauffeur) | highlight: query()">
+                </td>
+
+                <td class="text-center"
+                    [innerHTML]="(c.nom_garant) | highlight: query()">
+                </td>
+
+                <td class="text-center"
+                    [innerHTML]="(c.reference_contrat_batt) | highlight: query()">
                 </td>
 
                 <td class="text-center">

@@ -48,7 +48,7 @@ export class ContratChauffeurList implements OnInit {
   openContratChauffeurDialog() {
     const dialogRef = this.dialog.open(AddContratChauffeur, {
       width: '90vw',
-      maxWidth: '700px',
+      maxWidth: '800px',
       maxHeight: 'none',
       panelClass: 'contrat_chauffeur',
       disableClose: true,
@@ -135,7 +135,7 @@ export class ContratChauffeurList implements OnInit {
       // Recherche
       let okSearch = true;
       if (q) {
-        const ref = this.normalizeStr(c?.reference);
+        const ref = this.normalizeStr(c?.reference_contrat);
         const nom = this.normalizeStr(c?.nom_chauffeur);
         okSearch = ref.includes(q) || nom.includes(q);
       }

@@ -1,8 +1,8 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { API_CONFIG, ApiConfig } from '../core/api-config.token';
-import { ContratChauffeur } from '../models/contrat-chauffeur.model';
-import { catchError, finalize, of, tap } from 'rxjs';
+import {AssociationUserMoto, ContratChauffeur} from '../models/contrat-chauffeur.model';
+import {catchError, finalize, of, pipe, tap} from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -14,6 +14,14 @@ export class ContratChauffeurService {
   private readonly _contratsCh = signal<ContratChauffeur[]>([]);
   private readonly _isLoadingContratCh = signal(false);
   private readonly _errorContratCh = signal<string | null>(null);
+
+  private readonly _associations = signal<AssociationUserMoto[]>([]);
+  private readonly _isLoadingAssociation = signal(false);
+  private readonly _errorAssociation = signal<string | null>(null);
+
+  readonly associations = this._associations.asReadonly();
+  readonly isLoadingAssociation = this._isLoadingAssociation.asReadonly();
+  readonly errorAssociation = this._errorAssociation.asReadonly();
 
   // Etats de soumission (ajoutés)
   private readonly _isContratChSubmitting = signal<boolean>(false);
@@ -32,7 +40,7 @@ export class ContratChauffeurService {
     this._isLoadingContratCh.set(true);
     this._errorContratCh.set(null);
 
-    this.http.get<ContratChauffeur[]>(`${this.config.apiUrl}/contratsCh`)
+    this.http.get<ContratChauffeur[]>(`${this.config.apiUrl}/contrats-chauffeurs`)
       .pipe(
         tap(res => this._contratsCh.set(res)),
         catchError(err => {
@@ -44,12 +52,28 @@ export class ContratChauffeurService {
       .subscribe();
   }
 
+  fetchAssociationUserMoto(){
+    this._isLoadingAssociation.set(true);
+    this._errorAssociation.set(null);
+
+    this.http.get<AssociationUserMoto[]>(`${this.config.apiUrl}/legacy/associations/summary`)
+      .pipe(
+        tap(res => this._associations.set(res)),
+        catchError(err => {
+          this._errorAssociation.set(err?.error?.detail ?? 'Erreur lors du chargement.');
+          return of([] as ContratChauffeur[]);
+        }),
+        finalize(() => this._isLoadingAssociation.set(false))
+      )
+    .subscribe();
+  }
+
   /** POST /contratsCh — création */
   registerContratChauffeur(payload: Omit<ContratChauffeur, 'id'>, onSuccess?: (res: ContratChauffeur) => void): void {
     this._isContratChSubmitting.set(true);
     this._isContratChSubmitError.set(null);
 
-    this.http.post<ContratChauffeur>(`${this.config.apiUrl}/contratsCh`, payload)
+    this.http.post<ContratChauffeur>(`${this.config.apiUrl}/contrats-chauffeurs`, payload)
       .pipe(
         tap(res => {
           const current = this._contratsCh();
