@@ -9,7 +9,7 @@
   flex-direction: column;
   font-family: var(--font-family-body), sans-serif;
   width: 100%;
-  max-width: 850px;
+  max-width: 800px;
 }
 
 /* Modal Header */
@@ -78,13 +78,19 @@
 }
 
 /* Form Grids */
-.form-grid-3-contrat {
+.form-grid-3-contrat{
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1rem;
 }
 
-/* Form Fields */
+.form-grid-4-contrat{
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+  /* Form Fields */
 .form-field-contrat {
   display: flex;
   flex-direction: column;

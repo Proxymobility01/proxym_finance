@@ -14,6 +14,8 @@ class Agences(models.Model):
 
 class ValidatedUser(models.Model):
     id = models.BigAutoField(primary_key=True)
+    nom = models.CharField(max_length=255, blank=True,null=True)
+    prenom = models.CharField(max_length=255, blank=True,null=True)
     class Meta:
         db_table = "validated_users"
         managed = False
@@ -38,7 +40,7 @@ class AssociationUserMoto(models.Model):
         db_column="moto_valide_id", null=True, blank=True
     )
     statut = models.CharField(max_length=50, null=True, blank=True)
-    swap_bloque = models.CharField(max_length=10, null=True, blank=True)
+    # swap_bloque = models.CharField(max_length=10, null=True, blank=True)
 
     class Meta:
         db_table = "association_user_motos"  

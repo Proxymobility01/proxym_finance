@@ -1,4 +1,4 @@
-import { Component, HostListener, inject, signal } from '@angular/core';
+import {Component, computed, HostListener, inject, OnInit, signal} from '@angular/core';
 import {
   FormArray,
   FormControl,
@@ -9,7 +9,7 @@ import {
   ValidationErrors
 } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
-import { CONTRACT_VALIDATION, ContratChauffeurPayload } from '../../models/contrat-chauffeur.model';
+import {AssociationUserMoto, CONTRACT_VALIDATION, ContratChauffeurPayload} from '../../models/contrat-chauffeur.model';
 import {
   dateCoherenceValidator,
   engagedNotAboveTotalValidator,
@@ -17,6 +17,10 @@ import {
   normalizeMoneyString
 } from '../../shared/utils';
 import {ContratChauffeurService} from '../../services/contrat-chauffeur';
+import {GarantService} from '../../services/garant';
+import {ContratBatterieService} from '../../services/contrat-batterie';
+import {Garant} from '../../models/garant.model';
+import {ContratBatterie} from '../../models/contrat-batterie.model';
 
 type FileKind =
   | 'contrat_physique_chauffeur'
@@ -30,9 +34,12 @@ type FileKind =
   templateUrl: './add-contrat-chauffeur.html',
   styleUrl: './add-contrat-chauffeur.css'
 })
-export class AddContratChauffeur {
+export class AddContratChauffeur implements OnInit{
   readonly dialogRef = inject(MatDialogRef<AddContratChauffeur>);
   readonly contratService = inject(ContratChauffeurService);
+  readonly garantService = inject(GarantService);
+  readonly contratBattService = inject(ContratBatterieService);
+  readonly contratChauffeurService = inject(ContratChauffeurService);
 
   // Etats UI issus du service
   readonly isSubmitting = this.contratService.isContratChSubmitting;
@@ -56,6 +63,59 @@ export class AddContratChauffeur {
     return arr && arr.length > 0 ? null : { required: true };
   }
 
+  ngOnInit() {
+    this.garantService.fetchGarants();
+    this.contratBattService.fetchContratBatterie();
+    this.contratService.fetchAssociationUserMoto();
+  }
+
+
+  // ---------- LISTES DÉROULANTES (computed) ----------
+  private garantLabel(g: Garant): string {
+    const nom = (g?.nom ?? '').trim();
+    const prenom = (g?.prenom ?? '').trim();
+    const tel = (g?.tel ?? '').trim();
+    const fullName = [nom, prenom].filter(Boolean).join(' ');
+    return [fullName || '—', tel || ''].filter(Boolean).join(' — ');
+  }
+
+
+  private battLabel(c: ContratBatterie): string {
+    if (!c) return '';
+    const ref = c.reference ?? `#${c.id}`;
+    const owner = c.proprietaire?.trim() || '';
+    return owner ? `${ref} — ${owner}` : ref;
+  }
+
+  readonly battOptions = computed(() =>
+    (this.contratBattService.contratsBatt() || []).map(c => ({ id: c.id, label: this.battLabel(c) }))
+  );
+
+
+  readonly garantOptions = computed(() =>
+    (this.garantService.garants() || []).map(g => ({ id: g.id, label: this.garantLabel(g) }))
+  );
+
+  private assocLabel(a: AssociationUserMoto): string {
+    if (!a) return '';
+    const nom = a.nom?.trim() ?? '';
+    const prenom = a.prenom?.trim() ?? '';
+    const vin = a.vin?.trim() ?? '';
+
+    const fullName = [nom, prenom].filter(Boolean).join(' ');
+    return fullName && vin ? `${fullName} — ${vin}` : fullName || vin || `#${a.association_id}`;
+  }
+
+  readonly associationOptions = computed(() =>
+    (this.contratChauffeurService.associations() || []).map(a => ({
+      id: a.association_id,
+      label: this.assocLabel(a)
+    }))
+  );
+
+
+
+
   // --- FORM ---
   form = new FormGroup(
     {
@@ -65,19 +125,24 @@ export class AddContratChauffeur {
       contrat_batt_id:          new FormControl<number | null>(null, [Validators.required]),
 
       // Montants (string -> on normalise à la soumission)
-      montant_total:  new FormControl<string>('', [
+      montant_total:  new FormControl<string>('1302000', [
         Validators.required,
         Validators.maxLength(CONTRACT_VALIDATION.MAX_MONEY_LEN),
         Validators.pattern(CONTRACT_VALIDATION.MONEY_STRING_PATTERN)
       ]),
       montant_engage: new FormControl<string>('', [
+        Validators.maxLength(CONTRACT_VALIDATION.MAX_MONEY_LEN),
+        Validators.pattern(CONTRACT_VALIDATION.MONEY_STRING_PATTERN)
+      ]),
+
+      montant_par_paiement: new FormControl<string>('3500', [
         Validators.required,
         Validators.maxLength(CONTRACT_VALIDATION.MAX_MONEY_LEN),
         Validators.pattern(CONTRACT_VALIDATION.MONEY_STRING_PATTERN)
       ]),
 
       // Durée en jours (number)
-      duree_jour: new FormControl<number | null>(null, [Validators.required, Validators.min(1), Validators.max(200)]),
+      duree_jour: new FormControl<number | null>(62, [Validators.required, Validators.min(1), Validators.max(200)]),
 
       // Dates (string, pattern JJ/MM/AAAA ou ce que tu as dans DATE_PATTERN)
       date_signature: new FormControl<string>('', [Validators.required, Validators.pattern(CONTRACT_VALIDATION.DATE_PATTERN)]),
@@ -89,7 +154,7 @@ export class AddContratChauffeur {
       contrat_physique_batt_garant: new FormControl<File | null>(null, [Validators.required]),
 
       // Congés
-      jour_conge_total: new FormControl<number | null>(0, [Validators.required, Validators.min(0), Validators.max(200)])
+      jour_conge_total: new FormControl<number | null>(30, [Validators.required, Validators.min(0), Validators.max(200)])
     },
     { validators: [dateCoherenceValidator, engagedNotAboveTotalValidator], updateOn: 'blur' }
   );
@@ -101,6 +166,7 @@ export class AddContratChauffeur {
 
   get total() { return this.form.get('montant_total') as FormControl<string | null>; }
   get engage() { return this.form.get('montant_engage') as FormControl<string | null>; }
+  get mpp()    { return this.form.get('montant_par_paiement')     as FormControl<string | null>; }
   get djour() { return this.form.get('duree_jour') as FormControl<number | null>; }
 
   get sig() { return this.form.get('date_signature') as FormControl<string | null>; }
@@ -120,8 +186,6 @@ export class AddContratChauffeur {
 
   // --- Multi fichiers ---
   aumOptions: any;
-  garantOptions: any;
-  battOptions: any;
   onFileChange(kind: FileKind, event: Event) {
     const input = event.target as HTMLInputElement;
     const fileList = input.files;
@@ -184,15 +248,17 @@ export class AddContratChauffeur {
     // Normalisations
     const montant_total   = normalizeMoneyString(this.total.value ?? '');
     const montant_engage  = normalizeMoneyString(this.engage.value ?? '');
+    const montant_par_paiement  = normalizeMoneyString(this.mpp.value    ?? '');
 
     // Construire le FormData attendu (un fichier par champ)
     const fd = new FormData();
-    fd.append('association_user_moto_id', String(this.aum.value));
-    fd.append('garant_id',                String(this.garant.value));
-    fd.append('contrat_batt_id',          String(this.batt.value));
+    fd.append('association_user_moto', String(this.aum.value));
+    fd.append('garant',                String(this.garant.value));
+    fd.append('contrat_batt',          String(this.batt.value));
 
     fd.append('montant_total',  montant_total);
     fd.append('montant_engage', montant_engage);
+    fd.append('montant_par_paiement', montant_par_paiement);
 
     fd.append('date_signature', this.sig.value!);
     fd.append('date_debut',     this.deb.value!);
