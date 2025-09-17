@@ -11,44 +11,23 @@ from .models import ContratChauffeur, StatutContrat, FrequencePaiement
 
 
 
-STATUS_CHOICES = ("ACTIVE", "SUSPENDED", "TERMINATED", "COMPLETED")  # used only if your model uses EN values
 _ANCHOR = datetime(1970, 1, 1)
-
-# Optional mapping if your DB uses FR choices but clients send EN values
-EN_TO_FR = {
-    # frequence_paiement
-    "DAILY": "JOURNALIER",
-    "WEEKLY": "HEBDOMADAIRE",
-    "MONTHLY": "MENSUEL",
-    # statut
-    "ACTIVE": "ACTIF",
-    "SUSPENDED": "SUSPENDU",
-    "TERMINATED": "RESILIE",
-    "COMPLETED": "TERMINE",
-}
 
 
 def _map_choice(value, *, field_name: str | None = None):
-    """Map common English values to French codes if model uses FR choices."""
+    """Valide que le statut envoyé est bien dans les choices FR définis dans le modèle."""
     if value is None:
         return value
     v = str(value).strip()
-    mapped = EN_TO_FR.get(v.upper(), v)
-
-    # If model has choices, ensure the final value matches one of them
     if field_name:
-        try:
-            field = ContratChauffeur._meta.get_field(field_name)
-            allowed = {str(code) for code, _ in (field.choices or [])}
-            if allowed and str(mapped) not in allowed:
-                # If not allowed, surface a clear error with allowed values
-                raise serializers.ValidationError(
-                    {field_name: f"Invalid value '{value}'. Allowed: {sorted(allowed)}"}
-                )
-        except Exception:
-            # If anything goes wrong fetching choices, just return mapped silently
-            pass
-    return mapped
+        field = ContratChauffeur._meta.get_field(field_name)
+        allowed = {str(code) for code, _ in (field.choices or [])}
+        if allowed and v not in allowed:
+            raise serializers.ValidationError(
+                {field_name: f"Valeur invalide '{value}'. Autorisés: {sorted(allowed)}"}
+            )
+    return v
+
 
 
 def _encode_days_as_datetime(days: int) -> datetime:
@@ -124,9 +103,7 @@ class ContractBatteryCreateSerializer(serializers.ModelSerializer):
         read_only_fields = ("duree_jour",)
 
     def validate_statut(self, value):
-        if value and value.upper() not in STATUS_CHOICES:
-            raise serializers.ValidationError(f"statut must be one of {STATUS_CHOICES}")
-        return value
+        return _map_choice(value, field_name="statut")
 
     def validate(self, attrs):
         mt = attrs.get("montant_total")
@@ -163,9 +140,7 @@ class ContractBatteryUpdateSerializer(serializers.ModelSerializer):
         read_only_fields = ("duree_jour",)
 
     def validate_statut(self, value):
-        if value and value.upper() not in STATUS_CHOICES:
-            raise serializers.ValidationError(f"statut must be one of {STATUS_CHOICES}")
-        return value
+        return _map_choice(value, field_name="statut")
 
     def validate(self, attrs):
         inst = self.instance
@@ -214,44 +189,25 @@ from .models import ContratChauffeur
 # -------------------------------------------------------------------
 # Constants & Helpers
 # -------------------------------------------------------------------
-STATUS_CHOICES = ("ACTIVE", "SUSPENDED", "TERMINATED", "COMPLETED")  # used only if your model uses EN values
+
 _ANCHOR = datetime(1970, 1, 1)
 
-# Optional mapping if your DB uses FR choices but clients send EN values
-EN_TO_FR = {
-    # frequence_paiement
-    "DAILY": "JOURNALIER",
-    "WEEKLY": "HEBDOMADAIRE",
-    "MONTHLY": "MENSUEL",
-    # statut
-    "ACTIVE": "ACTIF",
-    "SUSPENDED": "SUSPENDU",
-    "TERMINATED": "RESILIE",
-    "COMPLETED": "TERMINE",
-}
 
 
 def _map_choice(value, *, field_name: str | None = None):
-    """Map common English values to French codes if model uses FR choices."""
+    """Valide que le statut envoyé est bien dans les choices FR définis dans le modèle."""
     if value is None:
         return value
     v = str(value).strip()
-    mapped = EN_TO_FR.get(v.upper(), v)
-
-    # If model has choices, ensure the final value matches one of them
     if field_name:
-        try:
-            field = ContratChauffeur._meta.get_field(field_name)
-            allowed = {str(code) for code, _ in (field.choices or [])}
-            if allowed and str(mapped) not in allowed:
-                # If not allowed, surface a clear error with allowed values
-                raise serializers.ValidationError(
-                    {field_name: f"Invalid value '{value}'. Allowed: {sorted(allowed)}"}
-                )
-        except Exception:
-            # If anything goes wrong fetching choices, just return mapped silently
-            pass
-    return mapped
+        field = ContratChauffeur._meta.get_field(field_name)
+        allowed = {str(code) for code, _ in (field.choices or [])}
+        if allowed and v not in allowed:
+            raise serializers.ValidationError(
+                {field_name: f"Valeur invalide '{value}'. Autorisés: {sorted(allowed)}"}
+            )
+    return v
+
 
 
 def _encode_days_as_datetime(days: int) -> datetime:
@@ -295,8 +251,12 @@ class _DureeJourOutMixin(serializers.ModelSerializer):
 # LIST / DETAIL
 # -------------------------------------------------------------------
 class ContractDriverListSerializer(_DureeJourOutMixin):
+    garant = serializers.SerializerMethodField()
+    chauffeur = serializers.SerializerMethodField()
+    reference_contrat_batt = serializers.SerializerMethodField()
     class Meta:
         model = ContratChauffeur
+
         fields = [
             "id", "reference_contrat",
             "montant_total", "montant_paye", "montant_restant",
@@ -314,9 +274,28 @@ class ContractDriverListSerializer(_DureeJourOutMixin):
             "contrat_batt",
             "garant",
             "regle_penalite",
-            "created", "updated",
+
+            "garant",
+            "chauffeur",
+            "reference_contrat_batt",
         ]
 
+    def get_garant(self, obj):
+        if obj.garant:
+            return f"{obj.garant.nom or ''} {obj.garant.prenom or ''}".strip()
+        return None
+
+    def get_chauffeur(self, obj):
+        assoc = obj.association_user_moto
+        if assoc and assoc.validated_user:
+            vu = assoc.validated_user
+            return f"{vu.nom or ''} {vu.prenom or ''}".strip()
+        return None
+
+    def get_reference_contrat_batt(self, obj):
+        if obj.contrat_batt:
+            return obj.contrat_batt.reference_contrat
+        return None
 
 class ContractDriverDetailSerializer(ContractDriverListSerializer):
     pass

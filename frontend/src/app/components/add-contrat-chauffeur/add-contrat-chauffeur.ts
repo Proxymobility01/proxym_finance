@@ -82,14 +82,17 @@ export class AddContratChauffeur implements OnInit{
 
   private battLabel(c: ContratBatterie): string {
     if (!c) return '';
-    const ref = c.reference ?? `#${c.id}`;
+    const ref = c.reference_contrat ?? `#${c.id}`;
     const owner = c.proprietaire?.trim() || '';
     return owner ? `${ref} — ${owner}` : ref;
   }
 
   readonly battOptions = computed(() =>
-    (this.contratBattService.contratsBatt() || []).map(c => ({ id: c.id, label: this.battLabel(c) }))
+    (this.contratBattService.contratsBatt() || [])
+      .filter(c => !c.proprietaire || c.proprietaire.trim() === '')
+      .map(c => ({ id: c.id, label: this.battLabel(c) }))
   );
+
 
 
   readonly garantOptions = computed(() =>

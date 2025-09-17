@@ -31,6 +31,7 @@
             <option value="termine">Terminés</option>
             <option value="encours">En cours</option>
             <option value="suspendu">Suspendu</option>
+            <option value="annule">Annulé</option>
           </select>
         </div>
 
@@ -140,7 +141,7 @@
               <tr class="contrat-row">
                 <!-- Référence -->
                 <td class="text-center fw-bold"
-                    [innerHTML]="(c.reference) | highlight: query()">
+                    [innerHTML]="(c.reference_contrat) | highlight: query()">
                 </td>
 
                 <!-- Propriétaire -->
@@ -170,13 +171,18 @@
 
                 <!-- Statut -->
                 <td class="text-center">
-                  <span class="status-badge"
-                        [class.status-termine]="(c.statut_contrat | lowercase) === 'termine'"
-                        [class.status-encours]="(c.statut_contrat | lowercase) === 'encours' || (c.statut_contrat | lowercase) === 'en cours'"
-                        [class.status-suspendu]="(c.statut_contrat | lowercase) === 'suspendu'">
-                    {{ (c.statut_contrat | lowercase) === 'termine' ? 'Terminé'
-                    : ((c.statut_contrat | lowercase) === 'suspendu' ? 'Suspendu' : 'En cours') }}
-                  </span>
+                        <span class="status-badge"
+                              [class.status-termine]="(c.statut | lowercase) === 'termine'"
+                              [class.status-encours]="(c.statut | lowercase) === 'encours' || (c.statut | lowercase) === 'en cours'"
+                              [class.status-suspendu]="(c.statut | lowercase) === 'suspendu'"
+                              [class.status-annule]="(c.statut | lowercase) === 'annule'">
+                          {{
+                            (c.statut | lowercase) === 'termine'   ? 'Terminé'   :
+                              (c.statut | lowercase) === 'suspendu' ? 'Suspendu'  :
+                                (c.statut | lowercase) === 'annule'   ? 'Annulé'    :
+                                  'En cours'
+                          }}
+                        </span>
                 </td>
 
                 <!-- Actions -->

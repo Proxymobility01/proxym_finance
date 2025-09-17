@@ -72,7 +72,7 @@ export class AddConge {
 
   // Label affiché pour chaque contrat dans la liste
   readonly contratLabel = (c: any) =>
-    `${c?.reference ?? 'REF'} — ${c?.nom_chauffeur ?? 'Chauffeur'}${c?.date_signature ? ' (' + new Date(c.date_signature).toLocaleDateString('fr-FR') + ')' : ''}`;
+    `${c?.reference ?? 'REF'} — ${c?.chauffeur ?? 'Chauffeur'}${c?.date_signature ? ' (' + new Date(c.date_signature).toLocaleDateString('fr-FR') + ')' : ''}`;
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: CongeDialogData) {
     // Mode + pré-remplissage

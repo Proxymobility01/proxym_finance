@@ -2,14 +2,14 @@
 export interface ContratChauffeur{
   id: number;
   reference_contrat: string;
-  nom_chauffeur: string
-  nom_garant: string;
+  chauffeur: string
+  garant: string;
   reference_contrat_batt:string;
   date_signature: string;
   montant_total: number;
   montant_restant: number;
   montant_paye: number;
-  status: boolean;
+  statut: string;
 }
 
 export interface ContratChauffeurPayload{

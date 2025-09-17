@@ -9,7 +9,7 @@ import {MatDialog} from "@angular/material/dialog";
 import {AddContratChauffeur} from "../../components/add-contrat-chauffeur/add-contrat-chauffeur";
 import {AddContratBatterie} from "../../components/add-contrat-batterie/add-contrat-batterie";
 
-type StatusFilter = '' | 'termine' | 'encours' | 'suspendu';
+type StatusFilter = '' | 'termine' | 'encours' | 'suspendu' | 'annule';
 type DateFilterMode = 'today' | 'week' | 'month' | 'year' | 'specific' | 'range' | 'all';
 type PageItem = { type: 'page', index: number } | { type: 'dots' };
 
@@ -93,12 +93,12 @@ export class ContratBatterieList implements OnInit {
       // recherche
       let okSearch = true;
       if (q) {
-        okSearch = this.normalizeStr(c.reference).includes(q)
+        okSearch = this.normalizeStr(c.reference_contrat).includes(q)
             || this.normalizeStr(c.proprietaire).includes(q);
       }
       // statut
       let okStatus = true;
-      if (st) okStatus = this.normalizeStr(c.statut_contrat) === st;
+      if (st) okStatus = this.normalizeStr(c.statut) === st;
       // date
       let okDate = true;
       if (from || to) {
@@ -172,7 +172,7 @@ export class ContratBatterieList implements OnInit {
       'Montant restant (FCFA)': c.montant_restant ?? '',
       'Montant total (FCFA)': c.montant_total ?? '',
       'Montant caution (FCFA)': c.montant_caution ?? '',
-      'Statut': c.statut_contrat ?? ''
+      'Statut': c.statut ?? ''
     };
   }
   private toCSV(rows: Record<string, any>[], sep = ','): string {

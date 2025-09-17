@@ -21,7 +21,7 @@ class PaiementLease(TimeStampedModel):
     contrat_chauffeur = models.ForeignKey(
         ContratChauffeur, on_delete=models.CASCADE, related_name="paiements_lease"
     )
-    date_conrnee = models.DateTimeField()
+    date_concernee = models.DateTimeField()
     date_limite = models.DateTimeField()
     statut = models.CharField(max_length=50)
     employe = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)

@@ -1,7 +1,7 @@
 import {Component, inject, OnInit, signal, computed, effect} from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
-import { DatePipe } from '@angular/common';
+import {DatePipe, LowerCasePipe} from '@angular/common';
 import {NumberPipe} from '../../shared/number-pipe';
 import {MatDialog} from "@angular/material/dialog";
 import { ContratChauffeurService} from "../../services/contrat-chauffeur";
@@ -10,7 +10,7 @@ import {HighlightPipe} from "../../shared/highlight-pipe";
 import * as XLSX from 'xlsx';
 
 
-type StatusFilter = '' | 'termine' | 'encours' | 'suspendu';
+type StatusFilter = '' | 'termine' | 'encours' | 'suspendu' | 'annule';
 type DateFilterMode = 'today' | 'week' | 'month' | 'year' | 'specific' | 'range' | 'all';
 type PageItem = { type: 'page', index: number } | { type: 'dots' };
 
@@ -21,7 +21,8 @@ type PageItem = { type: 'page', index: number } | { type: 'dots' };
     FormsModule,
     DatePipe,
     NumberPipe,
-    HighlightPipe
+    HighlightPipe,
+    LowerCasePipe
   ],
   templateUrl: './contrat-chauffeur-list.html',
   styleUrl: './contrat-chauffeur-list.css'
@@ -140,15 +141,15 @@ export class ContratChauffeurList implements OnInit {
       let okSearch = true;
       if (q) {
         const ref = this.normalizeStr(c?.reference_contrat);
-        const nom = this.normalizeStr(c?.nom_chauffeur);
+        const nom = this.normalizeStr(c?.chauffeur);
         okSearch = ref.includes(q) || nom.includes(q);
       }
 
       // Statut (robuste: booléen ou string)
       let okStatus = true;
       if (st) {
-        const valBool   = (typeof c?.status === 'boolean') ? c.status : undefined;
-        const valString = this.normalizeStr(c?.status ?? c?.status);
+        const valBool   = (typeof c?.statut === 'boolean') ? c.statut : undefined;
+        const valString = this.normalizeStr(c?.statut ?? c?.statut);
 
         if (st === 'termine')  okStatus = (valBool === true) || valString === 'termine';
         if (st === 'encours')  okStatus = (valBool === false) || valString === 'en cours' || valString === 'encours';

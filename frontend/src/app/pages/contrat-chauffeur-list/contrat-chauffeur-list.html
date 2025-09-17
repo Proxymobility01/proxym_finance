@@ -31,6 +31,7 @@
             <option value="termine">Terminés</option>
             <option value="encours">En cours</option>
             <option value="suspendu">Suspendu</option>
+            <option value="annule">Annulé</option>
           </select>
         </div>
 
@@ -145,11 +146,11 @@
                 </td>
 
                 <td class="text-center"
-                    [innerHTML]="(c.nom_chauffeur) | highlight: query()">
+                    [innerHTML]="(c.chauffeur) | highlight: query()">
                 </td>
 
                 <td class="text-center"
-                    [innerHTML]="(c.nom_garant) | highlight: query()">
+                    [innerHTML]="(c.garant) | highlight: query()">
                 </td>
 
                 <td class="text-center"
@@ -170,11 +171,20 @@
                 </td>
 
                 <td class="text-center">
-                <span class="status-badge"
-                      [class]="c.status ? 'status-termine' : 'status-encours'">
-                  {{ c.status ? 'Terminé' : 'En cours' }}
-                </span>
+                      <span class="status-badge"
+                            [class.status-termine]="(c.statut | lowercase) === 'termine'"
+                            [class.status-encours]="(c.statut | lowercase) === 'encours' || (c.statut | lowercase) === 'en cours'"
+                            [class.status-suspendu]="(c.statut | lowercase) === 'suspendu'"
+                            [class.status-annule]="(c.statut | lowercase) === 'annule'">
+                        {{
+                          (c.statut | lowercase) === 'termine'   ? 'Terminé'   :
+                            (c.statut | lowercase) === 'suspendu' ? 'Suspendu'  :
+                              (c.statut | lowercase) === 'annule'   ? 'Annulé'    :
+                                'En cours'
+                        }}
+                      </span>
                 </td>
+
 
                 <td class="text-center" (click)="$event.stopPropagation()">
                   <button class="action-btn me-1" title="Détails">

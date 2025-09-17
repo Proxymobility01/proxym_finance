@@ -11,6 +11,12 @@ from app_legacy.models import AssociationUserMoto
 from shared.models import TimeStampedModel
 
 
+class StatutContrat(models.TextChoices):
+    ENCOURS = "encours", _("En cours")
+    SUSPENDU = "suspendu", _("Suspendu")
+    ANNULE   = "annule", _("Annulé")
+    TERMINE  = "termine", _("Terminé")
+
 # ------- Existing battery contract table (read-only mapping) -------
 class ContratBatterie(TimeStampedModel):
     reference_contrat = models.CharField(max_length=100, null=True, blank=True)
@@ -21,7 +27,7 @@ class ContratBatterie(TimeStampedModel):
     date_debut = models.DateField()
     duree_jour = models.IntegerField(null=True, blank=True)
     date_fin = models.DateField(null=True, blank=True)
-    statut = models.CharField(max_length=50, null=True, blank=True)
+    statut = models.CharField(max_length=50, null=True, blank=True, default=StatutContrat.ENCOURS)
     contrat_physique_batt =models.CharField(max_length=255, blank=True,null=True)
     montant_engage = models.DecimalField(max_digits=14, decimal_places=2, blank=True, null=True)
     montant_caution = models.DecimalField(max_digits=14, decimal_places=2)
@@ -29,6 +35,18 @@ class ContratBatterie(TimeStampedModel):
     class Meta:
         db_table = "contrat_batterie"
 
+    @staticmethod
+    def _next_reference() -> str:
+        """Generate a battery contract reference like CB-YYYYMM-xxxxx."""
+        today = date.today()
+        yyyymm = f"{today.year}{today.month:02d}"
+        chunk = uuid.uuid4().hex[:5].upper()
+        return f"CB-{yyyymm}-{chunk}"
+
+    def save(self, *args, **kwargs):
+        if not self.reference_contrat:
+            self.reference_contrat = self._next_reference()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.reference_contrat or f"ContratBatterie #{self.pk}"
@@ -40,7 +58,6 @@ class ContratBatterie(TimeStampedModel):
 
 
 def contract_upload_path(instance, filename):
-    # e.g. contrats/CC-202509-00017/filename.pdf
     ref = instance.reference_contrat or "UNSET"
     return f"contrats/{ref}/{filename}"
 
@@ -53,11 +70,6 @@ class FrequencePaiement(models.TextChoices):
     CUSTOM = "custom", _("Personnalisé")
 
 
-class StatutContrat(models.TextChoices):
-    ACTIVE = "active", _("Actif")
-    SUSPENDED = "suspended", _("Suspendu")
-    TERMINATED = "terminated", _("Résilié")
-    COMPLETED = "completed", _("Terminé")
 
 
 # ---------------- Chauffeur contract (managed by Django) ----------------
@@ -77,7 +89,7 @@ class ContratChauffeur(TimeStampedModel):
     duree_jour = models.PositiveIntegerField(null=True, blank=True, help_text=_("Durée du contrat en jours"))
     date_fin = models.DateField(null=True, blank=True)
 
-    statut = models.CharField(max_length=50, choices=StatutContrat.choices, default=StatutContrat.ACTIVE)
+    statut = models.CharField(max_length=50, choices=StatutContrat.choices, default=StatutContrat.ENCOURS)
 
     montant_engage = models.DecimalField(max_digits=14, decimal_places=2, default=0)
 
@@ -171,8 +183,9 @@ class ContratChauffeur(TimeStampedModel):
         self.montant_restant = max(self.montant_total - self.montant_paye, 0)
         self.jour_conge_restant = max(self.jour_conge_total - self.jour_conge_utilise, 0)
         # Auto set date_enregistrement when moving to ACTIVE
-        if self.statut == StatutContrat.ACTIVE and not self.date_enregistrement:
+        if self.statut == StatutContrat.ENCOURS and not self.date_enregistrement:
             self.date_enregistrement = date.today()
+
         self.full_clean()
         return super().save(*args, **kwargs)
 
@@ -181,25 +194,20 @@ class ContratChauffeur(TimeStampedModel):
         required = [self.garant_id, self.association_user_moto_id, self.date_debut, self.montant_total is not None]
         return self.statut == StatutContrat.DRAFT and all(required)
 
-    def activate(self):
-        if not self.can_activate():
-            raise ValidationError(_("Conditions non réunies pour activer le contrat."))
-        self.statut = StatutContrat.ACTIVE
-
     def suspend(self):
-        if self.statut != StatutContrat.ACTIVE:
-            raise ValidationError(_("Seul un contrat actif peut être suspendu."))
-        self.statut = StatutContrat.SUSPENDED
+        if self.statut != StatutContrat.ENCOURS:
+            raise ValidationError(_("Seul un contrat en cours peut être suspendu."))
+        self.statut = StatutContrat.SUSPENDU
 
-    def terminate(self):
-        if self.statut not in (StatutContrat.ACTIVE, StatutContrat.SUSPENDED):
-            raise ValidationError(_("Seul un contrat actif/suspendu peut être résilié."))
-        self.statut = StatutContrat.TERMINATED
+    def annule(self):
+        if self.statut not in (StatutContrat.ENCOURS, StatutContrat.SUSPENDU):
+            raise ValidationError(_("Seul un contrat en cours/suspendu peut être annulé."))
+        self.statut = StatutContrat.ANNULE
 
-    def complete(self):
+    def termine(self):
         if self.montant_restant != 0:
             raise ValidationError(_("Impossible de clôturer: le montant restant n'est pas nul."))
-        self.statut = StatutContrat.COMPLETED
+        self.statut = StatutContrat.TERMINE
 
     def __str__(self):
         return f"{self.reference_contrat or 'UNSET'} - {self.get_statut_display()}"

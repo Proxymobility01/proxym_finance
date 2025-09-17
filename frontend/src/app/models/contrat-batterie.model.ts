@@ -13,7 +13,7 @@ export interface ContratBatteriesPayload{
 
 export interface ContratBatterie{
   id: number;
-  reference:string;
+  reference_contrat:string;
   montant_total: number;
   montant_paye: number;
   montant_restant: number;
@@ -21,7 +21,7 @@ export interface ContratBatterie{
   date_debut: string;
   date_fin: string;
   duree_jour:string;
-  statut_contrat:string;
+  statut:string;
   montant_engage:string;
   montant_caution:string;
   contrat_physique_batt:string;
