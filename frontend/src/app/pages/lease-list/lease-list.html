@@ -2,9 +2,8 @@
   <!-- Header -->
   <div class="page-header d-flex align-items-center justify-content-between flex-wrap mb-4">
     <h2 class="page-title">Gestion des Leases</h2>
-
     <div class="header-actions">
-      <button class="btn btn-nouveau" >
+      <button class="btn btn-nouveau">
         <i class="fas fa-money-bill-wave me-2"></i>
         Effectuer un paiement
       </button>
@@ -16,13 +15,12 @@
     <div class="card-body">
       <div class="row g-3 align-items-end">
         <!-- Recherche -->
-        <div class="col-md-4">
+        <div class="col-md-3">
           <label class="form-label">Recherche</label>
-          <input
-            class="form-control"
-            placeholder="Chauffeur ID, nom, moto ID, VIN…"
-            [ngModel]="query()"
-            (ngModelChange)="query.set($event)">
+          <input class="form-control"
+                 placeholder="Chauffeur ID, nom, moto ID, VIN…"
+                 [ngModel]="query()"
+                 (ngModelChange)="query.set($event)">
         </div>
 
         <!-- Statut paiement -->
@@ -61,9 +59,9 @@
           </select>
         </div>
 
-        <!-- Station de paiement -->
+        <!-- Station -->
         <div class="col-md-2">
-          <label class="form-label">Station de paiement</label>
+          <label class="form-label">Station paiement</label>
           <select class="form-select"
                   [ngModel]="stationPaiement()"
                   (ngModelChange)="stationPaiement.set($event)">
@@ -72,12 +70,13 @@
             }
           </select>
         </div>
-      </div>
 
-      <div class="mt-2 d-flex justify-content-end">
-        <button class="btn btn-light" type="button" (click)="clearFilters()">
-          Réinitialiser les filtres
-        </button>
+        <!-- Bouton Reset -->
+        <div class="col-md-1 text-end">
+          <button class="btn btn-reset" type="button" (click)="clearFilters()">
+            <i class="fas fa-undo"></i>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -88,17 +87,13 @@
       <table class="table custom-table table-hover mb-0">
         <thead>
         <tr>
-          <th class="text-center">Chauffeur ID</th>
+          <th class="text-center">ID</th>
           <th class="text-center">Chauffeur</th>
-          <th class="text-center">Moto ID</th>
-          <th class="text-center">VIN</th>
-          <th class="text-center">Date Concernée paiement</th>
-          <th class="text-center">Date Limite paiement</th>
-          <th class="text-center">Statut paiement</th>
-          <th class="text-center">Statut pénalité</th>
-          <th class="text-center">Paiement effectué par</th>
-          <th class="text-center">Station paiement</th>
-          <th class="text-center">Date paiement</th>
+          <th class="text-center">Moto</th>
+          <th class="text-center">Montants</th>
+          <th class="text-center">Dates</th>
+          <th class="text-center">Statuts</th>
+          <th class="text-center">Paiement</th>
           <th class="text-center">Actions</th>
         </tr>
         </thead>
@@ -106,14 +101,14 @@
         <tbody>
           @if (isLoading()) {
             <tr>
-              <td colspan="9" class="loading-state text-center py-4">
+              <td colspan="8" class="loading-state">
                 <div class="spinner-border spinner-custom" role="status"></div>
                 <div class="mt-2">Chargement des leases…</div>
               </td>
             </tr>
           } @else if (error() && !isLoading()) {
             <tr>
-              <td colspan="9" class="error-state text-center py-4">
+              <td colspan="8" class="error-state">
                 <div class="text-danger mb-3">
                   <i class="fas fa-exclamation-triangle error-icon"></i>
                   <div>{{ error() }}</div>
@@ -125,7 +120,7 @@
             </tr>
           } @else if (!isLoading() && !error() && filtered().length === 0) {
             <tr>
-              <td colspan="9" class="empty-state text-center py-4">
+              <td colspan="8" class="empty-state">
                 <i class="fas fa-file-invoice-dollar empty-icon"></i>
                 <h6 class="text-muted mb-2">Aucun lease trouvé</h6>
                 <p class="text-muted mb-0">Aucun élément ne correspond aux critères de recherche.</p>
@@ -134,20 +129,96 @@
           } @else {
             @for (l of paged(); track l.id) {
               <tr class="lease-row">
-                <td class="text-center">{{ l?.chauffeur_unique_id }}</td>
-                <td class="text-center">{{ l?.chauffeur_nom }}</td>
-                <td class="text-center">{{ l?.moto_unique_id }}</td>
-                <td class="text-center">{{ l?.moto_vin }}</td>
-                <td class="text-center">{{ l?.date_concernee }}</td>
-                <td class="text-center">{{ l?.date_limite }}</td>
-                <td class="text-center">{{ l?.statut_paiement }}</td>
-                <td class="text-center">{{ l?.statut_penalite }}</td>
-                <td class="text-center">{{ l?.paye_par }}</td>
-                <td class="text-center">{{ l?.date_paiement }}</td>
-                <td class="text-center">{{ l?.station_paiement }}</td>
+                <!-- ID -->
+                <td class="text-center">
+                  <span class="lease-id">#{{ l?.id }}</span>
+                </td>
+
+                <!-- Chauffeur -->
+                <td class="text-center">
+                  <div class="chauffeur-info">
+                    <div class="chauffeur-id">{{ l?.chauffeur_unique_id }}</div>
+                    <div class="chauffeur-name">{{ l?.chauffeur_nom }}</div>
+                  </div>
+                </td>
+
+                <!-- Moto -->
+                <td class="text-center">
+                  <div class="moto-info">
+                    <div class="moto-id">{{ l?.moto_unique_id }}</div>
+                    <div class="moto-vin">{{ l?.moto_vin }}</div>
+                  </div>
+                </td>
+
+                <!-- Montants -->
+                <td class="text-center">
+                  <div class="montants-info">
+                    <div class="montant-moto">
+                      <i class="fas fa-motorcycle me-1"></i>
+                      {{ l?.montant_moto }} FCFA
+                    </div>
+                    <div class="montant-batterie">
+                      <i class="fas fa-battery-full me-1"></i>
+                      {{ l?.montant_batterie }} FCFA
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Dates -->
+                <td class="text-center">
+                  <div class="dates-info">
+                    <div class="date-concernee">
+                      <i class="fas fa-calendar me-1"></i>
+                      {{ l?.date_concernee }}
+                    </div>
+                    <div class="date-limite">
+                      <i class="fas fa-exclamation-triangle me-1"></i>
+                      {{ l?.date_limite }}
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Statuts -->
+                <td class="text-center">
+                  <div class="status-group">
+                    <span class="status-badge status-paiement"
+                          [ngClass]="getStatusPaiementClass(l?.statut_paiement)">
+                      {{ l?.statut_paiement || 'N/A' }}
+                    </span>
+                    <span class="status-badge status-penalite"
+                          [ngClass]="getStatusPenaliteClass(l?.statut_penalite)">
+                      {{ l?.statut_penalite || 'N/A' }}
+                    </span>
+                  </div>
+                </td>
+
+                <!-- Informations Paiement -->
+                <td class="text-center">
+                  <div class="payment-info">
+                    <div class="paye-par" *ngIf="l?.paye_par">
+                      <i class="fas fa-user me-1"></i>
+                      {{ l?.paye_par }}
+                    </div>
+                    <div class="methode-paiement" *ngIf="l?.methode_paiement">
+                      <i class="fas fa-credit-card me-1"></i>
+                      {{ l?.methode_paiement }}
+                    </div>
+                    <div class="station-paiement" *ngIf="l?.station_paiement">
+                      <i class="fas fa-map-marker-alt me-1"></i>
+                      {{ l?.station_paiement }}
+                    </div>
+                    <div class="date-paiement" *ngIf="l?.date_paiement">
+                      <i class="fas fa-clock me-1"></i>
+                      {{ l?.date_paiement }}
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Actions -->
                 <td class="text-center" (click)="$event.stopPropagation()">
-                  <button class="action-btn btn btn-sm btn-primary" title="Payer">
-                    <i class="fas fa-credit-card me-1"></i> Payer
+                  <button class="action-btn action-pay" title="Effectuer paiement">
+                    <i class="fas fa-credit-card me-1"></i>
+                    Payer
                   </button>
                 </td>
               </tr>
@@ -158,7 +229,7 @@
     </div>
 
     <!-- Footer pagination -->
-    <div class="pagination-container d-flex align-items-center justify-content-between mt-2">
+    <div class="pagination-container">
       <div class="pagination-info">
         <small>
           Affichage de {{ total() ? (pageStart() + 1) : 0 }}

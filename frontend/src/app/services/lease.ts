@@ -30,7 +30,7 @@ export class LeaseService {
     this._isLoadingLeases.set(true);
     this._errorLeases.set(null);
 
-    this.http.get<Lease[]>(`${this.config.apiUrl}/leases/`)
+    this.http.get<Lease[]>(`${this.config.apiUrl}/lease/payments`)
       .pipe(
         tap((res) => this._leases.set(res)),
         catchError((err) => {

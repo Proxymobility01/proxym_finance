@@ -148,4 +148,19 @@ export class LeaseList implements OnInit {
     this.stationPaiement.set('');
     this.pageIndex.set(0);
   }
+
+  getStatusPaiementClass(statut: string | undefined): string {
+    if (!statut) return 'status-default';
+
+    const normalized = statut.toLowerCase().replace(/\s+/g, '-');
+    return `status-${normalized}`;
+  }
+
+  getStatusPenaliteClass(statut: string | undefined): string {
+    if (!statut) return 'penalite-default';
+
+    const normalized = statut.toLowerCase().replace(/\s+/g, '-');
+    return `penalite-${normalized}`;
+  }
+
 }

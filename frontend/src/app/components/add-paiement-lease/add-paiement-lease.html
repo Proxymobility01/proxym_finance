@@ -1,0 +1,107 @@
+<div class="modal-container">
+  <!-- Header -->
+  <div class="modal-header-blue">
+    <h4 class="modal-title">Enregistrement Paiement Lease</h4>
+    <button type="button" class="btn-close-white" (click)="close()">&times;</button>
+  </div>
+
+  <!-- Formulaire -->
+  <form [formGroup]="paiementForm" class="modal-content p-3">
+
+    <!-- Contrat -->
+    <div class="form-group mb-3">
+      <label class="form-label">Contrat <span class="required">*</span></label>
+      <select class="form-control"
+              formControlName="contrat_id"
+              [disabled]="isLoadingLeases()">
+        <option value="">-- Sélectionner un contrat --</option>
+        @for (c of contrats(); track c.id) {
+          <option [ngValue]="c.id">{{c.chauffeur || ('Contrat #' + c.id) }}</option>
+        }
+      </select>
+      @if (contratIdCtrl.touched && contratIdCtrl.invalid) {
+        <div class="error-message">Veuillez sélectionner un contrat.</div>
+      }
+    </div>
+
+    <!-- Montant Moto -->
+    <div class="form-group mb-3">
+      <label class="form-label">Montant Moto <span class="required">*</span></label>
+      <input type="number" formControlName="montant_moto" class="form-control"
+             placeholder="Montant moto">
+      @if (montantMotoCtrl.touched && montantMotoCtrl.invalid) {
+        <div class="error-message">Montant moto requis et > 0.</div>
+      }
+    </div>
+
+    <!-- Montant Batterie -->
+    <div class="form-group mb-3">
+      <label class="form-label">Montant Batterie <span class="required">*</span></label>
+      <input type="number" formControlName="montant_batterie" class="form-control"
+             placeholder="Montant batterie">
+      @if (montantBatterieCtrl.touched && montantBatterieCtrl.invalid) {
+        <div class="error-message">Montant batterie requis et > 0.</div>
+      }
+    </div>
+
+    <!-- Méthode de paiement -->
+    <div class="form-group mb-3">
+      <label class="form-label">Méthode de paiement <span class="required">*</span></label>
+      <select formControlName="methode_paiement" class="form-control">
+        <option value="">-- Sélectionner --</option>
+        <option value="espece">Espèces</option>
+        <option value="mobile_money">Mobile Money</option>
+        <option value="orange_money">Orange Money</option>
+        <option value="virement_bancaire">Virement bancaire</option>
+        <option value="cheque">Chèque</option>
+      </select>
+      @if (methodeCtrl.touched && methodeCtrl.invalid) {
+        <div class="error-message">Méthode de paiement obligatoire.</div>
+      }
+    </div>
+
+    <!-- Dates -->
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Date concernée <span class="required">*</span></label>
+        <input type="date" formControlName="date_concernee" class="form-control">
+        @if (dateConcerneeCtrl.touched && dateConcerneeCtrl.invalid) {
+          <div class="error-message">Date concernée obligatoire.</div>
+        }
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Date limite <span class="required">*</span></label>
+        <input type="date" formControlName="date_limite" class="form-control">
+        @if (dateLimiteCtrl.touched && dateLimiteCtrl.invalid) {
+          <div class="error-message">Date limite obligatoire.</div>
+        }
+      </div>
+    </div>
+
+    <!-- Référence transaction -->
+    <div class="form-group mb-3">
+      <label class="form-label">Référence transaction</label>
+      <input type="text" formControlName="reference_transaction" class="form-control"
+             placeholder="Référence optionnelle">
+    </div>
+
+    <!-- Erreurs backend -->
+    @if (submitError()) {
+      <div class="alert alert-danger">{{ submitError() }}</div>
+    }
+
+    <!-- Footer -->
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="close()" [disabled]="isSubmitting()">Annuler</button>
+      <button type="button" class="btn btn-primary"
+              (click)="submit()"
+              [disabled]="paiementForm.invalid || isSubmitting()">
+        @if (isSubmitting()) {
+          <span class="spinner-border spinner-border-sm me-1"></span>
+        }
+        {{ isSubmitting() ? 'Enregistrement...' : 'Enregistrer' }}
+      </button>
+    </div>
+  </form>
+</div>

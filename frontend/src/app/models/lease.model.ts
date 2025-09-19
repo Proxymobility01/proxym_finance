@@ -1,11 +1,12 @@
 export interface PaiementLeasePayload {
   id: number;
-  contrat_chauffeur_id: number;
+  contrat_id: number;
   methode_paiement: string;
   date_concernee: string;
   date_limite: string;
   montant_moto: string;
   montant_batterie: string;
+  reference_transaction: string;
 }
 
 export interface Lease{
