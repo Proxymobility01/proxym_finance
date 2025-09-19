@@ -82,8 +82,9 @@ class ContratChauffeur(TimeStampedModel):
     montant_par_paiement = models.DecimalField(max_digits=14, decimal_places=2, default=0)
 
     date_signature = models.DateField(null=True, blank=True)
-    date_enregistrement = models.DateField(null=True, blank=True)
     date_debut = models.DateField(null=True, blank=True)
+    date_concernee = models.DateTimeField()
+    date_limite = models.DateTimeField()
 
     # Use days as integer
     duree_jour = models.PositiveIntegerField(null=True, blank=True, help_text=_("Durée du contrat en jours"))

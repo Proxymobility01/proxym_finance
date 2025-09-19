@@ -151,7 +151,7 @@ export class CongeList implements OnInit {
       // Recherche
       let okSearch = true;
       if (q) {
-        const tit = this.normalize(c?.titulaire_contrat);
+        const tit = this.normalize(c?.chauffeur);
         const ref = this.normalize(c?.reference_contrat);
         okSearch = tit.includes(q) || ref.includes(q);
       }
@@ -236,7 +236,7 @@ export class CongeList implements OnInit {
       return d && !isNaN(+d) ? d.toLocaleDateString('fr-FR') : '';
     };
     return {
-      'Titulaire': c?.titulaire_contrat ?? '',
+      'Chauffeur': c?.chauffeur ?? '',
       'Référence contrat': c?.reference_contrat ?? '',
       'Statut': c?.statut ?? '',
       'Date début': fmt(c?.date_debut),

@@ -59,38 +59,56 @@
           }
         </div>
 
-        <!-- Date fin -->
+        <!-- Nombre de jours -->
         <div class="form-field-conge">
           <label class="field-label-conge">
-            Date de fin <span class="required-mark-conge">*</span>
+            Nombre de jours <span class="required-mark-conge">*</span>
           </label>
+          <input type="number"
+                 min="1"
+                 class="field-input-conge"
+                 formControlName="nb_jour"
+                 [class.input-error-conge]="nb_jour.invalid && nb_jour.touched">
+          @if (nb_jour.touched && nb_jour.invalid) {
+            <div class="field-error-conge">
+              @if (nb_jour.hasError('required')) { Le nombre de jours est obligatoire. }
+              @if (nb_jour.hasError('min')) { Le nombre de jours doit être ≥ 1. }
+            </div>
+          }
+        </div>
+
+        <!-- Date fin (calculée automatiquement) -->
+        <div class="form-field-conge">
+          <label class="field-label-conge">Date de fin</label>
           <input type="date"
                  class="field-input-conge"
                  formControlName="date_fin"
-                 [class.input-error-conge]="(date_fin.invalid && date_fin.touched) || form.hasError('dateRange')">
-          @if (date_fin.touched && date_fin.invalid) {
-            <div class="field-error-conge">
-              @if (date_fin.hasError('required')) { La date de fin est obligatoire. }
-            </div>
-          }
-          @if (form.hasError('dateRange')) {
-            <div class="field-error-conge">La date de fin doit être supérieure ou égale à la date de début.</div>
-          }
+                 >
         </div>
+
+        <!-- Date reprise (calculée automatiquement) -->
+        <div class="form-field-conge">
+          <label class="field-label-conge">Date de reprise</label>
+          <input type="date"
+                 class="field-input-conge"
+                 formControlName="date_reprise"
+                 >
+        </div>
+
 
         <!-- Motif (facultatif) - Span sur 2 colonnes -->
         <div class="form-field-conge form-field-full-conge">
           <label class="field-label-conge">Motif (facultatif)</label>
           <textarea class="field-textarea-conge"
-                    formControlName="motif"
+                    formControlName="motif_conge"
                     rows="3"
                     placeholder="Ex: Congé annuel, motif personnel…"
-                    [class.input-error-conge]="motif.touched && motif.invalid"></textarea>
-          @if (motif.touched && motif.invalid) {
+                    [class.input-error-conge]="motif_conge.touched && motif_conge.invalid"></textarea>
+          @if (motif_conge.touched && motif_conge.invalid) {
             <div class="field-error-conge">
-              @if (motif.hasError('maxlength')) { 500 caractères maximum. }
-              @else if (motif.hasError('pattern')) { Uniquement lettres, chiffres et ponctuation simple. }
-              @else if (motif.hasError('unsafeChars')) { Caractères < et > interdits. }
+              @if (motif_conge.hasError('maxlength')) { 500 caractères maximum. }
+              @else if (motif_conge.hasError('pattern')) { Uniquement lettres, chiffres et ponctuation simple. }
+              @else if (motif_conge.hasError('unsafeChars')) { Caractères < et > interdits. }
             </div>
           }
         </div>

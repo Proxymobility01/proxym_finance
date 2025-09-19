@@ -11,11 +11,11 @@ from shared.models import TimeStampedModel
 class PaiementLease(TimeStampedModel):
     reference_paiement = models.CharField(max_length=100,null=True,blank=True)
     montant_moto = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    montant_batt = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    montant_batt = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True)
     montant_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     date_paiement = models.DateField()
     methode_paiement = models.CharField(max_length=50)
-    reference_transaction = models.CharField(max_length=100, blank=True)
+    reference_transaction = models.CharField(max_length=100, blank=True, null=True)
     type_contrat = models.CharField(max_length=50)
 
     contrat_chauffeur = models.ForeignKey(
@@ -24,8 +24,8 @@ class PaiementLease(TimeStampedModel):
     date_concernee = models.DateTimeField()
     date_limite = models.DateTimeField()
     statut = models.CharField(max_length=50)
-    employe = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    user_agence = models.ForeignKey(Agences, on_delete=models.PROTECT, db_column='user_agence_id')
+    employe = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)
+    user_agence = models.ForeignKey(Agences, on_delete=models.PROTECT, db_column='user_agence_id',null=True)
 
 
     class Meta:

@@ -3,16 +3,20 @@ export interface CongePayload{
   contrat_id: number;
   date_debut: string;
   date_fin: string;
-  motif: string;
+  date_reprise:string
+  nb_jour: number;
+  motif_conge: string;
 }
 
 export interface Conge{
   id: number;
-  titulaire_contrat: string;
+  chauffeur: string;
   reference_contrat:string;
   statut: string;
   date_debut: string;
   date_fin: string;
+  date_reprise:string
+  nb_jour: number;
   motif: string;
 }
 

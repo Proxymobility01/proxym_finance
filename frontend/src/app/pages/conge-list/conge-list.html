@@ -101,7 +101,7 @@
       <table class="table custom-table table-hover mb-0">
         <thead>
         <tr>
-          <th class="text-center">Titulaire</th>
+          <th class="text-center">Chauffeur</th>
           <th class="text-center">Référence contrat</th>
           <th class="text-center">Statut</th>
           <th class="text-center">Date début</th>
@@ -144,7 +144,7 @@
               <tr class="conge-row">
                 <td class="text-center">
                   <div class="titulaire-info">
-                    <span class="titulaire-name" [innerHTML]="(c.titulaire_contrat) | highlight: query()"></span>
+                    <span class="titulaire-name" [innerHTML]="(c.chauffeur) | highlight: query()"></span>
                   </div>
                 </td>
                 <td class="text-center">
