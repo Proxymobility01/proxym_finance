@@ -14,18 +14,29 @@ class Agences(models.Model):
 
 class ValidatedUser(models.Model):
     id = models.BigAutoField(primary_key=True)
-    nom = models.CharField(max_length=255, blank=True,null=True)
-    prenom = models.CharField(max_length=255, blank=True,null=True)
+    user_unique_id = models.CharField(max_length=255, blank=True, null=True)  # 👈 ajouté
+    nom = models.CharField(max_length=255, blank=True, null=True)
+    prenom = models.CharField(max_length=255, blank=True, null=True)
+    phone = models.CharField(max_length=255, blank=True, null=True)
+    email = models.CharField(max_length=255, blank=True, null=True)
+
     class Meta:
         db_table = "validated_users"
         managed = False
 
 
+
 class MotoValide(models.Model):
     id = models.BigAutoField(primary_key=True)
+    moto_unique_id = models.CharField(max_length=255, blank=True, null=True) 
+    vin = models.CharField(max_length=255, blank=True, null=True) 
+    model = models.CharField(max_length=255, blank=True, null=True) 
+    gps_imei = models.CharField(max_length=255, blank=True, null=True) 
+
     class Meta:
-        db_table = "moto_valides"  # adjust if different
+        db_table = "motos_valides"  # 👈 attention au vrai nom de ta table
         managed = False
+
 
 
 
