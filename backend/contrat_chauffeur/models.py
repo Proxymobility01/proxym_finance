@@ -160,10 +160,10 @@ class ContratChauffeur(TimeStampedModel):
         if self.jour_conge_utilise > self.jour_conge_total:
             raise ValidationError(_("Les congés utilisés ne peuvent pas dépasser le total."))
         # Dates order
-        if self.date_signature and self.date_enregistrement and self.date_signature > self.date_enregistrement:
-            raise ValidationError(_("La date de signature doit précéder la date d'enregistrement."))
-        if self.date_enregistrement and self.date_debut and self.date_enregistrement > self.date_debut:
-            raise ValidationError(_("La date d'enregistrement doit précéder la date de début."))
+        if self.date_signature and self.date_debut and self.date_signature > self.date_debut:
+            raise ValidationError(_("La date de signature doit précéder la date de début."))
+        if self.created and self.date_debut and self.created.date() > self.date_debut:
+            raise ValidationError(_("La date de création doit précéder la date de début."))
         # AFTER — set midnight of the end day; make aware if USE_TZ
         if self.date_debut and self.duree_jour and not self.date_fin:
             end_date = self.date_debut + timedelta(days=int(self.duree_jour) - 1)
@@ -172,9 +172,6 @@ class ContratChauffeur(TimeStampedModel):
                 end_dt = timezone.make_aware(end_dt, timezone.get_current_timezone())
             self.date_fin = end_dt
 
-        # Compute date_fin from duree_jours if needed
-        if self.date_debut and self.duree_jour and not self.date_fin:
-            self.date_fin = self.date_debut + timedelta(days=int(self.duree_jour) - 1)
 
     def save(self, *args, **kwargs):
         # Autogen reference if missing
@@ -183,12 +180,11 @@ class ContratChauffeur(TimeStampedModel):
         # Compute derived fields
         self.montant_restant = max(self.montant_total - self.montant_paye, 0)
         self.jour_conge_restant = max(self.jour_conge_total - self.jour_conge_utilise, 0)
-        # Auto set date_enregistrement when moving to ACTIVE
-        if self.statut == StatutContrat.ENCOURS and not self.date_enregistrement:
-            self.date_enregistrement = date.today()
 
+        # plus besoin de gérer date_enregistrement → remplacé par created automatiquement
         self.full_clean()
         return super().save(*args, **kwargs)
+
 
     # ---- state transitions (domain guards) ----
     def can_activate(self) -> bool:

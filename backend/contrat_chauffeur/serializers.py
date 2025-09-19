@@ -274,6 +274,8 @@ class ContractDriverListSerializer(_DureeJourOutMixin):
             "contrat_batt",
             "garant",
             "regle_penalite",
+            "date_paiement_concerne", 
+            "date_limite_paiement", 
 
             "garant",
             "chauffeur",

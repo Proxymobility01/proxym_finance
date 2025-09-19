@@ -6,10 +6,8 @@ from contrat_chauffeur.models import ContratChauffeur
 from shared.models import TimeStampedModel
 
 
-# Create your models here.
-
 class PaiementLease(TimeStampedModel):
-    reference_paiement = models.CharField(max_length=100,null=True,blank=True)
+    reference_paiement = models.CharField(max_length=100, null=True, blank=True)
     montant_moto = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     montant_batt = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True)
     montant_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
@@ -24,13 +22,21 @@ class PaiementLease(TimeStampedModel):
     date_concernee = models.DateTimeField()
     date_limite = models.DateTimeField()
     statut = models.CharField(max_length=50)
-    employe = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)
-    user_agence = models.ForeignKey(Agences, on_delete=models.PROTECT, db_column='user_agence_id',null=True)
 
+    employe = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True
+    )
+    user_agence = models.ForeignKey(
+        Agences,
+        on_delete=models.PROTECT,
+        db_column='user_agence_id',
+        null=True, blank=True
+    )
 
     class Meta:
         db_table = "paiement_lease"
 
     def __str__(self):
-        return self.reference_paiement
-
+        return self.reference_paiement or f"PaiementLease #{self.pk}"
