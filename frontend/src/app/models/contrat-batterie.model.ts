@@ -2,7 +2,7 @@ export interface ContratBatteriesPayload{
   id: number;
   montant_total: number;
   montant_engage: number;
-  montant_caution: number;
+  montant_par_paiement: number;
   date_signature: string;
   date_debut: string;
   duree_jour:string;

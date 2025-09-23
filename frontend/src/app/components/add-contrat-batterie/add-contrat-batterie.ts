@@ -105,11 +105,13 @@ export class AddContratBatterie {
         Validators.maxLength(15),
         Validators.pattern(/^\d{0,3}([ ,]?\d{3})*(\.\d{1,2})?$/) // autorise vide
       ]),
-      montant_caution: new FormControl<string>('', [
+
+      montant_par_paiement: new FormControl<string>('', [
         Validators.required,
         Validators.maxLength(15),
         Validators.pattern(/^\d{1,3}([ ,]?\d{3})*(\.\d{1,2})?$/)
-      ]),
+        ]
+      ),
 
       // Dates
       date_signature:  new FormControl<string>('', [
@@ -143,7 +145,7 @@ export class AddContratBatterie {
   // Getters pratiques
   get total()   { return this.form.get('montant_total') as FormControl<string | null>; }
   get engage()  { return this.form.get('montant_engage') as FormControl<string | null>; }
-  get caution() { return this.form.get('montant_caution') as FormControl<string | null>; }
+  get mpp(){ return this.form.get('montant_par_paiement') as FormControl<string | null>; }
 
   get sig()     { return this.form.get('date_signature') as FormControl<string | null>; }
   get deb()     { return this.form.get('date_debut') as FormControl<string | null>; }
@@ -218,7 +220,7 @@ export class AddContratBatterie {
     // Normalisations
     const montant_total   = this.toNumberSafe(this.total.value ?? '');
     const montant_engage  = String(this.engage.value ?? '').trim() === '' ? 0 : this.toNumberSafe(this.engage.value!);
-    const montant_caution = this.toNumberSafe(this.caution.value ?? '');
+    const montant_par_paiement = this.toNumberSafe(this.mpp.value ?? '');
     const file = this.physBattCtrl.value;
 
     if (!file) {
@@ -230,7 +232,7 @@ export class AddContratBatterie {
     const fd = new FormData();
     fd.append('montant_total',   String(montant_total));
     fd.append('montant_engage',  String(montant_engage));
-    fd.append('montant_caution', String(montant_caution));
+    fd.append('montant_par_paiement', String(montant_par_paiement));
     fd.append('date_signature',  this.sig.value!);
     fd.append('date_debut',      this.deb.value!);
     fd.append('date_fin',        this.fin.value!);

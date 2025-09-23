@@ -1,4 +1,3 @@
-# conge/serializers.py
 from datetime import timedelta, datetime, time
 from django.utils import timezone
 from django.conf import settings
@@ -8,13 +7,13 @@ from rest_framework import serializers
 from contrat_chauffeur.models import ContratChauffeur
 from .models import Conge
 
+
 class StatutConge:
     ANNULE     = "annule"
     EN_ATTENTE = "en_attente"
     APPROUVE   = "approuve"
     TERMINE    = "termine"
     REJETE     = "rejete"
-    EN_COURS   = "en_cours"
 
     CHOICES = [
         (ANNULE, "Annulé"),
@@ -22,14 +21,12 @@ class StatutConge:
         (APPROUVE, "Approuvé"),
         (TERMINE, "Terminé"),
         (REJETE, "Rejeté"),
-        (EN_COURS, "En cours"),
     ]
 
 
 def _mk_dt(d):
     """Combine une date (YYYY-MM-DD) en DateTime à minuit, aware si USE_TZ."""
     if isinstance(d, str):
-        # 'YYYY-MM-DD' -> date
         y, m, day = map(int, d.split("-"))
         d = datetime(y, m, day).date()
     dt = datetime.combine(d, time.min)
@@ -38,43 +35,26 @@ def _mk_dt(d):
     return dt
 
 
-class CongeSerializer(serializers.ModelSerializer):
-    # FRONT envoie contrat_id -> mappe sur FK 'contrat'
-    contrat_id = serializers.PrimaryKeyRelatedField(
-        source="contrat",
-        queryset=ContratChauffeur.objects.all(),
-        write_only=True,
-        required=True,
-    )
-
-    # FRONT envoie nb_jour (singulier) -> mappe sur champ modèle nb_jours (pluriel)
-    nb_jour = serializers.IntegerField(source="nb_jours", write_only=True, required=True)
-
-    # Exposition lecture
-    nb_jours = serializers.IntegerField(read_only=True)
+class CongeBaseSerializer(serializers.ModelSerializer):
+    contrat_id_read = serializers.IntegerField(source="contrat.id", read_only=True)
     reference_contrat = serializers.CharField(source="contrat.reference_contrat", read_only=True)
     chauffeur = serializers.SerializerMethodField()
-
-    # On laisse le backend calculer ces champs
-    date_fin = serializers.DateTimeField(read_only=True)
-    date_reprise = serializers.DateTimeField(read_only=True)
 
     class Meta:
         model = Conge
         fields = [
             "id",
-            "contrat_id",          # écriture
+            "contrat_id_read",     # lecture
             "reference_contrat",   # lecture
             "chauffeur",           # lecture
-            "date_debut",          # écriture (YYYY-MM-DD ou ISO)
-            "date_fin",            # lecture (calculée)
-            "date_reprise",        # lecture (calculée)
-            "nb_jour",             # écriture (alias -> nb_jours)
-            "nb_jours",            # lecture
-            "motif_conge",         # si présent dans ton modèle
-            "statut",              # lecture
+            "date_debut",
+            "date_fin",
+            "date_reprise",
+            "nb_jour",
+            "motif_conge",
+            "statut",
         ]
-        read_only_fields = ("date_fin", "date_reprise", "nb_jours", "statut")
+        read_only_fields = ("date_fin", "date_reprise", "statut")
 
     def get_chauffeur(self, obj):
         assoc = getattr(obj.contrat, "association_user_moto", None)
@@ -83,60 +63,101 @@ class CongeSerializer(serializers.ModelSerializer):
         return None
 
     def validate(self, attrs):
-        """
-        On attend ici:
-          - attrs['contrat'] (via contrat_id)
-          - attrs['date_debut']
-          - attrs['nb_jours'] (via nb_jour)
-        On calcule date_fin = date_debut + (nb_jours - 1)
-                 date_reprise = date_fin + 1
-        """
-        contrat = attrs.get("contrat")
-        date_debut = attrs.get("date_debut")
-        nb_jours = attrs.get("nb_jours")
+        # Normalise date_debut
+        date_debut = attrs.get("date_debut") or getattr(self.instance, "date_debut", None)
+        nb_jour = attrs.get("nb_jour") or getattr(self.instance, "nb_jour", None)
 
-        errors = {}
-        if not contrat:
-            errors["contrat_id"] = "Ce champ est obligatoire."
-        if not date_debut:
-            errors["date_debut"] = "Ce champ est obligatoire."
-        if not nb_jours:
-            errors["nb_jour"] = "Ce champ est obligatoire."
-        if errors:
-            raise serializers.ValidationError(errors)
+        if date_debut and nb_jour:
+            debut_dt = _mk_dt(date_debut)
+            fin_dt = debut_dt + timedelta(days=int(nb_jour) - 1)
+            reprise_dt = fin_dt + timedelta(days=1)
 
-        # Normalise date_debut -> datetime
-        debut_dt = _mk_dt(date_debut)
-
-        # Calculs
-        fin_dt = debut_dt + timedelta(days=int(nb_jours) - 1)
-        reprise_dt = fin_dt + timedelta(days=1)
-
-        attrs["date_debut"] = debut_dt
-        attrs["date_fin"] = fin_dt
-        attrs["date_reprise"] = reprise_dt
+            attrs["date_debut"] = debut_dt
+            attrs["date_fin"] = fin_dt
+            attrs["date_reprise"] = reprise_dt
         return attrs
+
+class CongeCreateSerializer(CongeBaseSerializer):
+    contrat_id = serializers.PrimaryKeyRelatedField(
+        source="contrat",
+        queryset=ContratChauffeur.objects.all(),
+        write_only=True,
+        required=True
+    )
+
+    class Meta(CongeBaseSerializer.Meta):
+        fields = CongeBaseSerializer.Meta.fields + ["contrat_id"]
 
     @transaction.atomic
     def create(self, validated_data):
-        """
-        - Vérifie le nombre de jours restants
-        - Définit le statut EN_ATTENTE
-        - Crée le congé
-        - Met à jour les compteurs du contrat (utilisé/restant)
-        """
         contrat: ContratChauffeur = validated_data["contrat"]
-        nb_jours = int(validated_data["nb_jours"])
+        nb_jour = int(validated_data["nb_jour"])
 
-        if nb_jours > contrat.jour_conge_restant:
-            raise serializers.ValidationError({"nb_jour": "Pas assez de jours de congés restants."})
+        if nb_jour > contrat.jour_conge_restant:
+            raise serializers.ValidationError(
+                {"nb_jour": "Pas assez de jours de congés restants."}
+            )
 
         validated_data["statut"] = StatutConge.EN_ATTENTE
-        conge = super().create(validated_data)
+        return super().create(validated_data)
 
-        # Décrément/ incrément immédiat (si tu préfères le faire à l'approbation, déplace ce code ailleurs)
-        contrat.jour_conge_utilise += nb_jours
-        contrat.jour_conge_restant = max(contrat.jour_conge_total - contrat.jour_conge_utilise, 0)
-        contrat.save(update_fields=["jour_conge_utilise", "jour_conge_restant"])
 
-        return conge
+class CongeUpdateSerializer(CongeBaseSerializer):
+    # contrat_id optionnel → pas besoin de required=True
+    contrat_id = serializers.PrimaryKeyRelatedField(
+        source="contrat",
+        queryset=ContratChauffeur.objects.all(),
+        write_only=True,
+        required=False
+    )
+
+    class Meta(CongeBaseSerializer.Meta):
+        fields = CongeBaseSerializer.Meta.fields + ["contrat_id"]
+        read_only_fields = ("date_fin", "date_reprise")
+
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        old_statut = instance.statut
+        new_statut = validated_data.get("statut", instance.statut)
+
+        # 🔒 Règle 1 : impossible d’approuver un congé annulé/rejeté
+        if old_statut in [StatutConge.ANNULE, StatutConge.REJETE] and new_statut == StatutConge.APPROUVE:
+            raise serializers.ValidationError(
+                {"statut": "Impossible d’approuver un congé déjà annulé ou rejeté."}
+            )
+
+        # 🔒 Règle 2 : impossible de passer de ANNULÉ → REJETÉ ou REJETÉ → ANNULÉ
+        if (old_statut == StatutConge.ANNULE and new_statut == StatutConge.REJETE) or \
+                (old_statut == StatutConge.REJETE and new_statut == StatutConge.ANNULE):
+            raise serializers.ValidationError(
+                {"statut": "Impossible de changer un congé annulé en rejeté ou inversement."}
+            )
+
+        instance = super().update(instance, validated_data)
+
+        contrat: ContratChauffeur = instance.contrat
+        nb_jour = instance.nb_jour
+
+        # Cas 1 : approbation → consomme des jours
+        if old_statut != StatutConge.APPROUVE and new_statut == StatutConge.APPROUVE:
+            if nb_jour > contrat.jour_conge_restant:
+                raise serializers.ValidationError(
+                    {"nb_jour": "Pas assez de jours de congés restants."}
+                )
+            contrat.jour_conge_utilise += nb_jour
+            contrat.jour_conge_restant = max(
+                contrat.jour_conge_total - contrat.jour_conge_utilise, 0
+            )
+            contrat.save(update_fields=["jour_conge_utilise", "jour_conge_restant"])
+
+        # Cas 2 : annulation ou rejet d’un congé déjà approuvé → restitution
+        elif old_statut == StatutConge.APPROUVE and new_statut in [StatutConge.ANNULE, StatutConge.REJETE]:
+            contrat.jour_conge_utilise = max(contrat.jour_conge_utilise - nb_jour, 0)
+            contrat.jour_conge_restant = max(
+                contrat.jour_conge_total - contrat.jour_conge_utilise, 0
+            )
+            contrat.save(update_fields=["jour_conge_utilise", "jour_conge_restant"])
+
+        # Cas 3 : passage à "termine" → pas d’effet sur les jours
+
+        return instance

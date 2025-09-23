@@ -5,7 +5,14 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { NgClass } from '@angular/common';
 
 
-import {CongeDialogData, CongePayload, Mode, MOTIF_SAFE_REGEX} from '../../models/conge.model';
+import {
+  CongeCreatePayload,
+  CongeDialogData,
+  CongePayload,
+  CongeUpdatePayload,
+  Mode,
+  MOTIF_SAFE_REGEX
+} from '../../models/conge.model';
 import { ContratChauffeurService } from '../../services/contrat-chauffeur';
 import {CongeService} from '../../services/conge';
 
@@ -113,6 +120,7 @@ export class AddConge implements OnInit{
       Validators.pattern(MOTIF_SAFE_REGEX),
       this.noAngleBracketsValidator()
     ]),
+    statut: new FormControl<string>({ value: '', disabled: true })
   }, { updateOn: 'blur' });
 
 
@@ -123,6 +131,7 @@ export class AddConge implements OnInit{
   get motif_conge() { return this.form.get('motif_conge') as FormControl<string>; }
   get date_fin()     { return this.form.get('date_fin') as FormControl<string | null>; }
   get date_reprise() { return this.form.get('date_reprise') as FormControl<string | null>; }
+  get statut() { return this.form.get('statut') as FormControl<string | null>; }
 
   private computeDates(): { date_fin: string; date_reprise: string } | null {
     const debut = this.date_debut.value;
@@ -159,30 +168,50 @@ export class AddConge implements OnInit{
     this.contratService.fetchContratChauffeur();
 
     // Pré-remplir si édition
-    if (mode === 'edit' && data?.conge) {
+    const c = data?.conge ?? {};
+    if (mode === 'edit') {
       this.form.patchValue({
-        contrat_id:   data.conge.contrat_id ?? null,
-        date_debut:   data.conge.date_debut ?? '',
-        nb_jour:      data.conge.nb_jour ?? null,
-        motif_conge:  data.conge.motif_conge ?? ''
+        contrat_id:   c.contrat_id_read ?? null,
+        date_debut:   c.date_debut ? c.date_debut.substring(0, 10) : '',
+        nb_jour:      c.nb_jour !== undefined ? Number(c.nb_jour) : null,
+        motif_conge:  c.motif_conge ?? '',
       }, { emitEvent: false });
 
-      // On regénère date_fin & date_reprise d'après date_debut + nb_jour
-      this.recomputeDates();
-      // Désactiver le select contrat en édition
+      this.date_fin.setValue(c.date_fin ? c.date_fin.substring(0, 10) : '', { emitEvent: false });
+      this.date_reprise.setValue(c.date_reprise ? c.date_reprise.substring(0, 10) : '', { emitEvent: false });
+      this.statut.setValue(c.statut ?? 'en_attente', { emitEvent: false });
+
       this.contrat_id.disable({ emitEvent: false });
+      this.statut.enable({ emitEvent: false });
     }
+
+
   }
 
   // Construction payload (toujours JSON)
-  private buildPayload(): Omit<CongePayload, 'id'> {
+  // --- builders dédiés
+  private buildCreatePayload(): CongeCreatePayload {
     return {
       contrat_id: Number(this.contrat_id.value),
       date_debut: String(this.date_debut.value),
-      nb_jour:    Number(this.nb_jour.value),
-      date_fin:   String(this.date_fin.value),
+      date_fin: String(this.date_fin.value),
       date_reprise: String(this.date_reprise.value),
-      motif_conge: String(this.motif_conge.value ?? '').trim()
+      nb_jour: Number(this.nb_jour.value),
+      motif_conge: String(this.motif_conge.value ?? '').trim(),
+    };
+  }
+
+  private buildUpdatePayload(): CongeUpdatePayload {
+    return {
+      // si tu veux permettre la MAJ d’autres champs, garde-les
+      // sinon tu peux envoyer uniquement { statut: this.statut.value! }
+      statut: (this.statut.value ?? 'en_attente') as any,
+      // Exemple si tu veux autoriser ces 3 aussi en edit (sinon retire-les) :
+      date_debut: String(this.date_debut.value),
+      date_fin: String(this.date_fin.value),
+      date_reprise: String(this.date_reprise.value),
+      nb_jour: Number(this.nb_jour.value),
+      motif_conge: String(this.motif_conge.value ?? '').trim(),
     };
   }
 
@@ -194,19 +223,16 @@ export class AddConge implements OnInit{
       return;
     }
 
-    const payload = this.buildPayload();
-
     if (this.mode() === 'create') {
-      this.congeService.registerConge(payload, (res) => this.dialogRef.close(res));
+      const payload = this.buildCreatePayload();
+      this.congeService.registerConge(payload, res => this.dialogRef.close(res));
     } else {
       const id = this.data?.id;
-      if (!id) {
-        console.error('ID manquant pour la mise à jour du congé');
-        return;
-      }
-      // En édition: ne pas envoyer contrat_id si le champ est disabled (protège contre une modif côté client)
-      const { contrat_id, ...rest } = payload;
-      this.congeService.updateConge(id, rest, (res) => this.dialogRef.close(res));
+      if (!id) { console.error('ID manquant pour la mise à jour du congé'); return; }
+
+      const payload = this.buildUpdatePayload();
+      // si le contrat ne doit *pas* changer en edit, ne l'inclus pas dans payload
+      this.congeService.updateConge(id, payload, res => this.dialogRef.close(res));
     }
   }
 

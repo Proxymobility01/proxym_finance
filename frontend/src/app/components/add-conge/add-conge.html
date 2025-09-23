@@ -95,6 +95,24 @@
                  >
         </div>
 
+        <!-- Statut (uniquement en édition) -->
+        @if (mode() === 'edit') {
+          <div class="form-field-conge">
+            <label class="field-label-conge">
+              Statut <span class="required-mark-conge">*</span>
+            </label>
+            <select class="field-select-conge"
+                    formControlName="statut"
+                    [class.input-error-conge]="statut.invalid && statut.touched">
+              <option [ngValue]="null" disabled>— Sélectionner —</option>
+              <option value="en_attente">En attente</option>
+              <option value="approuve">Approuvé</option>
+              <option value="rejete">Rejeté</option>
+              <option value="annule">Annulé</option>
+              <option value="termine">Terminé</option>
+            </select>
+          </div>
+        }
 
         <!-- Motif (facultatif) - Span sur 2 colonnes -->
         <div class="form-field-conge form-field-full-conge">

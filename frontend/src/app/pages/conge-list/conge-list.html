@@ -41,10 +41,9 @@
                   (ngModelChange)="statut.set($event)">
             <option value="">Tous</option>
             <option value="annule">Annulé</option>
-            <option value="en attente">En attente</option>
+            <option value="en_attente">En attente</option>
             <option value="approuve">Approuvé</option>
             <option value="rejette">Rejeté</option>
-            <option value="en cours">En cours</option>
             <option value="termine">Terminé</option>
           </select>
         </div>
@@ -106,6 +105,7 @@
           <th class="text-center">Statut</th>
           <th class="text-center">Date début</th>
           <th class="text-center">Date fin</th>
+          <th class="text-center">Date reprise</th>
           <th class="text-center">Nb jours</th>
           <th class="text-center">Actions</th>
         </tr>
@@ -154,9 +154,8 @@
                   <span class="status-badge"
                         [class]="
                           (c.statut === 'approuve') ? 'status-approve' :
-                          (c.statut === 'en cours') ? 'status-progress' :
-                          (c.statut === 'en attente') ? 'status-pending' :
-                          (c.statut === 'rejette') ? 'status-reject' :
+                          (c.statut === 'en_attente') ? 'status-pending' :
+                          (c.statut === 'rejete') ? 'status-reject' :
                           (c.statut === 'annule') ? 'status-cancel' :
                           (c.statut === 'termine') ? 'status-done' : 'status-default'
                         ">
@@ -176,12 +175,15 @@
                   </div>
                 </td>
                 <td class="text-center">
+                  <div class="date-info">
+                    <i class="fas fa-calendar-check me-1"></i>
+                    {{ c.date_reprise | date:'dd/MM/yyyy' }}
+                  </div>
+                </td>
+                <td class="text-center">
                   <span class="days-count">{{ countDays(c) }} jour(s)</span>
                 </td>
                 <td class="text-center" (click)="$event.stopPropagation()">
-                  <button class="action-btn me-1" title="Détails">
-                    <i class="fas fa-info-circle"></i>
-                  </button>
                   <button class="action-btn" title="Modifier" (click)="openCongeEditDialog(c)">
                     <i class="fas fa-edit"></i>
                   </button>

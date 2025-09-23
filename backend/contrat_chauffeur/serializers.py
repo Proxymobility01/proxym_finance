@@ -78,7 +78,7 @@ class ContractBatteryListSerializer(serializers.ModelSerializer):
             "montant_total", "montant_paye", "montant_restant",
             "date_signature", "date_debut", "date_fin","proprietaire",
             "duree_jour",
-            "statut", "montant_engage", "montant_caution",
+            "statut", "montant_engage",
             "contrat_physique_batt",
             "created", "updated",
         ]
@@ -97,7 +97,7 @@ class ContractBatteryCreateSerializer(serializers.ModelSerializer):
             "reference_contrat",
             "montant_total", "montant_paye", "montant_restant",
             "date_signature", "date_debut", "date_fin",
-            "statut", "montant_engage", "montant_caution",
+            "statut", "montant_engage","montant_par_paiement",
             "contrat_physique_batt",
         ]
         read_only_fields = ("duree_jour",)
@@ -254,6 +254,8 @@ class ContractDriverListSerializer(_DureeJourOutMixin):
     garant = serializers.SerializerMethodField()
     chauffeur = serializers.SerializerMethodField()
     reference_contrat_batt = serializers.SerializerMethodField()
+    montant_par_paiement_batt = serializers.SerializerMethodField()
+    montant_engage_batt = serializers.SerializerMethodField()
     class Meta:
         model = ContratChauffeur
 
@@ -261,6 +263,8 @@ class ContractDriverListSerializer(_DureeJourOutMixin):
             "id", "reference_contrat",
             "montant_total", "montant_paye", "montant_restant",
              "montant_par_paiement",
+            "montant_par_paiement_batt",
+            "montant_engage_batt",
             "date_signature", "date_debut", "date_fin",
             "duree_jour",
             "statut", "montant_engage",
@@ -274,8 +278,8 @@ class ContractDriverListSerializer(_DureeJourOutMixin):
             "contrat_batt",
             "garant",
             "regle_penalite",
-
-
+            "date_concernee",
+            "date_limite",
             "garant",
             "chauffeur",
             "reference_contrat_batt",
@@ -296,6 +300,17 @@ class ContractDriverListSerializer(_DureeJourOutMixin):
     def get_reference_contrat_batt(self, obj):
         if obj.contrat_batt:
             return obj.contrat_batt.reference_contrat
+        return None
+
+    def get_montant_par_paiement_batt(self, obj):
+        """Retourne le montant par paiement de la batterie liée"""
+        if obj.contrat_batt:
+            return obj.contrat_batt.montant_par_paiement
+        return None
+
+    def get_montant_engage_batt(self, obj):
+        if obj.contrat_batt:
+            return obj.contrat_batt.montant_engage
         return None
 
 class ContractDriverDetailSerializer(ContractDriverListSerializer):

@@ -1,7 +1,7 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { API_CONFIG, ApiConfig } from '../core/api-config.token';
-import { Conge, CongePayload } from '../models/conge.model';
+import {Conge, CongeCreatePayload, CongePayload, CongeUpdatePayload} from '../models/conge.model';
 import { catchError, finalize, of, tap } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
@@ -39,7 +39,7 @@ export class CongeService {
   }
 
   // ---- CREATE (JSON body)
-  registerConge(payload: Omit<CongePayload, 'id'>, onSuccess?: (res: Conge) => void) {
+  registerConge(payload: CongeCreatePayload, onSuccess?: (res: Conge) => void) {
     this._isCongeSubmitting.set(true);
     this._isCongeSubmitError.set(null);
 
@@ -69,12 +69,14 @@ export class CongeService {
   }
 
   // ---- UPDATE (JSON body)  -> PATCH conseillé si partiel, PUT si complet
-  updateConge(id: number, payload: Partial<CongePayload>, onSuccess?: (res: Conge) => void) {
+  updateConge(id: number, payload: CongeUpdatePayload, onSuccess?: (res: Conge) => void) {
     this._isCongeSubmitting.set(true);
     this._isCongeSubmitError.set(null);
 
-    // PATCH si tu envoies seulement les champs modifiés
-    this.http.patch<Conge>(`${this.config.apiUrl}/conges/${id}/`, payload)
+    // ⚠️ Ne jamais envoyer `contrat_id` en update
+    const { contrat_id, ...safePayload } = payload as any;
+
+    this.http.patch<Conge>(`${this.config.apiUrl}/conges/${id}/`, safePayload)
       .pipe(
         tap(res => {
           const current = this._conges();
@@ -100,22 +102,5 @@ export class CongeService {
       .subscribe();
   }
 
-  // ---- DELETE (utile dans la liste)
-  deleteConge(id: number, onSuccess?: () => void) {
-    this.http.delete(`${this.config.apiUrl}/conges/${id}/`)
-      .pipe(
-        tap(() => {
-          const current = this._conges();
-          this._conges.set(current.filter(c => c.id !== id));
-          onSuccess?.();
-        }),
-        catchError(err => {
-          const msg = err?.error?.detail ?? 'Erreur lors de la suppression du congé.';
-          this._isCongeSubmitError.set(msg);
-          console.error('[CONGE DELETE ERROR]:', err);
-          return of(null);
-        }),
-      )
-      .subscribe();
-  }
+
 }

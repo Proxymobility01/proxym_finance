@@ -29,8 +29,8 @@ class ContratBatterie(TimeStampedModel):
     date_fin = models.DateField(null=True, blank=True)
     statut = models.CharField(max_length=50, null=True, blank=True, default=StatutContrat.ENCOURS)
     contrat_physique_batt =models.CharField(max_length=255, blank=True,null=True)
+    montant_par_paiement = models.DecimalField(max_digits=14, decimal_places=2, default=0)
     montant_engage = models.DecimalField(max_digits=14, decimal_places=2, blank=True, null=True)
-    montant_caution = models.DecimalField(max_digits=14, decimal_places=2)
     proprietaire = models.CharField(max_length=255, blank=True,null=True)
     class Meta:
         db_table = "contrat_batterie"

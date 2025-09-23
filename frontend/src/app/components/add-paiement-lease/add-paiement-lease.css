@@ -1,0 +1,335 @@
+/* Modal Container - Version Compacte */
+.modal-container-paiement {
+  background-color: var(--card-bg);
+  border-radius: 8px; /* Réduit de 10px */
+  box-shadow: var(--shadow);
+  max-height: 80vh; /* Réduit de 85vh */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-family-body), sans-serif;
+  width: 100%;
+  max-width: 550px; /* Réduit de 650px */
+  box-sizing: border-box;
+}
+
+/* Modal Header - Plus compact */
+.modal-header-paiement {
+  background: linear-gradient(135deg, var(--text-color), var(--text-secondary));
+  color: var(--bg-color);
+  padding: 0.75rem 1rem; /* Réduit de 1rem 1.5rem */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 8px 8px 0 0;
+}
+
+.modal-title-paiement {
+  font-family: var(--font-Orbitron), sans-serif;
+  font-weight: 600;
+  font-size: 1rem; /* Réduit de 1.1rem */
+  margin: 0;
+  display: flex;
+  align-items: center;
+}
+
+.btn-close-paiement {
+  background: none;
+  border: none;
+  color: var(--bg-color);
+  font-size: 1.1rem; /* Réduit de 1.2rem */
+  cursor: pointer;
+  padding: 0.25rem; /* Réduit de 0.3rem */
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  opacity: 0.8;
+}
+
+.btn-close-paiement:hover {
+  opacity: 1;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Modal Content - Plus compact */
+.modal-content-paiement {
+  padding: 1rem; /* Réduit de 1.5rem */
+  overflow-y: auto;
+  flex: 1;
+  background-color: var(--bg-color);
+}
+
+/* Submit Error - Plus compact */
+.submit-error-paiement {
+  background-color: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+  padding: 0.5rem 0.75rem; /* Réduit de 0.75rem 1rem */
+  border-radius: 4px; /* Réduit de 6px */
+  border-left: 3px solid #dc3545;
+  margin-bottom: 1rem; /* Réduit de 1.5rem */
+  font-size: 0.8rem; /* Réduit de 0.85rem */
+  display: flex;
+  align-items: center;
+}
+
+/* Form Sections - Plus compactes */
+.form-section-paiement {
+  margin-bottom: 1rem; /* Réduit de 1.5rem */
+  padding: 0.75rem; /* Réduit de 1rem */
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px; /* Réduit de 8px */
+}
+
+.section-label-paiement {
+  font-weight: 600; /* Réduit de 700 */
+  color: var(--text-color);
+  margin-bottom: 0.75rem; /* Réduit de 1rem */
+  padding-bottom: 0.25rem; /* Réduit de 0.3rem */
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.85rem; /* Réduit de 0.9rem */
+  text-transform: uppercase;
+  letter-spacing: 0.3px; /* Réduit de 0.5px */
+}
+
+/* Form Grids - Espacement réduit */
+.form-grid-1-paiement {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem; /* Réduit de 1rem */
+}
+
+.form-grid-2-paiement {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem; /* Réduit de 1rem */
+}
+
+/* Form Fields - Plus compacts */
+.form-field-paiement {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.field-label-paiement {
+  font-weight: 500; /* Réduit de 600 */
+  color: var(--text-color);
+  margin-bottom: 0.3rem; /* Réduit de 0.4rem */
+  font-size: 0.75rem; /* Réduit de 0.8rem */
+  display: flex;
+  align-items: center;
+}
+
+.required-mark-paiement {
+  color: #dc3545;
+  margin-left: 0.2rem;
+}
+
+/* Form Inputs & Selects - Plus compacts */
+.field-input-paiement, .field-select-paiement {
+  padding: 0.4rem 0.6rem; /* Réduit de 0.5rem 0.75rem */
+  border: 1px solid var(--border-color);
+  border-radius: 4px; /* Réduit de 6px */
+  font-size: 0.8rem; /* Réduit de 0.85rem */
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: all 0.3s ease;
+  font-family: var(--font-family-body), sans-serif;
+  height: 2rem; /* Réduit de 2.2rem */
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.field-input-paiement:focus, .field-select-paiement:focus {
+  outline: none;
+  border-color: var(--text-secondary);
+  box-shadow: 0 0 0 0.1rem rgba(102, 102, 102, 0.15); /* Réduit */
+}
+
+.field-input-paiement:hover, .field-select-paiement:hover {
+  border-color: var(--text-secondary);
+}
+
+.field-input-paiement:disabled, .field-select-paiement:disabled {
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.field-input-paiement.input-error-paiement, .field-select-paiement.input-error-paiement {
+  border-color: #dc3545;
+  background-color: rgba(220, 53, 69, 0.05);
+}
+
+/* Currency Input - Plus compact */
+.input-currency-paiement {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.currency-suffix-paiement {
+  position: absolute;
+  right: 0.6rem; /* Réduit de 0.75rem */
+  color: var(--text-secondary);
+  font-size: 0.7rem; /* Réduit de 0.75rem */
+  font-weight: 500; /* Réduit de 600 */
+  background-color: var(--bg-color);
+  padding: 0 0.15rem; /* Réduit */
+  pointer-events: none;
+  z-index: 1;
+}
+
+.input-currency-paiement .field-input-paiement {
+  padding-right: 3rem; /* Réduit de 3.5rem */
+  width: 100%;
+}
+
+/* Error Messages - Plus compacts */
+.field-error-paiement {
+  color: #dc3545;
+  font-size: 0.65rem; /* Réduit de 0.7rem */
+  margin-top: 0.15rem; /* Réduit de 0.2rem */
+  padding: 0.15rem 0.3rem; /* Réduit */
+  background-color: rgba(220, 53, 69, 0.1);
+  border-radius: 3px;
+  border-left: 2px solid #dc3545;
+}
+
+/* Modal Footer - Plus compact */
+.modal-footer-paiement {
+  padding: 0.75rem 1rem; /* Réduit de 1rem 1.5rem */
+  background-color: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem; /* Réduit de 0.75rem */
+  border-radius: 0 0 8px 8px;
+}
+
+/* Buttons - Plus compacts */
+.btn-cancel-paiement {
+  padding: 0.4rem 0.8rem; /* Réduit de 0.5rem 1rem */
+  background-color: var(--bg-color);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px; /* Réduit de 6px */
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  font-size: 0.8rem; /* Réduit de 0.85rem */
+}
+
+.btn-cancel-paiement:hover:not(:disabled) {
+  background-color: var(--bg-secondary);
+  border-color: var(--text-secondary);
+  color: var(--text-color);
+}
+
+.btn-cancel-paiement:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-save-paiement {
+  padding: 0.4rem 0.8rem; /* Réduit de 0.5rem 1rem */
+  background-color: var(--text-color);
+  color: var(--bg-color);
+  border: none;
+  border-radius: 4px; /* Réduit de 6px */
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  font-size: 0.8rem; /* Réduit de 0.85rem */
+}
+
+.btn-save-paiement:hover:not(:disabled) {
+  background-color: var(--text-secondary);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-save-paiement:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Spinner - Plus petit */
+.spinner-border-sm {
+  width: 0.75rem; /* Réduit de 0.875rem */
+  height: 0.75rem;
+  border-width: 0.1em; /* Réduit de 0.125em */
+}
+
+/* Responsive Design - Optimisé */
+@media (max-width: 768px) {
+  .modal-container-paiement {
+    margin: 0.5rem;
+    max-height: 85vh;
+    max-width: none;
+  }
+
+  .modal-header-paiement,
+  .modal-content-paiement,
+  .modal-footer-paiement {
+    padding: 0.75rem; /* Réduit de 1rem */
+  }
+
+  .modal-title-paiement {
+    font-size: 0.95rem; /* Réduit de 1rem */
+  }
+
+  .form-grid-2-paiement {
+    grid-template-columns: 1fr;
+    gap: 0.5rem; /* Réduit */
+  }
+
+  .form-section-paiement {
+    padding: 0.5rem; /* Réduit */
+    margin-bottom: 0.75rem; /* Réduit */
+  }
+
+  .modal-footer-paiement {
+    flex-direction: column-reverse;
+    gap: 0.5rem;
+  }
+
+  .btn-cancel-paiement,
+  .btn-save-paiement {
+    width: 100%;
+    justify-content: center;
+    padding: 0.5rem; /* Légèrement augmenté pour mobile */
+  }
+}
+
+@media (max-width: 480px) {
+  .section-label-paiement {
+    font-size: 0.75rem; /* Réduit */
+  }
+
+  .field-label-paiement {
+    font-size: 0.7rem; /* Réduit */
+  }
+
+  .field-input-paiement,
+  .field-select-paiement {
+    font-size: 0.75rem; /* Réduit */
+    height: 1.8rem; /* Réduit pour très petits écrans */
+  }
+
+  .modal-title-paiement {
+    font-size: 0.9rem; /* Réduit */
+  }
+}

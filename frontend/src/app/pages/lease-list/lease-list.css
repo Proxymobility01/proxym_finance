@@ -112,17 +112,18 @@
   color: var(--text-color);
   font-weight: 700;
   font-size: 0.9rem;
-  padding: 1rem 0.75rem;
+  padding: 0.75rem 0.5rem;
   border: none;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .custom-table tbody td {
-  padding: 1rem 0.75rem;
+  padding: 0.4rem 0.5rem;
   border-bottom: 1px solid var(--border-color);
-  font-size: 0.9rem;
-  vertical-align: middle;
+  font-size: 0.85rem;
+  vertical-align: top;
+  line-height: 1.2;
 }
 
 .lease-row {
@@ -134,105 +135,82 @@
   background-color: var(--bg-secondary);
 }
 
-/* Lease Specific Styles */
-.chauffeur-info {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.2rem;
-}
-
-.chauffeur-id {
+/* ID Lease */
+.lease-id {
   background-color: var(--primary-light);
   color: var(--text-color);
-  padding: 0.2rem 0.5rem;
-  border-radius: 12px;
+  padding: 0.2rem 0.4rem;
+  border-radius: 8px;
   font-size: 0.75rem;
   font-weight: 700;
   border: 1px solid var(--primary-color);
 }
 
-.chauffeur-name {
-  font-weight: 600;
-  color: var(--text-color);
-  font-size: 0.85rem;
-}
-
-.moto-info {
+/* Style pour les lignes d'informations compactes */
+.info-row {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.2rem;
-}
-
-.moto-id {
-  background-color: var(--bg-secondary);
-  color: var(--text-color);
-  padding: 0.2rem 0.5rem;
-  border-radius: 8px;
+  align-items: flex-start;
+  justify-content: flex-start;
+  text-align: left;
   font-size: 0.75rem;
-  font-weight: 600;
-  border: 1px solid var(--border-color);
+  line-height: 1.2;
+  margin-bottom: 0.15rem;
+  gap: 0.25rem;
 }
 
-.moto-vin {
-  font-family: monospace;
-  color: var(--text-secondary);
-  font-size: 0.75rem;
+.info-row:last-child {
+  margin-bottom: 0;
 }
 
-.dates-info {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.3rem;
-}
-
-.date-concernee {
-  display: flex;
-  align-items: center;
-  font-weight: 500;
+.info-row strong {
   color: var(--text-color);
-  font-size: 0.8rem;
-}
-
-.date-concernee i {
-  color: var(--primary-color);
-}
-
-.date-limite {
-  display: flex;
-  align-items: center;
-  font-weight: 500;
-  color: #dc3545;
-  font-size: 0.8rem;
-}
-
-.date-limite i {
-  color: #dc3545;
-}
-
-.status-group {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.3rem;
-}
-
-.status-badge {
-  padding: 0.3rem 0.6rem;
-  border-radius: 15px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
+  font-weight: 700;
+  min-width: fit-content;
   white-space: nowrap;
 }
 
-.status-paiement {
-  border: 1px solid;
+/* Ajustements pour les groupes d'informations */
+.chauffeur-info,
+.moto-info,
+.montants-info,
+.dates-info,
+.payment-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  align-items: center;
 }
 
-.status-penalite {
+/* Style spécial pour les statuts */
+.status-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  align-items: flex-start;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  line-height: 1.2;
+}
+
+.status-item strong {
+  color: var(--text-color);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.status-badge {
+  padding: 0.15rem 0.4rem;
+  border-radius: 12px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  white-space: nowrap;
   border: 1px solid;
 }
 
@@ -292,42 +270,16 @@
   border-color: var(--border-color);
 }
 
-.payment-info {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.2rem;
-  font-size: 0.8rem;
-}
-
-.paye-par, .station-paiement, .date-paiement {
-  display: flex;
-  align-items: center;
-  color: var(--text-color);
-}
-
-.paye-par i {
-  color: var(--primary-color);
-}
-
-.station-paiement i {
-  color: #17a2b8;
-}
-
-.date-paiement i {
-  color: var(--text-secondary);
-}
-
 /* Action Button */
 .action-pay {
   background-color: var(--primary-color);
   border: 1px solid var(--primary-color);
   color: var(--text-color);
-  padding: 0.5rem 1rem;
+  padding: 0.3rem 0.6rem;
   border-radius: 6px;
   font-weight: 600;
   transition: all 0.3s ease;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
 }
 
 .action-pay:hover {
@@ -441,7 +393,7 @@
   }
 
   .table-responsive {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
   }
 
   .pagination-container {
@@ -450,59 +402,60 @@
   }
 
   .custom-table tbody td {
-    padding: 0.75rem 0.5rem;
+    padding: 0.3rem 0.25rem;
   }
 
-  .chauffeur-info,
-  .moto-info,
-  .dates-info,
-  .status-group,
-  .payment-info {
-    gap: 0.1rem;
+  .custom-table thead th {
+    padding: 0.5rem 0.25rem;
+    font-size: 0.8rem;
+  }
+
+  .info-row {
+    font-size: 0.7rem;
+    margin-bottom: 0.1rem;
+    gap: 0.2rem;
+  }
+
+  .status-item {
+    font-size: 0.7rem;
   }
 
   .status-badge {
-    font-size: 0.65rem;
-    padding: 0.2rem 0.4rem;
+    font-size: 0.6rem;
+    padding: 0.1rem 0.3rem;
   }
 
   .action-pay {
-    padding: 0.4rem 0.8rem;
-    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+  }
+
+  .lease-id {
+    font-size: 0.65rem;
+    padding: 0.15rem 0.3rem;
   }
 }
 
 @media (max-width: 480px) {
   .custom-table thead th {
-    font-size: 0.75rem;
-    padding: 0.75rem 0.3rem;
+    font-size: 0.7rem;
+    padding: 0.4rem 0.2rem;
   }
 
   .custom-table tbody td {
-    padding: 0.5rem 0.3rem;
+    padding: 0.25rem 0.2rem;
   }
 
-  .chauffeur-id,
-  .moto-id {
+  .info-row {
     font-size: 0.65rem;
-    padding: 0.1rem 0.3rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
   }
 
-  .chauffeur-name {
-    font-size: 0.75rem;
-  }
-
-  .moto-vin {
-    font-size: 0.65rem;
-  }
-
-  .date-concernee,
-  .date-limite {
-    font-size: 0.7rem;
-  }
-
-  .date-concernee i,
-  .date-limite i {
-    display: none;
+  .status-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.1rem;
   }
 }

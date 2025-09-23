@@ -2,17 +2,17 @@ export interface PaiementLeasePayload {
   id: number;
   contrat_id: number;
   methode_paiement: string;
-  date_concernee: string;
-  date_limite: string;
+  date_paiement_concerne: string;
+  date_limite_paiement: string;
   montant_moto: string;
-  montant_batterie: string;
+  montant_batt: string;
   reference_transaction: string;
 }
 
 export interface Lease{
   id: number;
   chauffeur_unique_id: string;
-  chauffeur_nom: string;
+  chauffeur: string;
   moto_unique_id: string;
   moto_vin:string;
   montant_moto: string;
@@ -25,4 +25,11 @@ export interface Lease{
   statut_penalite:string;
   paye_par:string;
   date_paiement:string;
+}
+
+export interface LeaseApiResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: any[];
 }

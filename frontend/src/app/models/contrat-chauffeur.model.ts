@@ -5,11 +5,17 @@ export interface ContratChauffeur{
   chauffeur: string
   garant: string;
   reference_contrat_batt:string;
+  montant_engage: string;
+  montant_par_paiement: string;
+  montant_par_paiement_batt: string;
+  montant_engage_batt: string;
   date_signature: string;
   montant_total: number;
   montant_restant: number;
   montant_paye: number;
   statut: string;
+  date_concernee: string;
+  date_limite: string;
 }
 
 export interface ContratChauffeurPayload{

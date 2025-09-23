@@ -9,7 +9,6 @@ class StatutConge(models.TextChoices):
     APPROUVE  = "approuve", _("Approuvé")
     TERMINE   = "termine", _("Terminé")
     REJETE    = "rejete", _("Rejeté")
-    EN_COURS  = "en_cours", _("En cours")
 # Create your models here.
 
 class Conge(TimeStampedModel):
@@ -19,7 +18,7 @@ class Conge(TimeStampedModel):
     date_debut = models.DateTimeField(null=True)
     date_fin = models.DateTimeField(null=True)
     date_reprise = models.DateTimeField(null=True)
-    nb_jours = models.IntegerField(default=0)
+    nb_jour = models.IntegerField(default=0)
     statut = models.CharField(max_length=50,choices=StatutConge.choices,
         default=StatutConge.EN_ATTENTE )
     motif_conge = models.CharField(max_length=500,null=True, blank=True)

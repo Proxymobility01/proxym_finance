@@ -1,8 +1,8 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { API_CONFIG, ApiConfig } from '../core/api-config.token';
-import {Lease, PaiementLeasePayload} from '../models/lease.model';
-import { catchError, finalize, of, tap } from 'rxjs';
+import {Lease, LeaseApiResponse, PaiementLeasePayload} from '../models/lease.model';
+import {catchError, finalize, map, of, tap} from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -30,11 +30,31 @@ export class LeaseService {
     this._isLoadingLeases.set(true);
     this._errorLeases.set(null);
 
-    this.http.get<Lease[]>(`${this.config.apiUrl}/lease/payments`)
+    this.http.get<LeaseApiResponse>(`${this.config.apiUrl}/lease/payments`)
       .pipe(
-        tap((res) => this._leases.set(res)),
+        map((res) =>
+          (res.results || []).map((item: any): Lease => ({
+            id: item.id,
+            chauffeur_unique_id: item.chauffeur?.user_unique_id ?? '',
+            chauffeur: `${item.chauffeur?.nom ?? ''} ${item.chauffeur?.prenom ?? ''}`.trim(),
+            moto_unique_id: item.moto?.moto_unique_id ?? '',
+            moto_vin: item.moto?.vin ?? '',
+            montant_moto: item.montant_moto,
+            montant_batterie: item.montant_batt,
+            date_concernee: item.date_concernee,
+            date_limite: item.date_limite,
+            methode_paiement: item.methode_paiement,
+            station_paiement: item.user_agence ?? 'N/A',
+            statut_paiement: item.statut ?? 'INCONNU',
+            statut_penalite: item.statut_penalite ?? 'N/A',
+            paye_par: item.employe ?? 'N/A',
+            date_paiement: item.date_paiement ?? '',
+          }))
+        ),
+        tap((leases) => this._leases.set(leases)),
         catchError((err) => {
-          this._errorLeases.set(err?.error?.detail ?? 'Erreur lors du chargement.');
+          this._errorLeases.set(err?.error?.detail ?? 'Erreur lors du chargement des paiements.');
+          console.error('[LEASE FETCH ERROR]:', err);
           return of([] as Lease[]);
         }),
         finalize(() => this._isLoadingLeases.set(false))
@@ -47,7 +67,7 @@ export class LeaseService {
     this._isLeaseSubmitting.set(true);
     this._isLeaseSubmitError.set(null);
 
-    this.http.post<Lease>(`${this.config.apiUrl}/leases/`, payload)
+    this.http.post<Lease>(`${this.config.apiUrl}/lease/pay`, payload)
       .pipe(
         tap(res => {
           const current = this._leases();

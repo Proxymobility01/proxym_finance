@@ -13,10 +13,9 @@ import {MatDialog} from '@angular/material/dialog';
 type StatusFilter =
   | ''
   | 'annule'
-  | 'en attente'
+  | 'en_attente'
   | 'approuve'
   | 'rejette'
-  | 'en cours'
   | 'termine';
 
 type DateFilterMode = 'today' | 'week' | 'month' | 'year' | 'specific' | 'range' | 'all';
@@ -257,16 +256,29 @@ export class CongeList implements OnInit {
     }).afterClosed().subscribe(res => { if (res) this.congeService.fetchConges(); });
   }
 
-  openCongeEditDialog(conge:Conge){
+  openCongeEditDialog(c: Conge) {
+    const payloadLike = {
+      id: c.id,
+      contrat_id_read: c.contrat_id_read ?? null,
+      date_debut: c.date_debut,
+      date_fin: c.date_fin,
+      date_reprise: c.date_reprise,
+      nb_jour: c.nb_jour,
+      motif_conge: c.motif_conge ?? '',   // 👈 ton Conge a `motif`, pas `motif_conge`
+      statut: c.statut
+    };
+
     this.dialog.open(AddConge, {
       width: '90vw',
       maxWidth: '600px',
       panelClass: 'conge_modal',
       disableClose: true,
-      data: { mode: 'edit', id: conge.id, conge }
-    }).afterClosed().subscribe(res => { if (res) this.congeService.fetchConges(); });
-
+      data: { mode: 'edit', id: c.id, conge: payloadLike }
+    }).afterClosed().subscribe(res => {
+      if (res) this.congeService.fetchConges();
+    });
   }
+
 
 
 

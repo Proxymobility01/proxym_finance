@@ -59,26 +59,28 @@
             <div class="field-error-batterie">Le montant engagé ne peut pas dépasser le montant total.</div>
           }
         </div>
+
         <div class="form-field-batterie">
           <label class="field-label-batterie">
-            Montant caution <span class="required-mark-batterie">*</span>
+            Montant par paiement <span class="required-mark-batterie">*</span>
           </label>
           <div class="input-currency-batterie">
             <input type="text"
                    class="field-input-batterie"
-                   placeholder="150 000"
-                   formControlName="montant_caution"
-                   [class.input-error-batterie]="caution.invalid && caution.touched">
+                   placeholder="500"
+                   formControlName="montant_par_paiement"
+                   [class.input-error-batterie]="mpp.invalid && mpp.touched">
             <span class="currency-suffix-batterie">FCFA</span>
           </div>
-          @if (caution.touched && caution.invalid) {
+          @if (mpp.touched && mpp.invalid) {
             <div class="field-error-batterie">
-              @if (caution.hasError('required')) { Champ requis. }
-              @else if (caution.hasError('pattern')) { Format: 1000, 1 000, 1 000.50 }
-              @else if (caution.hasError('maxlength')) { Valeur trop longue. }
+              @if (mpp.hasError('required')) { Champ requis. }
+              @else if (mpp.hasError('pattern')) { Format: 1000, 1 000, 1 000.50 }
+              @else if (mpp.hasError('maxlength')) { Valeur trop longue. }
             </div>
           }
         </div>
+
       </div>
     </div>
     <!-- Section Dates -->

@@ -1,107 +1,168 @@
-<div class="modal-container">
-  <!-- Header -->
-  <div class="modal-header-blue">
-    <h4 class="modal-title">Enregistrement Paiement Lease</h4>
-    <button type="button" class="btn-close-white" (click)="close()">&times;</button>
+<div class="modal-container-paiement">
+  <div class="modal-header-paiement">
+    <h4 class="modal-title-paiement">
+      <i class="fas fa-money-bill-wave me-2"></i>
+      Paiement Lease
+    </h4>
+    <button type="button" class="btn-close-paiement" (click)="close()">
+      <i class="fas fa-times"></i>
+    </button>
   </div>
 
-  <!-- Formulaire -->
-  <form [formGroup]="paiementForm" class="modal-content p-3">
-
-    <!-- Contrat -->
-    <div class="form-group mb-3">
-      <label class="form-label">Contrat <span class="required">*</span></label>
-      <select class="form-control"
-              formControlName="contrat_id"
-              [disabled]="isLoadingLeases()">
-        <option value="">-- Sélectionner un contrat --</option>
-        @for (c of contrats(); track c.id) {
-          <option [ngValue]="c.id">{{c.chauffeur || ('Contrat #' + c.id) }}</option>
-        }
-      </select>
-      @if (contratIdCtrl.touched && contratIdCtrl.invalid) {
-        <div class="error-message">Veuillez sélectionner un contrat.</div>
-      }
-    </div>
-
-    <!-- Montant Moto -->
-    <div class="form-group mb-3">
-      <label class="form-label">Montant Moto <span class="required">*</span></label>
-      <input type="number" formControlName="montant_moto" class="form-control"
-             placeholder="Montant moto">
-      @if (montantMotoCtrl.touched && montantMotoCtrl.invalid) {
-        <div class="error-message">Montant moto requis et > 0.</div>
-      }
-    </div>
-
-    <!-- Montant Batterie -->
-    <div class="form-group mb-3">
-      <label class="form-label">Montant Batterie <span class="required">*</span></label>
-      <input type="number" formControlName="montant_batterie" class="form-control"
-             placeholder="Montant batterie">
-      @if (montantBatterieCtrl.touched && montantBatterieCtrl.invalid) {
-        <div class="error-message">Montant batterie requis et > 0.</div>
-      }
-    </div>
-
-    <!-- Méthode de paiement -->
-    <div class="form-group mb-3">
-      <label class="form-label">Méthode de paiement <span class="required">*</span></label>
-      <select formControlName="methode_paiement" class="form-control">
-        <option value="">-- Sélectionner --</option>
-        <option value="espece">Espèces</option>
-        <option value="mobile_money">Mobile Money</option>
-        <option value="orange_money">Orange Money</option>
-        <option value="virement_bancaire">Virement bancaire</option>
-        <option value="cheque">Chèque</option>
-      </select>
-      @if (methodeCtrl.touched && methodeCtrl.invalid) {
-        <div class="error-message">Méthode de paiement obligatoire.</div>
-      }
-    </div>
-
-    <!-- Dates -->
-    <div class="row">
-      <div class="col-md-6 mb-3">
-        <label class="form-label">Date concernée <span class="required">*</span></label>
-        <input type="date" formControlName="date_concernee" class="form-control">
-        @if (dateConcerneeCtrl.touched && dateConcerneeCtrl.invalid) {
-          <div class="error-message">Date concernée obligatoire.</div>
-        }
-      </div>
-
-      <div class="col-md-6 mb-3">
-        <label class="form-label">Date limite <span class="required">*</span></label>
-        <input type="date" formControlName="date_limite" class="form-control">
-        @if (dateLimiteCtrl.touched && dateLimiteCtrl.invalid) {
-          <div class="error-message">Date limite obligatoire.</div>
-        }
-      </div>
-    </div>
-
-    <!-- Référence transaction -->
-    <div class="form-group mb-3">
-      <label class="form-label">Référence transaction</label>
-      <input type="text" formControlName="reference_transaction" class="form-control"
-             placeholder="Référence optionnelle">
-    </div>
-
-    <!-- Erreurs backend -->
+  <form class="modal-content-paiement" [formGroup]="paiementForm">
     @if (submitError()) {
-      <div class="alert alert-danger">{{ submitError() }}</div>
+      <div class="submit-error-paiement">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        {{ submitError() }}
+      </div>
     }
 
-    <!-- Footer -->
-    <div class="modal-footer">
-      <button type="button" class="btn btn-secondary" (click)="close()" [disabled]="isSubmitting()">Annuler</button>
-      <button type="button" class="btn btn-primary"
-              (click)="submit()"
-              [disabled]="paiementForm.invalid || isSubmitting()">
-        @if (isSubmitting()) {
-          <span class="spinner-border spinner-border-sm me-1"></span>
+    <!-- Section Contrat -->
+    <div class="form-section-paiement">
+      <h6 class="section-label-paiement">Contrat</h6>
+
+      <div class="form-field-paiement">
+        <label class="field-label-paiement">
+          Contrat <span class="required-mark-paiement">*</span>
+        </label>
+        <select class="field-select-paiement"
+                formControlName="contrat_id"
+                [disabled]="isLoadingLeases()"
+                [class.input-error-paiement]="contratIdCtrl.touched && contratIdCtrl.invalid">
+          <option [ngValue]="null" disabled>— Sélectionner un contrat —</option>
+          @for (c of contrats(); track c.id) {
+            <option [ngValue]="c.id">{{ c.chauffeur || ('Contrat #' + c.id) }}</option>
+          }
+        </select>
+        @if (contratIdCtrl.touched && contratIdCtrl.invalid) {
+          <div class="field-error-paiement">Veuillez sélectionner un contrat.</div>
         }
-        {{ isSubmitting() ? 'Enregistrement...' : 'Enregistrer' }}
-      </button>
+      </div>
+    </div>
+
+    <!-- Section Montants -->
+    <div class="form-section-paiement">
+      <h6 class="section-label-paiement">Montants</h6>
+
+      <div class="form-grid-2-paiement">
+        <div class="form-field-paiement">
+          <label class="field-label-paiement">
+            Montant Moto <span class="required-mark-paiement">*</span>
+          </label>
+          <div class="input-currency-paiement">
+            <input type="number"
+                   formControlName="montant_moto"
+                   class="field-input-paiement"
+                   placeholder="0"
+                   [class.input-error-paiement]="montantMotoCtrl.touched && montantMotoCtrl.invalid">
+            <span class="currency-suffix-paiement">FCFA</span>
+          </div>
+          @if (montantMotoCtrl.touched && montantMotoCtrl.invalid) {
+            <div class="field-error-paiement">Montant moto requis et > 0.</div>
+          }
+        </div>
+
+        <div class="form-field-paiement">
+          <label class="field-label-paiement">
+            Montant Batterie <span class="required-mark-paiement">*</span>
+          </label>
+          <div class="input-currency-paiement">
+            <input type="number"
+                   formControlName="montant_batt"
+                   class="field-input-paiement"
+                   placeholder="0"
+                   [class.input-error-paiement]="montantBatterieCtrl.touched && montantBatterieCtrl.invalid">
+            <span class="currency-suffix-paiement">FCFA</span>
+          </div>
+          @if (montantBatterieCtrl.touched && montantBatterieCtrl.invalid) {
+            <div class="field-error-paiement">Montant batterie requis et > 0.</div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Section Paiement -->
+    <div class="form-section-paiement">
+      <h6 class="section-label-paiement">Informations de paiement</h6>
+
+      <div class="form-grid-1-paiement">
+        <div class="form-field-paiement">
+          <label class="field-label-paiement">
+            Méthode de paiement <span class="required-mark-paiement">*</span>
+          </label>
+          <select class="field-select-paiement"
+                  formControlName="methode_paiement"
+                  [class.input-error-paiement]="methodeCtrl.touched && methodeCtrl.invalid">
+            <option value="">— Sélectionner —</option>
+            <option value="espece">Espèces</option>
+            <option value="mobile_money">Mobile Money</option>
+            <option value="orange_money">Orange Money</option>
+          </select>
+          @if (methodeCtrl.touched && methodeCtrl.invalid) {
+            <div class="field-error-paiement">Méthode de paiement obligatoire.</div>
+          }
+        </div>
+
+        <div class="form-field-paiement">
+          <label class="field-label-paiement">Référence transaction</label>
+          <input type="text"
+                 formControlName="reference_transaction"
+                 class="field-input-paiement"
+                 placeholder="Référence optionnelle">
+        </div>
+      </div>
+    </div>
+
+    <!-- Section Dates -->
+    <div class="form-section-paiement">
+      <h6 class="section-label-paiement">Dates</h6>
+
+      <div class="form-grid-2-paiement">
+        <div class="form-field-paiement">
+          <label class="field-label-paiement">
+            Date concernée <span class="required-mark-paiement">*</span>
+          </label>
+          <input type="date"
+                 formControlName="date_concernee"
+                 class="field-input-paiement"
+                 [class.input-error-paiement]="dateConcerneeCtrl.touched && dateConcerneeCtrl.invalid">
+          @if (dateConcerneeCtrl.touched && dateConcerneeCtrl.invalid) {
+            <div class="field-error-paiement">Date concernée obligatoire.</div>
+          }
+        </div>
+
+        <div class="form-field-paiement">
+          <label class="field-label-paiement">
+            Date limite <span class="required-mark-paiement">*</span>
+          </label>
+          <input type="date"
+                 formControlName="date_limite"
+                 class="field-input-paiement"
+                 [class.input-error-paiement]="dateLimiteCtrl.touched && dateLimiteCtrl.invalid">
+          @if (dateLimiteCtrl.touched && dateLimiteCtrl.invalid) {
+            <div class="field-error-paiement">Date limite obligatoire.</div>
+          }
+        </div>
+      </div>
     </div>
   </form>
+
+  <div class="modal-footer-paiement">
+    <button type="button" class="btn-cancel-paiement" (click)="close()" [disabled]="isSubmitting()">
+      <i class="fas fa-times me-1"></i>
+      Annuler
+    </button>
+    <button type="button"
+            class="btn-save-paiement"
+            (click)="submit()"
+            [disabled]="paiementForm.invalid || isSubmitting()">
+      @if (isSubmitting()) {
+        <span class="spinner-border spinner-border-sm me-1"></span>
+        Enregistrement...
+      } @else {
+        <i class="fas fa-save me-1"></i>
+        Enregistrer
+      }
+    </button>
+  </div>
 </div>

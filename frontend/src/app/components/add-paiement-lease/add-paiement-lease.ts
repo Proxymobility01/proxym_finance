@@ -16,7 +16,7 @@ import {ContratChauffeurService} from '../../services/contrat-chauffeur';
 export class AddPaiementLeaseComponent implements OnInit {
   private readonly dialogRef = inject(MatDialogRef<AddPaiementLeaseComponent>);
   private readonly leaseService = inject(LeaseService);
-  private readonly contratService = inject(ContratChauffeurService);
+  readonly contratService = inject(ContratChauffeurService);
 
   readonly contrats = this.contratService.contratsCh;
   readonly isLoadingLeases = this.leaseService.isLoadingLeases;
@@ -26,7 +26,7 @@ export class AddPaiementLeaseComponent implements OnInit {
   paiementForm = new FormGroup({
     contrat_id: new FormControl<number | null>(null, Validators.required),
     montant_moto: new FormControl('', [Validators.required, Validators.min(1)]),
-    montant_batterie: new FormControl('', [Validators.required, Validators.min(1)]),
+    montant_batt: new FormControl('', [Validators.required, Validators.min(1)]),
     methode_paiement: new FormControl('', Validators.required),
     date_concernee: new FormControl('', Validators.required),
     date_limite: new FormControl('', Validators.required),
@@ -38,15 +38,48 @@ export class AddPaiementLeaseComponent implements OnInit {
   // Getters pratiques
   get contratIdCtrl() { return this.paiementForm.get('contrat_id') as FormControl; }
   get montantMotoCtrl() { return this.paiementForm.get('montant_moto') as FormControl; }
-  get montantBatterieCtrl() { return this.paiementForm.get('montant_batterie') as FormControl; }
+  get montantBatterieCtrl() { return this.paiementForm.get('montant_batt') as FormControl; }
   get methodeCtrl() { return this.paiementForm.get('methode_paiement') as FormControl; }
   get dateConcerneeCtrl() { return this.paiementForm.get('date_concernee') as FormControl; }
   get dateLimiteCtrl() { return this.paiementForm.get('date_limite') as FormControl; }
   get refCtrl() { return this.paiementForm.get('reference_transaction') as FormControl; }
 
+  // ngOnInit(): void {
+  //   this.leaseService.fetchLeases();
+  //   this.contratService.fetchContratChauffeur();
+  // }
+
   ngOnInit(): void {
+    this.contratService.fetchContratChauffeur();
     this.leaseService.fetchLeases();
+    // valeur par défaut
+    this.methodeCtrl.setValue('espece');
+
+    this.contratIdCtrl.valueChanges.subscribe((contratId) => {
+      if (!contratId) return;
+      const contrat = this.contrats().find(c => c.id === contratId);
+      if (!contrat) return;
+
+      // Montant moto
+      const montantMoto = Number(contrat.montant_engage) > 0
+        ? String(contrat.montant_engage)
+        : String(contrat.montant_par_paiement);
+
+      // Montant batterie
+      const montantBatt = Number(contrat.montant_engage_batt) > 0
+        ? String(contrat.montant_engage_batt)
+        : String(contrat.montant_par_paiement_batt);
+
+      this.montantMotoCtrl.setValue(montantMoto);
+      this.montantBatterieCtrl.setValue(montantBatt);
+
+      // Dates
+      this.dateConcerneeCtrl.setValue(contrat.date_concernee);
+      this.dateLimiteCtrl.setValue(contrat.date_limite);
+    });
   }
+
+
 
   submit() {
     if (this.paiementForm.invalid) {
@@ -57,10 +90,10 @@ export class AddPaiementLeaseComponent implements OnInit {
     const payload: Omit<PaiementLeasePayload, 'id'> = {
       contrat_id: this.contratIdCtrl.value!,
       montant_moto: this.montantMotoCtrl.value!,
-      montant_batterie: this.montantBatterieCtrl.value!,
+      montant_batt: this.montantBatterieCtrl.value!,
       methode_paiement: this.methodeCtrl.value!,
-      date_concernee: this.dateConcerneeCtrl.value!,
-      date_limite: this.dateLimiteCtrl.value!,
+      date_paiement_concerne: this.dateConcerneeCtrl.value!,
+      date_limite_paiement: this.dateLimiteCtrl.value!,
       reference_transaction: this.refCtrl.value || ''
     };
 
