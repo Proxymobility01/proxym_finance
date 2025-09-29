@@ -8,6 +8,7 @@ import {GarantList} from './pages/garant-list/garant-list';
 import {Login} from './pages/login/login';
 import {CongeList} from './pages/conge-list/conge-list';
 import {LeaseList} from './pages/lease-list/lease-list';
+import {PenaliteList} from './pages/penalite-list/penalite-list';
 
 
 export const routes: Routes = [
@@ -42,6 +43,10 @@ export const routes: Routes = [
       {
         path: 'paiements/contrats',
         component:LeaseList
+      },
+      {
+        path: 'paiements/penalites',
+        component:PenaliteList
       }
     ]
   }

@@ -16,6 +16,9 @@ export interface ContratChauffeur{
   statut: string;
   date_concernee: string;
   date_limite: string;
+  jour_conge_total: number;
+  jour_conge_utilise:number;
+  jour_conge_restant:number;
 }
 
 export interface ContratChauffeurPayload{

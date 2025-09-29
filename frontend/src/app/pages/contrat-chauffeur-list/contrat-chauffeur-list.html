@@ -1,3 +1,5 @@
+
+
 <div class="container-fluid">
   <!-- Header -->
   <div class="page-header d-flex align-items-center justify-content-between flex-wrap mb-4">
@@ -89,38 +91,71 @@
           </div>
         }
       </div>
-
     </div>
   </div>
 
-  <!-- Tableau -->
+  <!-- Tableau Complet -->
   <div class="table-container">
     <div class="table-responsive">
       <table class="table custom-table table-hover mb-0">
         <thead>
         <tr>
+          <!-- Groupe: Identifiants -->
+          <th class="text-center group-header" colspan="4">Informations générales</th>
+          <!-- Groupe: Financier Lease -->
+          <th class="text-center group-header" colspan="3">Financier Lease</th>
+          <!-- Groupe: Financier Batterie -->
+          <th class="text-center group-header " colspan="2">Financier Batterie</th>
+          <!-- Groupe: Dates -->
+          <th class="text-center group-header " colspan="3">Dates</th>
+          <!-- Groupe: Congés -->
+          <th class="text-center group-header " colspan="3">Congés</th>
+          <!-- Groupe: Statut & Actions -->
+          <th class="text-center group-header" colspan="2">Statut & Actions</th>
+        </tr>
+        <tr>
+          <!-- Groupe: Identifiants -->
           <th class="text-center">Référence</th>
           <th class="text-center">Chauffeur</th>
-          <th class="text-center">Garant</th>
-          <th class="text-center">Reference batterie</th>
-          <th class="text-center">Date Signature</th>
-          <th class="text-center">Paiement</th>
+          <th class="text-center ">Garant</th>
+          <th class="text-center ">Ref. Batterie</th>
+
+          <!-- Groupe: Financier Lease -->
+          <th class="text-center">Paiement<br><small>(Payé/Restant/Total)</small></th>
+          <th class="text-center ">Engagé</th>
+          <th class="text-center ">Par paiement</th>
+
+          <!-- Groupe: Financier Batterie -->
+          <th class="text-center ">Engagé Batt.</th>
+          <th class="text-center ">Par paie. Batt.</th>
+
+          <!-- Groupe: Dates -->
+          <th class="text-center ">Signature</th>
+          <th class="text-center ">Échéance lease</th>
+          <th class="text-center ">Limite lease</th>
+
+          <!-- Groupe: Congés -->
+          <th class="text-center ">Total</th>
+          <th class="text-center ">Utilisé</th>
+          <th class="text-center ">Restant</th>
+
+          <!-- Groupe: Statut & Actions -->
           <th class="text-center">Statut</th>
-          <th class="text-center">Action</th>
+          <th class="text-center">Actions</th>
         </tr>
         </thead>
 
         <tbody>
           @if (isLoadingContrat()) {
             <tr>
-              <td colspan="6" class="loading-state">
+              <td colspan="17" class="loading-state">
                 <div class="spinner-border spinner-custom" role="status"></div>
                 <div class="mt-2">Chargement des contrats…</div>
               </td>
             </tr>
           } @else if (errorContrat() && !isLoadingContrat()) {
             <tr>
-              <td colspan="6" class="error-state">
+              <td colspan="17" class="error-state">
                 <div class="text-danger mb-3">
                   <i class="fas fa-exclamation-triangle error-icon"></i>
                   <div>{{ errorContrat() }}</div>
@@ -132,7 +167,7 @@
             </tr>
           } @else if (!isLoadingContrat() && !errorContrat() && filteredContrats().length === 0) {
             <tr>
-              <td colspan="6" class="empty-state">
+              <td colspan="17" class="empty-state">
                 <i class="fas fa-search empty-icon"></i>
                 <h6 class="text-muted mb-2">Aucun contrat trouvé</h6>
                 <p class="text-muted mb-0">Aucun élément ne correspond aux critères.</p>
@@ -141,7 +176,8 @@
           } @else {
             @for (c of pagedContrats(); track $index) {
               <tr class="contrat-row">
-                <td class="text-center fw-bold"
+                <!-- Groupe: Identifiants -->
+                <td class="text-center fw-bold reference-cell"
                     [innerHTML]="(c.reference_contrat) | highlight: query()">
                 </td>
 
@@ -149,42 +185,85 @@
                     [innerHTML]="(c.chauffeur) | highlight: query()">
                 </td>
 
-                <td class="text-center"
+                <td class="text-center "
                     [innerHTML]="(c.garant) | highlight: query()">
                 </td>
 
-                <td class="text-center"
+                <td class="text-center "
                     [innerHTML]="(c.reference_contrat_batt) | highlight: query()">
                 </td>
 
-                <td class="text-center">
+                <!-- Groupe: Financier Lease -->
+                <td class="text-center payment-info">
+                  <span class="amount-paye">{{ c.montant_paye | noGroupNumber }}</span>
+                  <span class="separator">/</span>
+                  <span class="amount-restant">{{ c.montant_restant | noGroupNumber }}</span>
+                  <span class="separator">/</span>
+                  <span class="amount-total">{{ c.montant_total | noGroupNumber }}</span>
+                  <small class="currency">FCFA</small>
+                </td>
+
+                <td class="text-center  amount-cell">
+                  {{ c.montant_engage | noGroupNumber }} <small>FCFA</small>
+                </td>
+
+                <td class="text-center  amount-cell">
+                  {{ c.montant_par_paiement | noGroupNumber }} <small>FCFA</small>
+                </td>
+
+                <!-- Groupe: Financier Batterie -->
+                <td class="text-center  amount-cell">
+                  {{ c.montant_engage_batt | noGroupNumber }} <small>FCFA</small>
+                </td>
+
+                <td class="text-center  amount-cell">
+                  {{ c.montant_par_paiement_batt | noGroupNumber }} <small>FCFA</small>
+                </td>
+
+                <!-- Groupe: Dates -->
+                <td class="text-center  date-cell">
+                  <i class="fas fa-calendar-alt me-1"></i>
                   {{ c.date_signature | date:'dd/MM/yyyy' }}
                 </td>
 
-                <td class="text-center payment-info">
-                  <span class="amount-paye">{{ c.montant_paye    | noGroupNumber }}</span>
-                  /
-                  <span class="amount-restant">{{ c.montant_restant | noGroupNumber }}</span>
-                  /
-                  <span class="amount-total">{{ c.montant_total  | noGroupNumber }}</span>
-                  FCFA
+                <td class="text-center  date-cell">
+                  <i class="fas fa-calendar-check me-1"></i>
+                  {{ c.date_concernee | date:'dd/MM/yyyy' }}
                 </td>
 
+                <td class="text-center  date-cell">
+                  <i class="fas fa-calendar-times me-1"></i>
+                  {{ c.date_limite | date:'dd/MM/yyyy' }}
+                </td>
+
+                <!-- Groupe: Congés -->
+                <td class="text-center ">
+                  <span class="conge-badge conge-total">{{ c.jour_conge_total }}</span>
+                </td>
+
+                <td class="text-center ">
+                  <span class="conge-badge conge-utilise">{{ c.jour_conge_utilise }}</span>
+                </td>
+
+                <td class="text-center ">
+                  <span class="conge-badge conge-restant">{{ c.jour_conge_restant }}</span>
+                </td>
+
+                <!-- Groupe: Statut & Actions -->
                 <td class="text-center">
-                      <span class="status-badge"
-                            [class.status-termine]="(c.statut | lowercase) === 'termine'"
-                            [class.status-encours]="(c.statut | lowercase) === 'encours' || (c.statut | lowercase) === 'en cours'"
-                            [class.status-suspendu]="(c.statut | lowercase) === 'suspendu'"
-                            [class.status-annule]="(c.statut | lowercase) === 'annule'">
-                        {{
-                          (c.statut | lowercase) === 'termine'   ? 'Terminé'   :
-                            (c.statut | lowercase) === 'suspendu' ? 'Suspendu'  :
-                              (c.statut | lowercase) === 'annule'   ? 'Annulé'    :
-                                'En cours'
-                        }}
-                      </span>
+                  <span class="status-badge"
+                        [class.status-termine]="(c.statut | lowercase) === 'termine'"
+                        [class.status-encours]="(c.statut | lowercase) === 'encours' || (c.statut | lowercase) === 'en cours'"
+                        [class.status-suspendu]="(c.statut | lowercase) === 'suspendu'"
+                        [class.status-annule]="(c.statut | lowercase) === 'annule'">
+                    {{
+                      (c.statut | lowercase) === 'termine'   ? 'Terminé'   :
+                        (c.statut | lowercase) === 'suspendu' ? 'Suspendu'  :
+                          (c.statut | lowercase) === 'annule'   ? 'Annulé'    :
+                            'En cours'
+                    }}
+                  </span>
                 </td>
-
 
                 <td class="text-center" (click)="$event.stopPropagation()">
                   <button class="action-btn me-1" title="Détails">
@@ -201,50 +280,44 @@
       </table>
     </div>
 
-    <!-- Footer (info simple pour l’instant) -->
+    <!-- Footer pagination -->
     <div class="pagination-container">
-      <div class="d-flex align-items-center justify-content-between w-100">
-        <div class="pagination-info">
-          <small>
-            Affichage de {{ total() ? (pageStart() + 1) : 0 }}
-            à {{ pageEnd() }} sur {{ total() }} contrat(s)
-          </small>
-        </div>
+      <div class="pagination-info">
+        <small>
+          Affichage de {{ total() ? (pageStart() + 1) : 0 }}
+          à {{ pageEnd() }} sur {{ total() }} contrat(s)
+        </small>
+      </div>
 
-        <div class="d-flex align-items-center">
+      @if (totalPages() > 1) {
+        <nav aria-label="Pagination des contrats">
+          <ul class="pagination pagination-sm mb-0">
+            <li class="page-item" [class.disabled]="pageIndex() === 0">
+              <button class="page-link" (click)="prev()" [disabled]="pageIndex() === 0">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+            </li>
 
-          @if (totalPages() > 1) {
-            <nav aria-label="Pagination des contrats">
-              <ul class="pagination pagination-sm mb-0">
-                <li class="page-item" [class.disabled]="pageIndex() === 0">
-                  <button class="page-link" (click)="prev()" [disabled]="pageIndex() === 0">
-                    <i class="fas fa-chevron-left"></i>
-                  </button>
-                </li>
-
-                @for (p of visiblePages(); track p) {
-                  <li class="page-item"
-                      [class.disabled]="p.type === 'dots'"
-                      [class.active]="p.type === 'page' && p.index === pageIndex()">
-                    @if (p.type === 'dots') {
-                      <span class="page-link">…</span>
-                    } @else {
-                      <button class="page-link" (click)="goToPage(p.index)">{{ p.index + 1 }}</button>
-                    }
-                  </li>
+            @for (p of visiblePages(); track p) {
+              <li class="page-item"
+                  [class.disabled]="p.type === 'dots'"
+                  [class.active]="p.type === 'page' && p.index === pageIndex()">
+                @if (p.type === 'dots') {
+                  <span class="page-link">…</span>
+                } @else {
+                  <button class="page-link" (click)="goToPage(p.index)">{{ p.index + 1 }}</button>
                 }
+              </li>
+            }
 
-                <li class="page-item" [class.disabled]="pageIndex() >= totalPages() - 1">
-                  <button class="page-link" (click)="next()" [disabled]="pageIndex() >= totalPages() - 1">
-                    <i class="fas fa-chevron-right"></i>
-                  </button>
-                </li>
-              </ul>
-            </nav>
-          }
-        </div>
+            <li class="page-item" [class.disabled]="pageIndex() >= totalPages() - 1">
+              <button class="page-link" (click)="next()" [disabled]="pageIndex() >= totalPages() - 1">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </li>
+          </ul>
+        </nav>
+      }
+    </div>
   </div>
 </div>
-  </div>
-</div>
-

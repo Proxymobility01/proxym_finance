@@ -37,6 +37,7 @@
 .custom-card {
   background-color: var(--card-bg);
   border: 1px solid var(--border-color);
+  border-radius: 12px;
   box-shadow: var(--shadow);
   margin-bottom: 1.5rem;
 }
@@ -85,32 +86,67 @@
   background-color: var(--primary-light);
 }
 
-/* Table */
+/* Table Container */
 .table-container {
   background-color: var(--card-bg);
+  border-radius: 5px;
   overflow: hidden;
   box-shadow: var(--shadow);
 }
 
 .custom-table {
   margin-bottom: 0;
+  font-size: 0.85rem;
 }
 
+/* Table Headers - Grouped avec séparateurs */
 .custom-table thead th {
   background-color: var(--bg-secondary);
   color: var(--text-color);
   font-weight: 700;
-  font-size: 0.9rem;
-  padding: 1rem 0.75rem;
+  font-size: 0.8rem;
+  padding: 0.75rem 0.5rem;
   border: none;
   text-transform: uppercase;
+  letter-spacing: 0.3px;
+  vertical-align: middle;
+  position: relative;
+}
+
+.custom-table thead th.group-header {
+  background-color: var(--text-color);
+  color: var(--bg-color);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.5rem;
+  border-bottom: 2px solid var(--primary-color);
   letter-spacing: 0.5px;
 }
 
+/* SÉPARATEURS ENTRE LES BLOCS - En gris */
+/* Séparateur après "Informations" (2ème colonne) */
+.custom-table thead tr:nth-child(1) th:nth-child(1),
+.custom-table tbody tr td:nth-child(2) {
+  border-right: 2px solid var(--border-color);
+}
+
+/* Séparateur après "Financier" (5ème colonne) */
+.custom-table thead tr:nth-child(1) th:nth-child(2),
+.custom-table tbody tr td:nth-child(5) {
+  border-right: 2px solid var(--border-color);
+}
+
+/* Séparateur après "Dates & Durée" (9ème colonne) */
+.custom-table thead tr:nth-child(1) th:nth-child(3),
+.custom-table tbody tr td:nth-child(9) {
+  border-right: 2px solid var(--border-color);
+}
+
+/* Table Body */
 .custom-table tbody td {
-  padding: 1rem 0.75rem;
+  padding: 0.75rem 0.5rem;
   border-bottom: 1px solid var(--border-color);
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   vertical-align: middle;
 }
 
@@ -127,12 +163,98 @@
   background-color: var(--primary-light) !important;
 }
 
-/* Status Badges */
+/* Specific Cell Styles */
+.reference-cell {
+  font-weight: 700;
+  color: var(--text-color);
+  font-size: 0.85rem;
+  background-color: var(--bg-secondary);
+}
+
+/* Payment Info Cell */
+.payment-info {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.payment-info .amount-paye {
+  color: #28a745;
+  font-weight: 700;
+}
+
+.payment-info .amount-restant {
+  color: #dc3545;
+  font-weight: 700;
+}
+
+.payment-info .amount-total {
+  color: var(--text-color);
+  font-weight: 600;
+}
+
+.payment-info .separator {
+  color: var(--text-secondary);
+  margin: 0 0.2rem;
+}
+
+.payment-info .currency {
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  display: block;
+  margin-top: 0.1rem;
+}
+
+/* Amount Cells */
+.amount-cell {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.amount-cell small {
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  display: block;
+  margin-top: 0.1rem;
+}
+
+/* Date Cells */
+.date-cell {
+  white-space: nowrap;
+  font-size: 0.8rem;
+}
+
+.date-cell i {
+  color: var(--primary-color);
+  font-size: 0.7rem;
+}
+
+/* Durée Badge */
+.duree-badge {
+  display: inline-block;
+  padding: 0.3rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  min-width: 3rem;
+  text-align: center;
+  background-color: var(--primary-light);
+  color: var(--text-color);
+  border: 1px solid var(--primary-color);
+}
+
+/* Status Badges - Organisation améliorée */
 .status-badge {
+  display: inline-block;
   padding: 0.4rem 0.8rem;
   border-radius: 20px;
   font-size: 0.8rem;
   font-weight: 600;
+  text-transform: capitalize;
+  white-space: nowrap;
+  min-width: 80px;
+  text-align: center;
 }
 
 .status-termine {
@@ -142,26 +264,22 @@
 }
 
 .status-encours {
+  background-color: #cce5ff;
+  color: #004085;
+  border: 1px solid #99d6ff;
+}
+
+.status-suspendu {
   background-color: #fff3cd;
   color: #856404;
   border: 1px solid #ffeaa7;
 }
 
-.status-suspendu {
-  background-color: #d4edda;
-  color: #155724;
-  border: 1px solid #c3e6cb;
+.status-annule {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f1b0b7;
 }
-
-/* Payment Display */
-.payment-info {
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-
-.amount-paye { color: #28a745; }
-.amount-restant { color: #dc3545; }
-.amount-total { color: var(--text-color); }
 
 /* Action Buttons */
 .action-btn {
@@ -171,6 +289,7 @@
   background-color: var(--bg-color);
   color: var(--text-secondary);
   transition: all 0.3s ease;
+  font-size: 0.85rem;
 }
 
 .action-btn:hover {
@@ -233,9 +352,10 @@
   margin: 0 0.2rem;
   border-radius: 6px;
   background-color: var(--bg-color);
+  border: none;
 }
 
-.pagination .page-link:hover {
+.pagination .page-link:hover:not(:disabled) {
   background-color: var(--primary-light);
   border-color: var(--primary-color);
   color: var(--text-color);
@@ -251,9 +371,29 @@
   color: var(--text-secondary);
   background-color: var(--bg-secondary);
   border-color: var(--border-color);
+  cursor: not-allowed;
 }
 
-/* Responsive */
+.pagination .page-link:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Responsive - Progressive column hiding */
+
+/* Hide on medium screens (< 1200px) */
+@media (max-width: 1200px) {
+  .hide-on-medium {
+    display: none !important;
+  }
+
+  /* Ajuster les séparateurs quand dates masquées */
+  .custom-table tbody tr td:nth-child(9) {
+    border-right: none;
+  }
+}
+
+/* Hide on medium screens (< 768px) */
 @media (max-width: 768px) {
   .container-fluid {
     padding: 1rem 0.5rem;
@@ -270,8 +410,12 @@
     margin-bottom: 0;
   }
 
+  .hide-on-small {
+    display: none !important;
+  }
+
   .table-responsive {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
   }
 
   .pagination-container {
@@ -280,11 +424,118 @@
   }
 
   .custom-table tbody td {
-    padding: 0.75rem 0.5rem;
+    padding: 0.5rem 0.3rem;
+  }
+
+  .custom-table thead th {
+    padding: 0.5rem 0.3rem;
+    font-size: 0.7rem;
+  }
+
+  /* Garder seulement les séparateurs essentiels sur mobile */
+  .custom-table tbody tr td:nth-child(2) {
+    border-right: 1px solid var(--border-color);
   }
 
   .action-btn {
     padding: 0.3rem 0.5rem;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
+  }
+
+  .status-badge {
+    font-size: 0.7rem;
+    padding: 0.3rem 0.6rem;
+    min-width: 70px;
+  }
+
+  .payment-info {
+    font-size: 0.7rem;
+  }
+
+  .payment-info .currency {
+    font-size: 0.6rem;
+  }
+
+  .duree-badge {
+    font-size: 0.65rem;
+    padding: 0.2rem 0.4rem;
+    min-width: 2.5rem;
+  }
+
+  /* Simplifier l'affichage des paiements sur mobile */
+  .payment-info .separator {
+    display: block;
+    margin: 0.1rem 0;
+  }
+}
+
+/* Very small screens (< 480px) */
+@media (max-width: 480px) {
+  .custom-table thead th {
+    font-size: 0.65rem;
+    padding: 0.4rem 0.2rem;
+  }
+
+  .custom-table tbody td {
+    padding: 0.4rem 0.2rem;
+    font-size: 0.7rem;
+  }
+
+  /* Séparateurs plus fins sur très petits écrans */
+  .custom-table tbody tr td:nth-child(2) {
+    border-right: 1px solid var(--border-color);
+  }
+
+  .action-btn {
+    padding: 0.25rem 0.4rem;
+    font-size: 0.7rem;
+  }
+
+  .status-badge {
+    font-size: 0.6rem;
+    padding: 0.2rem 0.3rem;
+    min-width: 60px;
+  }
+
+  .duree-badge {
+    font-size: 0.6rem;
+    padding: 0.2rem 0.3rem;
+    min-width: 2rem;
+  }
+
+  .reference-cell {
+    font-size: 0.75rem;
+  }
+
+  .date-cell i {
+    display: none;
+  }
+
+  .amount-cell small,
+  .payment-info .currency {
+    display: none;
+  }
+}
+
+/* Print styles */
+@media print {
+  .hide-on-medium,
+  .hide-on-small {
+    display: table-cell !important;
+  }
+
+  .custom-table {
+    font-size: 0.7rem;
+  }
+
+  .action-btn {
+    display: none;
+  }
+
+  /* Séparateurs visibles à l'impression */
+  .custom-table tbody tr td:nth-child(2),
+  .custom-table tbody tr td:nth-child(5),
+  .custom-table tbody tr td:nth-child(9) {
+    border-right: 2px solid #666 !important;
   }
 }

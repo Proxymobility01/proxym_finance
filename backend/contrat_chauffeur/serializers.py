@@ -406,6 +406,9 @@ class ContractDriverCreateSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def create(self, validated_data):
+        today = timezone.now().date()
+        validated_data.setdefault("date_concernee", today)
+        validated_data.setdefault("date_limite", today + timedelta(days=1))
         contrat = ContratChauffeur.objects.create(**validated_data)
 
         # --- Attribuer le proprietaire de la batterie si vide

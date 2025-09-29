@@ -44,10 +44,6 @@ export class AddPaiementLeaseComponent implements OnInit {
   get dateLimiteCtrl() { return this.paiementForm.get('date_limite') as FormControl; }
   get refCtrl() { return this.paiementForm.get('reference_transaction') as FormControl; }
 
-  // ngOnInit(): void {
-  //   this.leaseService.fetchLeases();
-  //   this.contratService.fetchContratChauffeur();
-  // }
 
   ngOnInit(): void {
     this.contratService.fetchContratChauffeur();

@@ -23,7 +23,6 @@ export interface ContratBatterie{
   duree_jour:string;
   statut:string;
   montant_engage:string;
-  montant_caution:string;
-  contrat_physique_batt:string;
+  montant_par_paiement:string;
   proprietaire:string;
 }

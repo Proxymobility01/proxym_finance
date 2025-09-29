@@ -48,7 +48,7 @@ export class LeaseService {
             statut_paiement: item.statut ?? 'INCONNU',
             statut_penalite: item.statut_penalite ?? 'N/A',
             paye_par: item.employe ?? 'N/A',
-            date_paiement: item.date_paiement ?? '',
+            created: item.created ?? '',
           }))
         ),
         tap((leases) => this._leases.set(leases)),

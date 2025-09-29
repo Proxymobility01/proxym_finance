@@ -1,0 +1,106 @@
+<!-- src/app/components/add-paiement-penalite/add-paiement-penalite.html -->
+<div class="modal-container">
+  <div class="modal-header">
+    <h4 class="modal-title">
+      <i class="fas fa-receipt me-2"></i>Payer une pénalité
+    </h4>
+    <button type="button" class="btn-close" (click)="close()">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+
+  <form class="modal-content" [formGroup]="form">
+    @if (submitError()) {
+      <div class="submit-error">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        {{ submitError() }}
+      </div>
+    }
+
+    <!-- Info pénalité -->
+    @if (p()) {
+      <div class="penalite-info">
+        <div class="row">
+          <div class="col">
+            <div><strong>Chauffeur :</strong> {{ p()?.chauffeur }}</div>
+            <div><strong>Référence contrat :</strong> {{ p()?.reference_contrat }}</div>
+            <div><strong>Type :</strong> {{ p()?.type_penalite }}</div>
+          </div>
+          <div class="col">
+            <div><strong>Statut :</strong> {{ p()?.statut_penalite }}</div>
+            <div><strong>Montant pénalité :</strong> {{ p()?.montant_penalite }}</div>
+            <div><strong>Reste à payer :</strong> {{ p()?.montant_restant }}</div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <div class="form-grid">
+      <!-- Montant -->
+      <div class="form-field">
+        <label class="field-label">Montant à payer <span class="required">*</span></label>
+        <input
+          type="number"
+          class="field-input"
+          formControlName="montant"
+          [attr.min]="1"
+          [attr.max]="montantRestant() ?? null"
+          placeholder="Ex: 2000"
+        >
+        @if (montantCtrl.touched && montantCtrl.hasError('required')) {
+          <div class="field-error">Le montant est obligatoire.</div>
+        }
+        @if (montantCtrl.touched && montantCtrl.hasError('min')) {
+          <div class="field-error">Montant invalide (doit être &gt; 0).</div>
+        }
+        <!-- si tu utilises un validateur custom pour plafonner au reste -->
+        @if (montantCtrl.touched && montantCtrl.hasError('tooHigh')) {
+          <div class="field-error">Montant trop élevé (≤ {{ montantRestant() }}).</div>
+        }
+      </div>
+
+      <!-- Méthode -->
+      <div class="form-field">
+        <label class="field-label">Méthode de paiement <span class="required">*</span></label>
+        <select class="field-select" formControlName="methode_paiement">
+          <option value="cash">Espèce</option>
+          <option value="momo">Mobile Money</option>
+          <option value="om">Orange momey</option>
+        </select>
+        @if (methodeCtrl.touched && methodeCtrl.invalid) {
+          <div class="field-error">La méthode est obligatoire.</div>
+        }
+      </div>
+
+      <!-- Référence transaction (facultatif) -->
+      <div class="form-field">
+        <label class="field-label">Référence transaction</label>
+        <input
+          type="text"
+          class="field-input"
+          formControlName="reference_transaction"
+          placeholder="Ex: MTN-2025-0001"
+        >
+      </div>
+    </div>
+  </form>
+
+  <div class="modal-footer">
+    <button type="button" class="btn-cancel" (click)="close()">
+      <i class="fas fa-times me-1"></i> Annuler
+    </button>
+
+    <button
+      type="button"
+      class="btn-save"
+      (click)="submit()"
+      [disabled]="form.invalid || isSubmitting()"
+    >
+      @if (isSubmitting()) {
+        <span class="spinner-border spinner-border-sm me-1"></span> Enregistrement...
+      } @else {
+        <i class="fas fa-check me-1"></i> Payer
+      }
+    </button>
+  </div>
+</div>

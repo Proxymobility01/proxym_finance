@@ -60,13 +60,7 @@ export class ContratChauffeurList implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe((result) => {
-      if (result) {
-        // result contient le payload renvoyé par la modal
-        console.log('Contrat créé :', result);
-
-        // 👉 ici tu peux rafraîchir ta liste ou rappeler ton service backend
-        // this.contratCService.fetchAll();
-      }
+      if (result) this.refresh();
     });
   }
 

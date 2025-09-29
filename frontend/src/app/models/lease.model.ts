@@ -24,7 +24,7 @@ export interface Lease{
   statut_paiement: string;
   statut_penalite:string;
   paye_par:string;
-  date_paiement:string;
+  created:string;
 }
 
 export interface LeaseApiResponse {

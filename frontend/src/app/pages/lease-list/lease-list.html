@@ -1,33 +1,29 @@
-
 <div class="container-fluid">
   <!-- Header -->
   <div class="page-header d-flex align-items-center justify-content-between flex-wrap mb-4">
     <h2 class="page-title">Gestion des Leases</h2>
-    <div class="header-actions">
-      <button class="btn btn-nouveau" (click)="openPaiementLeaseDialog()">
-        <i class="fas fa-money-bill-wave me-2"></i>
-        Effectuer un paiement
-      </button>
-    </div>
+    <button class="btn btn-nouveau" (click)="openPaiementLeaseDialog()">
+      <i class="fas fa-money-bill-wave me-2"></i>
+      Payer un lease
+    </button>
   </div>
 
-  <!-- Filtres -->
+  <!-- Filtres Compactés -->
   <div class="custom-card">
     <div class="card-body">
-      <div class="row g-3 align-items-end">
-        <!-- Recherche -->
+      <!-- Ligne 1 : Filtres principaux -->
+      <div class="row g-2 align-items-end mb-2">
         <div class="col-md-3">
-          <label class="form-label">Recherche</label>
-          <input class="form-control"
-                 placeholder="Chauffeur ID, nom, moto ID, VIN…"
+          <label class="form-label-compact">Recherche</label>
+          <input class="form-control form-control-sm"
+                 placeholder="Chauffeur, moto, VIN…"
                  [ngModel]="query()"
                  (ngModelChange)="query.set($event)">
         </div>
 
-        <!-- Statut paiement -->
         <div class="col-md-2">
-          <label class="form-label">Statut paiement</label>
-          <select class="form-select"
+          <label class="form-label-compact">Statut</label>
+          <select class="form-select form-select-sm"
                   [ngModel]="statutPaiement()"
                   (ngModelChange)="statutPaiement.set($event)">
             @for (opt of optionsStatutPaiement(); track opt) {
@@ -36,22 +32,9 @@
           </select>
         </div>
 
-        <!-- Statut pénalité -->
         <div class="col-md-2">
-          <label class="form-label">Statut pénalité</label>
-          <select class="form-select"
-                  [ngModel]="statutPenalite()"
-                  (ngModelChange)="statutPenalite.set($event)">
-            @for (opt of optionsStatutPenalite(); track opt) {
-              <option [value]="opt">{{ opt || 'Tous' }}</option>
-            }
-          </select>
-        </div>
-
-        <!-- Payé par -->
-        <div class="col-md-2">
-          <label class="form-label">Payé par</label>
-          <select class="form-select"
+          <label class="form-label-compact">Payé par</label>
+          <select class="form-select form-select-sm"
                   [ngModel]="payePar()"
                   (ngModelChange)="payePar.set($event)">
             @for (opt of optionsPayePar(); track opt) {
@@ -60,10 +43,9 @@
           </select>
         </div>
 
-        <!-- Station -->
         <div class="col-md-2">
-          <label class="form-label">Station paiement</label>
-          <select class="form-select"
+          <label class="form-label-compact">Station</label>
+          <select class="form-select form-select-sm"
                   [ngModel]="stationPaiement()"
                   (ngModelChange)="stationPaiement.set($event)">
             @for (opt of optionsStationPaiement(); track opt) {
@@ -71,29 +53,129 @@
             }
           </select>
         </div>
+      </div>
 
-        <!-- Bouton Reset -->
-        <div class="col-md-1 text-end">
-          <button class="btn btn-reset" type="button" (click)="clearFilters()">
-            <i class="fas fa-undo"></i>
-          </button>
+      <!-- Ligne 2 : Filtres de dates compacts -->
+      <div class="row g-2 align-items-end">
+        <!-- Date concernée -->
+        <div class="col-md-2">
+          <label class="form-label-compact">Date concernée</label>
+          <select class="form-select form-select-sm"
+                  [ngModel]="dateModeConcernee()"
+                  (ngModelChange)="dateModeConcernee.set($event)">
+            <option value="all">Toutes</option>
+            <option value="today">Aujourd'hui</option>
+            <option value="week">Semaine</option>
+            <option value="month">Mois</option>
+            <option value="specific">Spécifique</option>
+            <option value="range">Période</option>
+          </select>
         </div>
+
+        @if (dateModeConcernee() === 'specific') {
+          <div class="col-md-2">
+            <label class="form-label-compact">Date</label>
+            <input type="date" class="form-control form-control-sm"
+                   [ngModel]="dateSpecificConcernee()"
+                   (ngModelChange)="dateSpecificConcernee.set($event)">
+          </div>
+        }
+
+        @if (dateModeConcernee() === 'range') {
+          <div class="col-md-2">
+            <label class="form-label-compact">Début</label>
+            <input type="date" class="form-control form-control-sm"
+                   [ngModel]="dateStartConcernee()"
+                   (ngModelChange)="dateStartConcernee.set($event)">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label-compact">Fin</label>
+            <input type="date" class="form-control form-control-sm"
+                   [ngModel]="dateEndConcernee()"
+                   (ngModelChange)="dateEndConcernee.set($event)">
+          </div>
+        }
+
+        <!-- Date paiement -->
+        <div class="col-md-2">
+          <label class="form-label-compact">Date paiement</label>
+          <select class="form-select form-select-sm"
+                  [ngModel]="dateModeCreated()"
+                  (ngModelChange)="dateModeCreated.set($event)">
+            <option value="all">Toutes</option>
+            <option value="today">Aujourd'hui</option>
+            <option value="week">Semaine</option>
+            <option value="month">Mois</option>
+            <option value="specific">Spécifique</option>
+            <option value="range">Période</option>
+          </select>
+        </div>
+
+        @if (dateModeCreated() === 'specific') {
+          <div class="col-md-2">
+            <label class="form-label-compact">Date</label>
+            <input type="date" class="form-control form-control-sm"
+                   [ngModel]="dateSpecificCreated()"
+                   (ngModelChange)="dateSpecificCreated.set($event)">
+          </div>
+        }
+
+        @if (dateModeCreated() === 'range') {
+          <div class="col-md-2">
+            <label class="form-label-compact">Début</label>
+            <input type="date" class="form-control form-control-sm"
+                   [ngModel]="dateStartCreated()"
+                   (ngModelChange)="dateStartCreated.set($event)">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label-compact">Fin</label>
+            <input type="date" class="form-control form-control-sm"
+                   [ngModel]="dateEndCreated()"
+                   (ngModelChange)="dateEndCreated.set($event)">
+          </div>
+        }
       </div>
     </div>
   </div>
 
-  <!-- Tableau -->
+  <!-- Tableau Groupé -->
   <div class="table-container">
     <div class="table-responsive">
       <table class="table custom-table table-hover mb-0">
         <thead>
         <tr>
+          <!-- Groupe: Identifiants -->
+          <th class="text-center group-header" colspan="2">Identifiants</th>
+          <!-- Groupe: Montants -->
+          <th class="text-center group-header" colspan="2">Montants</th>
+          <!-- Groupe: Dates -->
+          <th class="text-center group-header hide-on-medium" colspan="3">Dates</th>
+          <!-- Groupe: Paiement -->
+          <th class="text-center group-header hide-on-large" colspan="4">Informations paiement</th>
+          <!-- Groupe: Actions -->
+          <th class="text-center group-header">Actions</th>
+        </tr>
+        <tr>
+          <!-- Groupe: Identifiants -->
           <th class="text-center">Chauffeur</th>
           <th class="text-center">Moto</th>
-          <th class="text-center">Montants</th>
-          <th class="text-center">Dates</th>
-          <th class="text-center">Statuts</th>
-          <th class="text-center">Paiement</th>
+
+          <!-- Groupe: Montants -->
+          <th class="text-center">Moto</th>
+          <th class="text-center">Batterie</th>
+
+          <!-- Groupe: Dates -->
+          <th class="text-center hide-on-medium">Concernée</th>
+          <th class="text-center hide-on-medium">Limite</th>
+          <th class="text-center hide-on-medium">Paiement</th>
+
+          <!-- Groupe: Paiement -->
+          <th class="text-center hide-on-large">Statut</th>
+          <th class="text-center hide-on-large">Payé par</th>
+          <th class="text-center hide-on-large">Méthode</th>
+          <th class="text-center hide-on-large">Station</th>
+
+          <!-- Groupe: Actions -->
           <th class="text-center">Actions</th>
         </tr>
         </thead>
@@ -101,14 +183,14 @@
         <tbody>
           @if (isLoading()) {
             <tr>
-              <td colspan="8" class="loading-state">
+              <td colspan="12" class="loading-state">
                 <div class="spinner-border spinner-custom" role="status"></div>
                 <div class="mt-2">Chargement des leases…</div>
               </td>
             </tr>
           } @else if (error() && !isLoading()) {
             <tr>
-              <td colspan="8" class="error-state">
+              <td colspan="12" class="error-state">
                 <div class="text-danger mb-3">
                   <i class="fas fa-exclamation-triangle error-icon"></i>
                   <div>{{ error() }}</div>
@@ -120,7 +202,7 @@
             </tr>
           } @else if (!isLoading() && !error() && filtered().length === 0) {
             <tr>
-              <td colspan="8" class="empty-state">
+              <td colspan="12" class="empty-state">
                 <i class="fas fa-file-invoice-dollar empty-icon"></i>
                 <h6 class="text-muted mb-2">Aucun lease trouvé</h6>
                 <p class="text-muted mb-0">Aucun élément ne correspond aux critères de recherche.</p>
@@ -129,97 +211,66 @@
           } @else {
             @for (l of paged(); track l.id) {
               <tr class="lease-row">
-                <!-- Chauffeur -->
-                <td class="align-content-center">
-                  <div class="chauffeur-info">
-                    <div class="info-row">
-                      <strong>ID:</strong> {{ l?.chauffeur_unique_id }}
-                    </div>
-                    <div class="info-row">
-                      <strong>Nom:</strong> {{ l?.chauffeur }}
-                    </div>
-                  </div>
+                <!-- Groupe: Identifiants -->
+                <td class="text-center chauffeur-cell">
+                  <div class="id-text">{{ l?.chauffeur_unique_id || '—' }}</div>
+                  <div class="name-text">{{ l?.chauffeur || 'Non renseigné' }}</div>
                 </td>
 
-                <!-- Moto -->
-                <td class="text-center align-content-center">
-                  <div class="moto-info">
-                    <div class="info-row">
-                      <strong>ID:</strong> {{ l?.moto_unique_id }}
-                    </div>
-                    <div class="info-row">
-                      <strong>VIN:</strong> {{ l?.moto_vin }}
-                    </div>
-                  </div>
+                <td class="text-center moto-cell">
+                  <div class="id-text">{{ l?.moto_unique_id || '—' }}</div>
+                  <div class="vin-text">{{ l?.moto_vin || '—' }}</div>
                 </td>
 
-                <!-- Montants -->
-                <td class="text-center align-content-center">
-                  <div class="montants-info">
-                    <div class="info-row">
-                      <strong>Moto:</strong> {{ l?.montant_moto }} FCFA
-                    </div>
-                    <div class="info-row">
-                      <strong>Batterie:</strong> {{ l?.montant_batterie }} FCFA
-                    </div>
-                  </div>
+                <!-- Groupe: Montants -->
+                <td class="text-center amount-cell">
+                  {{ l?.montant_moto | noGroupNumber }} <small>FCFA</small>
                 </td>
 
-                <!-- Dates -->
-                <td class="text-center align-content-center">
-                  <div class="dates-info">
-                    <div class="info-row">
-                      <strong>Concernée:</strong> {{ l?.date_concernee | date: 'dd/MM/yyyy'}}
-                    </div>
-                    <div class="info-row">
-                      <strong>Limite:</strong> {{ l?.date_limite | date: 'dd/MM/yyyy'}}
-                    </div>
-                  </div>
+                <td class="text-center amount-cell">
+                  {{ l?.montant_batterie | noGroupNumber }} <small>FCFA</small>
                 </td>
 
-                <!-- Statuts -->
-                <td class="text-center align-content-center">
-                  <div class="status-group">
-                    <div class="status-item">
-                      <strong>Paiement:</strong>
-                      <span class="status-badge status-paiement"
-                            [ngClass]="getStatusPaiementClass(l?.statut_paiement)">
-                        {{ l?.statut_paiement || 'N/A' }}
-                      </span>
-                    </div>
-                    <div class="status-item">
-                      <strong>Pénalité:</strong>
-                      <span class="status-badge status-penalite"
-                            [ngClass]="getStatusPenaliteClass(l?.statut_penalite)">
-                        {{ l?.statut_penalite || 'N/A' }}
-                      </span>
-                    </div>
-                  </div>
+                <!-- Groupe: Dates -->
+                <td class="text-center hide-on-medium date-cell">
+                  <i class="fas fa-calendar-check me-1"></i>
+                  {{ l?.date_concernee | date: 'dd/MM/yyyy' }}
                 </td>
 
-                <!-- Informations Paiement -->
-                <td class="text-center">
-                  <div class="payment-info">
-                    <div class="info-row" *ngIf="l?.paye_par">
-                      <strong>Payé par:</strong> {{ l?.paye_par }}
-                    </div>
-                    <div class="info-row" *ngIf="l?.methode_paiement">
-                      <strong>Méthode:</strong> {{ l?.methode_paiement }}
-                    </div>
-                    <div class="info-row" *ngIf="l?.station_paiement">
-                      <strong>Station:</strong> {{ l?.station_paiement }}
-                    </div>
-                    <div class="info-row" *ngIf="l?.date_paiement">
-                      <strong>Date:</strong> {{ l?.date_paiement }}
-                    </div>
-                  </div>
+                <td class="text-center hide-on-medium date-cell">
+                  <i class="fas fa-calendar-times me-1"></i>
+                  {{ l?.date_limite | date: 'dd/MM/yyyy' }}
                 </td>
 
-                <!-- Actions -->
-                <td class="text-center align-content-center" (click)="$event.stopPropagation()">
-                  <button class="action-btn action-pay" title="Effectuer paiement">
-                    <i class="fas fa-credit-card me-1"></i>
-                    Payer
+                <td class="text-center hide-on-medium date-cell">
+                  <i class="fas fa-calendar-alt me-1"></i>
+                  {{ l?.created | date: 'dd/MM/yyyy' }}
+                </td>
+
+                <!-- Groupe: Paiement -->
+                <td class="text-center hide-on-large">
+                  <span class="status-badge"
+                        [ngClass]="getStatusPaiementClass(l?.statut_paiement)">
+                    {{ l?.statut_paiement || 'N/A' }}
+                  </span>
+                </td>
+
+                <td class="text-center hide-on-large">
+                  {{ l?.paye_par || '—' }}
+                </td>
+
+                <td class="text-center hide-on-large">
+                  {{ l?.methode_paiement || '—' }}
+                </td>
+
+                <td class="text-center hide-on-large">
+                  {{ l?.station_paiement || '—' }}
+                </td>
+
+                <!-- Groupe: Actions -->
+                <td class="text-center" (click)="$event.stopPropagation()">
+                  <button class="action-btn" title="Payer" (click)="openPaiementLeaseDialog()">
+                    <i class="fas fa-credit-card"></i>
                   </button>
                 </td>
               </tr>

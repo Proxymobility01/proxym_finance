@@ -4,7 +4,7 @@ from django.db import models
 from django.db import models
 
 
-class Agences(models.Model):
+class UsersAgences(models.Model):
     id = models.PositiveBigIntegerField(primary_key=True)
     class Meta:
         managed = False

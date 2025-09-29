@@ -112,17 +112,10 @@
                                [class.dropdown-item-active]="isCurrentRoute('/paiements/contrats')"
                                [routerLink]="['/paiements/contrats']"
                                (click)="closeAllDropdowns()">
-                                Paiements Contrats
+                                Paiements Leases
                             </a>
                         </li>
-                        <li>
-                            <a class="dropdown-item"
-                               [class.dropdown-item-active]="isCurrentRoute('/paiements/historique')"
-                               [routerLink]="['/paiements/historique']"
-                               (click)="closeAllDropdowns()">
-                                Historique Paiements
-                            </a>
-                        </li>
+
                         <li>
                             <a class="dropdown-item"
                                [class.dropdown-item-active]="isCurrentRoute('/paiements/penalites')"
@@ -131,6 +124,14 @@
                                 Pénalités
                             </a>
                         </li>
+                      <li>
+                        <a class="dropdown-item"
+                           [class.dropdown-item-active]="isCurrentRoute('/paiements/historique')"
+                           [routerLink]="['/paiements/historique']"
+                           (click)="closeAllDropdowns()">
+                          Historique Pénalités
+                        </a>
+                      </li>
                         <li>
                             <a class="dropdown-item"
                                [class.dropdown-item-active]="isCurrentRoute('/swap')"

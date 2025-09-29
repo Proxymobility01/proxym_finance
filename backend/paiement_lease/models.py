@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.db import models
 
-from app_legacy.models import Agences
+from app_legacy.models import UsersAgences
 from contrat_chauffeur.models import ContratChauffeur
 from shared.models import TimeStampedModel
 
@@ -11,7 +11,6 @@ class PaiementLease(TimeStampedModel):
     montant_moto = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     montant_batt = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True)
     montant_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    date_paiement = models.DateField()
     methode_paiement = models.CharField(max_length=50)
     reference_transaction = models.CharField(max_length=100, blank=True, null=True)
     type_contrat = models.CharField(max_length=50)
@@ -19,8 +18,8 @@ class PaiementLease(TimeStampedModel):
     contrat_chauffeur = models.ForeignKey(
         ContratChauffeur, on_delete=models.CASCADE, related_name="paiements_lease"
     )
-    date_concernee = models.DateTimeField()
-    date_limite = models.DateTimeField()
+    date_concernee = models.DateField()
+    date_limite = models.DateField()
     statut = models.CharField(max_length=50)
 
     employe = models.ForeignKey(
@@ -29,7 +28,7 @@ class PaiementLease(TimeStampedModel):
         null=True, blank=True
     )
     user_agence = models.ForeignKey(
-        Agences,
+        UsersAgences,
         on_delete=models.PROTECT,
         db_column='user_agence_id',
         null=True, blank=True

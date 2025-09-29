@@ -69,11 +69,16 @@ class FrequencePaiement(models.TextChoices):
     MONTHLY = "monthly", _("Mensuel")
     CUSTOM = "custom", _("Personnalisé")
 
+def default_date_concernee():
+    return timezone.now().date()
 
+def default_date_limite():
+    return (timezone.now() + timedelta(days=1)).date()
 
 
 # ---------------- Chauffeur contract (managed by Django) ----------------
 class ContratChauffeur(TimeStampedModel):
+
     reference_contrat = models.CharField(max_length=100, unique=True, null=True, blank=True, db_index=True)
     montant_total = models.DecimalField(max_digits=14, decimal_places=2, default=0)
     montant_paye = models.DecimalField(max_digits=14, decimal_places=2, default=0)
@@ -83,8 +88,8 @@ class ContratChauffeur(TimeStampedModel):
 
     date_signature = models.DateField(null=True, blank=True)
     date_debut = models.DateField(null=True, blank=True)
-    date_concernee = models.DateField()
-    date_limite = models.DateField()
+    date_concernee = models.DateField(null=True)
+    date_limite = models.DateField(null=True)
 
     # Use days as integer
     duree_jour = models.PositiveIntegerField(null=True, blank=True, help_text=_("Durée du contrat en jours"))

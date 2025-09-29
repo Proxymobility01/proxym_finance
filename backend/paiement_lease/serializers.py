@@ -1,17 +1,20 @@
 from rest_framework import serializers
 from .models import PaiementLease
 
+from penalite.models import Penalite
+
 class LeasePaymentSerializer(serializers.ModelSerializer):
     contrat_id = serializers.IntegerField(write_only=True)
     date_paiement_concerne = serializers.DateField(write_only=True)
     date_limite_paiement = serializers.DateField(write_only=True)
     reference_transaction = serializers.CharField(
         required=False, allow_blank=True, allow_null=True
-    )  # 👈 pas obligatoire
+    )
 
     # Champs enrichis (lecture seule)
     chauffeur = serializers.SerializerMethodField()
     moto = serializers.SerializerMethodField()
+
 
     class Meta:
         model = PaiementLease
@@ -21,7 +24,6 @@ class LeasePaymentSerializer(serializers.ModelSerializer):
             "montant_moto",
             "montant_batt",
             "montant_total",
-            "date_paiement",
             "methode_paiement",
             "reference_transaction",
             "type_contrat",
@@ -32,8 +34,9 @@ class LeasePaymentSerializer(serializers.ModelSerializer):
             "employe",
             "user_agence",
             "created",
-            "chauffeur",   # 👈 ajouté
-            "moto",        # 👈 ajouté
+            "chauffeur",
+            "moto",
+
             # write-only pour Postman
             "contrat_id",
             "date_paiement_concerne",
@@ -42,7 +45,6 @@ class LeasePaymentSerializer(serializers.ModelSerializer):
         read_only_fields = [
             "id",
             "reference_paiement",
-            "date_paiement",
             "type_contrat",
             "statut",
             "created",
@@ -53,6 +55,7 @@ class LeasePaymentSerializer(serializers.ModelSerializer):
             "date_limite",
             "chauffeur",
             "moto",
+
         ]
 
     def get_chauffeur(self, obj):
@@ -81,3 +84,6 @@ class LeasePaymentSerializer(serializers.ModelSerializer):
                 "model": getattr(mv, "model", None),
             }
         return None
+
+
+
