@@ -39,7 +39,6 @@
 .custom-card {
   background-color: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
   box-shadow: var(--shadow);
   margin-bottom: 1.5rem;
 }
@@ -91,7 +90,6 @@
 /* Table Container */
 .table-container {
   background-color: var(--card-bg);
-  border-radius: 5px;
   overflow: hidden;
   box-shadow: var(--shadow);
 }

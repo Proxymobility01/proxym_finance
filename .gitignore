@@ -108,11 +108,10 @@ Thumbs.db
 # ----------------------------
 
 # Ignore Git metadata (if copied somewhere else)
-.git/
+
 .gitignore
 # Logs & keys
 *.log
 *.pem
 *.pub
-github_action
-github_action.pub
+

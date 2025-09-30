@@ -51,7 +51,7 @@ class AssociationUserMoto(models.Model):
         db_column="moto_valide_id", null=True, blank=True
     )
     statut = models.CharField(max_length=50, null=True, blank=True)
-    # swap_bloque = models.CharField(max_length=10, null=True, blank=True)
+
 
     class Meta:
         db_table = "association_user_motos"  

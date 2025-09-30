@@ -29,6 +29,7 @@ class Penalite(TimeStampedModel):
     date_paiement_manquee = models.DateField(null=True, blank=True)
     montant_paye = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     montant_restant = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    echeance_paiement_penalite = models.DecimalField(max_digits=12, decimal_places=2, default=0)
 
     contrat_chauffeur = models.ForeignKey(
         "contrat_chauffeur.ContratChauffeur", on_delete=models.CASCADE, related_name="penalites"

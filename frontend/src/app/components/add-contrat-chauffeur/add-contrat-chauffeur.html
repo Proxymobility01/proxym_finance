@@ -261,66 +261,6 @@
       </div>
     </div>
 
-    <!-- Section Dates -->
-<!--    <div class="form-section-contrat">-->
-<!--      <h6 class="section-label-contrat">Dates et congés</h6>-->
-
-<!--      <div class="form-grid-3-contrat">-->
-<!--        <div class="form-field-contrat">-->
-<!--          <label class="field-label-contrat">-->
-<!--            Date de signature <span class="required-mark-contrat">*</span>-->
-<!--          </label>-->
-<!--          <input type="date"-->
-<!--                 formControlName="date_signature"-->
-<!--                 class="field-input-contrat"-->
-<!--                 [class.input-error-contrat]="sig.invalid && sig.touched">-->
-<!--          @if (sig.touched && sig.invalid) {-->
-<!--            <div class="field-error-contrat">-->
-<!--              @if (sig.hasError('required')) { Champ requis. }-->
-<!--              @else if (sig.hasError('pattern')) { Format attendu AAAA-MM-JJ. }-->
-<!--            </div>-->
-<!--          }-->
-<!--        </div>-->
-
-<!--        <div class="form-field-contrat">-->
-<!--          <label class="field-label-contrat">-->
-<!--            Date de début <span class="required-mark-contrat">*</span>-->
-<!--          </label>-->
-<!--          <input type="date"-->
-<!--                 formControlName="date_debut"-->
-<!--                 class="field-input-contrat"-->
-<!--                 [class.input-error-contrat]="(deb.invalid && deb.touched) || form.hasError('dateOrder')">-->
-<!--          @if (deb.touched && deb.invalid) {-->
-<!--            <div class="field-error-contrat">-->
-<!--              @if (deb.hasError('required')) { Champ requis. }-->
-<!--              @else if (deb.hasError('pattern')) { Format attendu AAAA-MM-JJ. }-->
-<!--            </div>-->
-<!--          }-->
-<!--          @if (form.hasError('dateOrder')) {-->
-<!--            <div class="field-error-contrat">La date de début doit être postérieure ou égale à la date de signature.</div>-->
-<!--          }-->
-<!--        </div>-->
-
-<!--        <div class="form-field-contrat">-->
-<!--          <label class="field-label-contrat">-->
-<!--            Jours de congé total <span class="required-mark-contrat">*</span>-->
-<!--          </label>-->
-<!--          <input type="number"-->
-<!--                 formControlName="jour_conge_total"-->
-<!--                 class="field-input-contrat"-->
-<!--                 min="0" max="200"-->
-<!--                 placeholder="4"-->
-<!--                 [class.input-error-contrat]="conge.invalid && conge.touched">-->
-<!--          @if (conge.touched && conge.invalid) {-->
-<!--            <div class="field-error-contrat">-->
-<!--              @if (conge.hasError('required')) { Champ requis. }-->
-<!--              @else if (conge.hasError('min')) { Minimum 0. }-->
-<!--              @else if (conge.hasError('max')) { Maximum 200. }-->
-<!--            </div>-->
-<!--          }-->
-<!--        </div>-->
-<!--      </div>-->
-<!--    </div>-->
 
     <!-- Section Documents -->
     <div class="form-section-contrat">
