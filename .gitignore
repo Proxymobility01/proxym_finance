@@ -109,7 +109,7 @@ Thumbs.db
 
 # Ignore Git metadata (if copied somewhere else)
 .git/
-
+.gitignore
 # Logs & keys
 *.log
 *.pem
