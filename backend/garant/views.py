@@ -1,14 +1,14 @@
 from django.conf import settings
 from rest_framework import generics, status
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import  IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
-
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from .models import Garant
 from .serializers import (
     GarantCreateSerializer,
     GarantDetailSerializer,
-    GarantUpdateSerializer,
+
 )
 
 def _abs_url(request, rel_path):
@@ -17,7 +17,8 @@ def _abs_url(request, rel_path):
     return request.build_absolute_uri(f"{settings.MEDIA_URL}{rel_path}")
 
 class GarantListCreateView(generics.ListCreateAPIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
     queryset = Garant.objects.all().order_by("-created")
     parser_classes = [MultiPartParser, FormParser, JSONParser]  # accept files & JSON
 
@@ -51,25 +52,3 @@ class GarantListCreateView(generics.ListCreateAPIView):
             "updated": garant.updated,
         }, status=status.HTTP_201_CREATED)
 
-
-class GarantDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Garant.objects.all()
-    parser_classes = [MultiPartParser, FormParser, JSONParser]  # enable file updates in PATCH/PUT
-
-    def get_serializer_class(self):
-        if self.request.method in ("PUT", "PATCH"):
-            return GarantUpdateSerializer
-        return GarantDetailSerializer
-
-    # optional: return file absolute URLs on GET retrieve
-    def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
-        data = GarantDetailSerializer(instance).data
-        data.update({
-            "photo_url": _abs_url(request, instance.photo),
-            "plan_localisation_url": _abs_url(request, instance.plan_localisation),
-            "cni_recto_url": _abs_url(request, instance.cni_recto),
-            "cni_verso_url": _abs_url(request, instance.cni_verso),
-            "justif_activite_url": _abs_url(request, instance.justif_activite),
-        })
-        return Response(data)

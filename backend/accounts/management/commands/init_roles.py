@@ -1,3 +1,4 @@
+# accounts/management/commands/init_roles.py
 from django.apps import apps
 from django.contrib.auth.management import create_permissions
 from django.contrib.auth.models import Permission
@@ -11,43 +12,30 @@ class Command(BaseCommand):
     help = 'Initialize roles'
 
     def handle(self, *args, **kwargs):
-        # Recréation automatique des permissions manquantes
+        # (1) S'assurer que toutes les permissions existent
         for app_config in apps.get_app_configs():
             create_permissions(app_config, verbosity=0, using=DEFAULT_DB_ALIAS)
 
+        # (2) Définition des rôles
         roles = {
-            "GestionnaireFinancier": {
-                "permissions": []
-            },
-            "Administrateur": {
-                "permissions": "__all__"
-            }
+            # 👉 les deux rôles ont TOUTES les permissions
+            "GestionnaireFinancier": {"permissions": "__all__"},
+            "Administrateur":        {"permissions": "__all__"},
         }
 
+        # (3) Attribution
         for nom, config in roles.items():
             role, created = Role.objects.get_or_create(nomRole=nom)
-            perms = []
 
             if config["permissions"] == "__all__":
                 perms = Permission.objects.all()
-            elif nom == "GestionnaireFinancier":
-                # Tous les permissions sauf celles liées à la gestion utilisateurs
-                all_perms = Permission.objects.all()
-                # Exclusion des permissions liées à l'app 'accounts' (gestion users)
-                perms = all_perms.exclude(content_type__app_label='accounts')
             else:
-                for code in config["permissions"]:
-                    matching_perms = Permission.objects.filter(codename=code)
-                    if not matching_perms.exists():
-                        self.stdout.write(self.style.WARNING(f"⚠️ Permission '{code}' introuvable."))
-                    elif matching_perms.count() > 1:
-                        self.stdout.write(self.style.WARNING(
-                            f"⚠️ Permission '{code}' dupliquée ({matching_perms.count()} fois). Ignorée."))
-                    else:
-                        perms.append(matching_perms.first())
+                perms = Permission.objects.filter(codename__in=config["permissions"])
 
             role.permissions.set(perms)
             role.save()
 
-            action = "create" if created else "update"
-            self.stdout.write(self.style.SUCCESS(f"✅ Rôle '{nom}' {action} avec {len(perms)} permissions."))
+            action = "créé" if created else "mis à jour"
+            self.stdout.write(self.style.SUCCESS(
+                f"✅ Rôle '{nom}' {action} avec {perms.count()} permissions."
+            ))

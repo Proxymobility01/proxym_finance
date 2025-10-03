@@ -1,3 +1,901 @@
+/*!*.container-fluid {*!*/
+/*!*  max-width: 1600px;*!*/
+/*!*  padding: 2rem 1rem;*!*/
+/*!*}*!*/
+
+/*!*!* Header *!*!*/
+/*!*.page-header {*!*/
+/*!*  margin-bottom: 2rem;*!*/
+/*!*}*!*/
+
+/*!*.page-title {*!*/
+/*!*  font-family: var(--font-Orbitron), sans-serif;*!*/
+/*!*  font-weight: 700;*!*/
+/*!*  font-size: 1.8rem;*!*/
+/*!*  color: var(--text-color);*!*/
+/*!*  margin-bottom: 1rem;*!*/
+/*!*}*!*/
+
+/*!*.header-actions {*!*/
+/*!*  display: flex;*!*/
+/*!*  align-items: center;*!*/
+/*!*  gap: 0.5rem;*!*/
+/*!*}*!*/
+
+/*!*!* Cards *!*!*/
+/*!*.custom-card {*!*/
+/*!*  background-color: var(--card-bg);*!*/
+/*!*  border: 1px solid var(--border-color);*!*/
+/*!*  border-radius: 12px;*!*/
+/*!*  box-shadow: var(--shadow);*!*/
+/*!*  margin-bottom: 1.5rem;*!*/
+/*!*}*!*/
+
+/*!*.card-body {*!*/
+/*!*  padding: 1.5rem;*!*/
+/*!*}*!*/
+
+/*!*!* Form Controls *!*!*/
+/*!*.form-label {*!*/
+/*!*  font-weight: 600;*!*/
+/*!*  color: var(--text-color);*!*/
+/*!*  margin-bottom: 0.5rem;*!*/
+/*!*  font-size: 0.9rem;*!*/
+/*!*}*!*/
+
+/*!*.form-control, .form-select {*!*/
+/*!*  border: 2px solid var(--border-color);*!*/
+/*!*  border-radius: 8px;*!*/
+/*!*  padding: 0.6rem 1rem;*!*/
+/*!*  font-size: 0.9rem;*!*/
+/*!*  transition: all 0.3s ease;*!*/
+/*!*  background-color: var(--bg-color);*!*/
+/*!*}*!*/
+
+/*!*.form-control:focus, .form-select:focus {*!*/
+/*!*  border-color: var(--primary-color);*!*/
+/*!*  box-shadow: 0 0 0 0.2rem rgba(220, 220, 52, 0.25);*!*/
+/*!*}*!*/
+
+/*!*!* Export Buttons *!*!*/
+/*!*.btn-export {*!*/
+/*!*  background-color: var(--bg-color);*!*/
+/*!*  border: 2px solid var(--border-color);*!*/
+/*!*  color: var(--text-secondary);*!*/
+/*!*  padding: 0.5rem 1rem;*!*/
+/*!*  border-radius: 6px;*!*/
+/*!*  font-weight: 600;*!*/
+/*!*  transition: all 0.3s ease;*!*/
+/*!*  font-size: 0.85rem;*!*/
+/*!*}*!*/
+
+/*!*.btn-export:hover {*!*/
+/*!*  border-color: var(--primary-color);*!*/
+/*!*  color: var(--text-color);*!*/
+/*!*  background-color: var(--primary-light);*!*/
+/*!*}*!*/
+
+/*!*!* Table *!*!*/
+/*!*.table-container {*!*/
+/*!*  background-color: var(--card-bg);*!*/
+/*!*  border-radius: 12px;*!*/
+/*!*  overflow: hidden;*!*/
+/*!*  box-shadow: var(--shadow);*!*/
+/*!*}*!*/
+
+/*!*.custom-table {*!*/
+/*!*  margin-bottom: 0;*!*/
+/*!*}*!*/
+
+/*!*.custom-table thead th {*!*/
+/*!*  background-color: var(--bg-secondary);*!*/
+/*!*  color: var(--text-color);*!*/
+/*!*  font-weight: 700;*!*/
+/*!*  font-size: 0.9rem;*!*/
+/*!*  padding: 1rem 0.75rem;*!*/
+/*!*  border: none;*!*/
+/*!*  text-transform: uppercase;*!*/
+/*!*  letter-spacing: 0.5px;*!*/
+/*!*}*!*/
+
+/*!*.custom-table tbody td {*!*/
+/*!*  padding: 1rem 0.75rem;*!*/
+/*!*  border-bottom: 1px solid var(--border-color);*!*/
+/*!*  font-size: 0.9rem;*!*/
+/*!*  vertical-align: middle;*!*/
+/*!*}*!*/
+
+/*!*.penalite-row {*!*/
+/*!*  cursor: pointer;*!*/
+/*!*  transition: all 0.3s ease;*!*/
+/*!*}*!*/
+
+/*!*.penalite-row:hover {*!*/
+/*!*  background-color: var(--bg-secondary);*!*/
+/*!*}*!*/
+
+/*!*!* Pénalité Specific Styles *!*!*/
+/*!*.reference-badge {*!*/
+/*!*  background-color: var(--bg-secondary);*!*/
+/*!*  color: var(--text-color);*!*/
+/*!*  padding: 0.3rem 0.6rem;*!*/
+/*!*  border-radius: 12px;*!*/
+/*!*  font-size: 0.8rem;*!*/
+/*!*  font-weight: 600;*!*/
+/*!*  border: 1px solid var(--border-color);*!*/
+/*!*}*!*/
+
+/*!*!* Status Badges pour Pénalités *!*!*/
+/*!*.status-badge {*!*/
+/*!*  padding: 0.4rem 0.8rem;*!*/
+/*!*  border-radius: 20px;*!*/
+/*!*  font-size: 0.8rem;*!*/
+/*!*  font-weight: 600;*!*/
+/*!*  text-transform: capitalize;*!*/
+/*!*}*!*/
+
+/*!*.status-done {*!*/
+/*!*  background-color: #d4edda;*!*/
+/*!*  color: #155724;*!*/
+/*!*  border: 1px solid #c3e6cb;*!*/
+/*!*}*!*/
+
+/*!*.status-partial {*!*/
+/*!*  background-color: #fff3cd;*!*/
+/*!*  color: #856404;*!*/
+/*!*  border: 1px solid #ffeaa7;*!*/
+/*!*}*!*/
+
+/*!*.status-pending {*!*/
+/*!*  background-color: #f8d7da;*!*/
+/*!*  color: #721c24;*!*/
+/*!*  border: 1px solid #f1b0b7;*!*/
+/*!*}*!*/
+
+/*!*.status-default {*!*/
+/*!*  background-color: var(--bg-secondary);*!*/
+/*!*  color: var(--text-secondary);*!*/
+/*!*  border: 1px solid var(--border-color);*!*/
+/*!*}*!*/
+
+/*!*!* Action Buttons - Spécifique aux pénalités *!*!*/
+/*!*.action-btn {*!*/
+/*!*  padding: 0.4rem 0.8rem;*!*/
+/*!*  border-radius: 6px;*!*/
+/*!*  border: 1px solid var(--border-color);*!*/
+/*!*  background-color: var(--primary-color);*!*/
+/*!*  color: var(--text-color);*!*/
+/*!*  transition: all 0.3s ease;*!*/
+/*!*  font-weight: 600;*!*/
+/*!*  font-size: 0.8rem;*!*/
+/*!*}*!*/
+
+/*!*.action-btn:hover:not(:disabled) {*!*/
+/*!*  background-color: var(--primary-dark);*!*/
+/*!*  border-color: var(--primary-dark);*!*/
+/*!*  color: var(--text-color);*!*/
+/*!*  transform: translateY(-1px);*!*/
+/*!*}*!*/
+
+/*!*.action-btn:disabled {*!*/
+/*!*  background-color: var(--bg-secondary);*!*/
+/*!*  border-color: var(--border-color);*!*/
+/*!*  color: var(--text-secondary);*!*/
+/*!*  cursor: not-allowed;*!*/
+/*!*  opacity: 0.6;*!*/
+/*!*  transform: none;*!*/
+/*!*}*!*/
+
+/*!*.action-btn i {*!*/
+/*!*  font-size: 0.85rem;*!*/
+/*!*}*!*/
+
+/*!*!* Montants - Styling spécial pour les montants financiers *!*!*/
+/*!*.montant-cell {*!*/
+/*!*  font-weight: 600;*!*/
+/*!*  font-family: 'Courier New', monospace;*!*/
+/*!*  color: var(--text-color);*!*/
+/*!*}*!*/
+
+/*!*.montant-paye {*!*/
+/*!*  color: #28a745;*!*/
+/*!*  font-weight: 700;*!*/
+/*!*}*!*/
+
+/*!*.montant-restant {*!*/
+/*!*  color: #dc3545;*!*/
+/*!*  font-weight: 700;*!*/
+/*!*}*!*/
+
+/*!*.montant-penalite {*!*/
+/*!*  color: var(--text-color);*!*/
+/*!*  font-weight: 600;*!*/
+/*!*}*!*/
+
+/*!*!* Type de pénalité *!*!*/
+/*!*.type-penalite {*!*/
+/*!*  background-color: var(--primary-light);*!*/
+/*!*  color: var(--text-color);*!*/
+/*!*  padding: 0.3rem 0.6rem;*!*/
+/*!*  border-radius: 12px;*!*/
+/*!*  font-size: 0.8rem;*!*/
+/*!*  font-weight: 600;*!*/
+/*!*  border: 1px solid var(--primary-color);*!*/
+/*!*}*!*/
+
+/*!*!* Loading and Empty States *!*!*/
+/*!*.loading-state, .error-state, .empty-state {*!*/
+/*!*  padding: 3rem 1rem;*!*/
+/*!*  text-align: center;*!*/
+/*!*}*!*/
+
+/*!*.spinner-custom {*!*/
+/*!*  color: var(--primary-color);*!*/
+/*!*  width: 2rem;*!*/
+/*!*  height: 2rem;*!*/
+/*!*}*!*/
+
+/*!*.error-icon, .empty-icon {*!*/
+/*!*  font-size: 3rem;*!*/
+/*!*  color: var(--text-secondary);*!*/
+/*!*  margin-bottom: 1rem;*!*/
+/*!*}*!*/
+
+/*!*.retry-btn {*!*/
+/*!*  background-color: var(--primary-color);*!*/
+/*!*  border-color: var(--primary-color);*!*/
+/*!*  color: var(--text-color);*!*/
+/*!*  padding: 0.6rem 1.5rem;*!*/
+/*!*  border-radius: 8px;*!*/
+/*!*  font-weight: 600;*!*/
+/*!*}*!*/
+
+/*!*.retry-btn:hover {*!*/
+/*!*  background-color: var(--primary-dark);*!*/
+/*!*  border-color: var(--primary-dark);*!*/
+/*!*}*!*/
+
+/*!*!* Pagination *!*!*/
+/*!*.pagination-container {*!*/
+/*!*  background-color: var(--card-bg);*!*/
+/*!*  padding: 1rem 1.5rem;*!*/
+/*!*  border-top: 1px solid var(--border-color);*!*/
+/*!*  display: flex;*!*/
+/*!*  justify-content: space-between;*!*/
+/*!*  align-items: center;*!*/
+/*!*}*!*/
+
+/*!*.pagination-info {*!*/
+/*!*  font-size: 0.9rem;*!*/
+/*!*  color: var(--text-secondary);*!*/
+/*!*}*!*/
+
+/*!*.pagination .page-link {*!*/
+/*!*  color: var(--text-secondary);*!*/
+/*!*  border-color: var(--border-color);*!*/
+/*!*  padding: 0.5rem 0.75rem;*!*/
+/*!*  margin: 0 0.2rem;*!*/
+/*!*  border-radius: 6px;*!*/
+/*!*  background-color: var(--bg-color);*!*/
+/*!*  border: none;*!*/
+/*!*}*!*/
+
+/*!*.pagination .page-link:hover:not(:disabled) {*!*/
+/*!*  background-color: var(--primary-light);*!*/
+/*!*  border-color: var(--primary-color);*!*/
+/*!*  color: var(--text-color);*!*/
+/*!*}*!*/
+
+/*!*.pagination .page-item.active .page-link {*!*/
+/*!*  background-color: var(--primary-color);*!*/
+/*!*  border-color: var(--primary-color);*!*/
+/*!*  color: var(--text-color);*!*/
+/*!*}*!*/
+
+/*!*.pagination .page-item.disabled .page-link {*!*/
+/*!*  color: var(--text-secondary);*!*/
+/*!*  background-color: var(--bg-secondary);*!*/
+/*!*  border-color: var(--border-color);*!*/
+/*!*  cursor: not-allowed;*!*/
+/*!*}*!*/
+
+/*!*.pagination .page-link:disabled {*!*/
+/*!*  opacity: 0.5;*!*/
+/*!*  cursor: not-allowed;*!*/
+/*!*}*!*/
+
+/*!*!* Responsive Design *!*!*/
+/*!*@media (max-width: 768px) {*!*/
+/*!*  .container-fluid {*!*/
+/*!*    padding: 1rem 0.5rem;*!*/
+/*!*  }*!*/
+
+/*!*  .page-header {*!*/
+/*!*    flex-direction: column;*!*/
+/*!*    align-items: stretch !important;*!*/
+/*!*    gap: 1rem;*!*/
+/*!*  }*!*/
+
+/*!*  .header-actions {*!*/
+/*!*    flex-direction: column;*!*/
+/*!*    gap: 1rem;*!*/
+/*!*  }*!*/
+
+/*!*  .page-title {*!*/
+/*!*    font-size: 1.4rem;*!*/
+/*!*    margin-bottom: 0;*!*/
+/*!*  }*!*/
+
+/*!*  .table-responsive {*!*/
+/*!*    font-size: 0.8rem;*!*/
+/*!*  }*!*/
+
+/*!*  .pagination-container {*!*/
+/*!*    flex-direction: column;*!*/
+/*!*    gap: 1rem;*!*/
+/*!*  }*!*/
+
+/*!*  .custom-table tbody td {*!*/
+/*!*    padding: 0.75rem 0.5rem;*!*/
+/*!*  }*!*/
+
+/*!*  .action-btn {*!*/
+/*!*    padding: 0.3rem 0.5rem;*!*/
+/*!*    font-size: 0.75rem;*!*/
+/*!*  }*!*/
+
+/*!*  .action-btn .d-none {*!*/
+/*!*    display: none !important;*!*/
+/*!*  }*!*/
+
+/*!*  .status-badge {*!*/
+/*!*    font-size: 0.7rem;*!*/
+/*!*    padding: 0.3rem 0.6rem;*!*/
+/*!*  }*!*/
+
+/*!*  .reference-badge {*!*/
+/*!*    font-size: 0.7rem;*!*/
+/*!*    padding: 0.2rem 0.4rem;*!*/
+/*!*  }*!*/
+
+/*!*  .type-penalite {*!*/
+/*!*    font-size: 0.7rem;*!*/
+/*!*    padding: 0.2rem 0.4rem;*!*/
+/*!*  }*!*/
+
+/*!*  !* Montants sur mobile *!*!*/
+/*!*  .montant-cell {*!*/
+/*!*    font-size: 0.8rem;*!*/
+/*!*  }*!*/
+/*!*}*!*/
+
+/*!*@media (max-width: 480px) {*!*/
+/*!*  .custom-table thead th {*!*/
+/*!*    font-size: 0.8rem;*!*/
+/*!*    padding: 0.75rem 0.3rem;*!*/
+/*!*  }*!*/
+
+/*!*  .custom-table tbody td {*!*/
+/*!*    padding: 0.5rem 0.3rem;*!*/
+/*!*    font-size: 0.8rem;*!*/
+/*!*  }*!*/
+
+/*!*  .action-btn {*!*/
+/*!*    padding: 0.25rem 0.4rem;*!*/
+/*!*    font-size: 0.7rem;*!*/
+/*!*  }*!*/
+
+/*!*  .action-btn i {*!*/
+/*!*    font-size: 0.8rem;*!*/
+/*!*  }*!*/
+
+/*!*  .status-badge, .reference-badge, .type-penalite {*!*/
+/*!*    font-size: 0.65rem;*!*/
+/*!*    padding: 0.2rem 0.3rem;*!*/
+/*!*  }*!*/
+
+/*!*  .montant-cell {*!*/
+/*!*    font-size: 0.75rem;*!*/
+/*!*  }*!*/
+/*!*}*!*/
+
+/*!*!* Améliorations spécifiques aux pénalités *!*!*/
+/*!*@media (max-width: 1200px) {*!*/
+/*!*  .custom-table thead th:nth-child(4),*!*/
+/*!*  .custom-table tbody td:nth-child(4) {*!*/
+/*!*    display: none;*!*/
+/*!*  }*!*/
+/*!*}*!*/
+
+/*!*@media (max-width: 992px) {*!*/
+/*!*  .custom-table thead th:nth-child(7),*!*/
+/*!*  .custom-table tbody td:nth-child(7) {*!*/
+/*!*    display: none;*!*/
+/*!*  }*!*/
+/*!*}*!*/
+
+/*!*@media (max-width: 768px) {*!*/
+/*!*  .custom-table thead th:nth-child(6),*!*/
+/*!*  .custom-table tbody td:nth-child(6) {*!*/
+/*!*    display: none;*!*/
+/*!*  }*!*/
+/*!*}*!*/
+
+/*.container-fluid {*/
+/*  max-width: 1600px;*/
+/*  padding: 2rem 1rem;*/
+/*}*/
+
+/*!* Header *!*/
+/*.page-header {*/
+/*  margin-bottom: 2rem;*/
+/*}*/
+
+/*.page-title {*/
+/*  font-family: var(--font-Orbitron), sans-serif;*/
+/*  font-weight: 700;*/
+/*  font-size: 1.8rem;*/
+/*  color: var(--text-color);*/
+/*  margin-bottom: 1rem;*/
+/*}*/
+
+/*!* Cards *!*/
+/*.custom-card {*/
+/*  background-color: var(--card-bg);*/
+/*  border: 1px solid var(--border-color);*/
+/*  box-shadow: var(--shadow);*/
+/*  margin-bottom: 1.5rem;*/
+/*}*/
+
+/*.card-body {*/
+/*  padding: 1rem; !* Réduit pour filtres compacts *!*/
+/*}*/
+
+/*!* Form Controls - Version Compacte *!*/
+/*.form-label-compact {*/
+/*  font-weight: 600;*/
+/*  color: var(--text-color);*/
+/*  margin-bottom: 0.25rem;*/
+/*  font-size: 0.8rem;*/
+/*}*/
+
+/*.form-control-sm, .form-select-sm {*/
+/*  border: 1px solid var(--border-color);*/
+/*  border-radius: 6px;*/
+/*  padding: 0.4rem 0.75rem;*/
+/*  font-size: 0.85rem;*/
+/*  transition: all 0.3s ease;*/
+/*  background-color: var(--bg-color);*/
+/*  height: auto;*/
+/*}*/
+
+/*.form-control-sm:focus, .form-select-sm:focus {*/
+/*  border-color: var(--primary-color);*/
+/*  box-shadow: 0 0 0 0.15rem rgba(220, 220, 52, 0.2);*/
+/*}*/
+
+/*!* Export Buttons *!*/
+/*.btn-export {*/
+/*  background-color: var(--bg-color);*/
+/*  border: 2px solid var(--border-color);*/
+/*  color: var(--text-secondary);*/
+/*  padding: 0.5rem 1rem;*/
+/*  border-radius: 6px;*/
+/*  font-weight: 600;*/
+/*  transition: all 0.3s ease;*/
+/*  font-size: 0.85rem;*/
+/*}*/
+
+/*.btn-export:hover {*/
+/*  border-color: var(--primary-color);*/
+/*  color: var(--text-color);*/
+/*  background-color: var(--primary-light);*/
+/*}*/
+
+/*!* Table Container - Avec scroll horizontal *!*/
+/*.table-container {*/
+/*  background-color: var(--card-bg);*/
+/*  overflow-x: auto; !* Scroll horizontal forcé *!*/
+/*  overflow-y: visible;*/
+/*  box-shadow: var(--shadow);*/
+/*}*/
+
+/*.table-responsive {*/
+/*  min-width: 100%;*/
+/*  overflow-x: auto;*/
+/*}*/
+
+/*.custom-table {*/
+/*  margin-bottom: 0;*/
+/*  font-size: 0.85rem;*/
+/*  min-width: 1400px; !* Largeur minimale pour 11 colonnes *!*/
+/*  width: 100%;*/
+/*}*/
+
+/*!* Table Headers - Grouped avec séparateurs *!*/
+/*.custom-table thead th {*/
+/*  background-color: var(--bg-secondary);*/
+/*  color: var(--text-color);*/
+/*  font-weight: 700;*/
+/*  font-size: 0.8rem;*/
+/*  padding: 0.75rem 0.5rem;*/
+/*  border: none;*/
+/*  text-transform: uppercase;*/
+/*  letter-spacing: 0.3px;*/
+/*  vertical-align: middle;*/
+/*  position: relative;*/
+/*}*/
+
+/*.custom-table thead th.group-header {*/
+/*  background-color: var(--text-color);*/
+/*  color: var(--bg-color);*/
+/*  font-size: 0.75rem;*/
+/*  font-weight: 700;*/
+/*  padding: 0.5rem;*/
+/*  border-bottom: 2px solid var(--primary-color);*/
+/*  letter-spacing: 0.5px;*/
+/*}*/
+
+/*!* SÉPARATEURS ENTRE LES BLOCS - En gris *!*/
+/*!* Séparateur après "Identifiants" (2ème colonne) *!*/
+/*.custom-table thead tr:nth-child(1) th:nth-child(1),*/
+/*.custom-table tbody tr td:nth-child(2) {*/
+/*  border-right: 2px solid var(--border-color);*/
+/*}*/
+
+/*!* Séparateur après "Statut & Type" (5ème colonne) *!*/
+/*.custom-table thead tr:nth-child(1) th:nth-child(2),*/
+/*.custom-table tbody tr td:nth-child(5) {*/
+/*  border-right: 2px solid var(--border-color);*/
+/*}*/
+
+/*!* Séparateur après "Dates" (7ème colonne) *!*/
+/*.custom-table thead tr:nth-child(1) th:nth-child(3),*/
+/*.custom-table tbody tr td:nth-child(7) {*/
+/*  border-right: 2px solid var(--border-color);*/
+/*}*/
+
+/*!* Séparateur après "Montants" (10ème colonne) *!*/
+/*.custom-table thead tr:nth-child(1) th:nth-child(4),*/
+/*.custom-table tbody tr td:nth-child(10) {*/
+/*  border-right: 2px solid var(--border-color);*/
+/*}*/
+
+/*!* Table Body *!*/
+/*.custom-table tbody td {*/
+/*  padding: 0.75rem 0.5rem;*/
+/*  border-bottom: 1px solid var(--border-color);*/
+/*  font-size: 0.8rem;*/
+/*  vertical-align: middle;*/
+/*}*/
+
+/*.penalite-row {*/
+/*  cursor: pointer;*/
+/*  transition: all 0.3s ease;*/
+/*}*/
+
+/*.penalite-row:hover {*/
+/*  background-color: var(--bg-secondary);*/
+/*}*/
+
+/*!* Specific Cell Styles *!*/
+/*.reference-badge {*/
+/*  background-color: var(--bg-secondary);*/
+/*  color: var(--text-color);*/
+/*  padding: 0.3rem 0.6rem;*/
+/*  border-radius: 12px;*/
+/*  font-size: 0.8rem;*/
+/*  font-weight: 600;*/
+/*  border: 1px solid var(--border-color);*/
+/*}*/
+
+/*.type-cell, .motif-cell {*/
+/*  font-size: 0.8rem;*/
+/*  color: var(--text-color);*/
+/*}*/
+
+/*!* Date Cells *!*/
+/*.date-cell {*/
+/*  white-space: nowrap;*/
+/*  font-size: 0.8rem;*/
+/*}*/
+
+/*.date-cell i {*/
+/*  color: var(--primary-color);*/
+/*  font-size: 0.7rem;*/
+/*}*/
+
+/*!* Amount Cells *!*/
+/*.amount-cell {*/
+/*  font-family: 'Courier New', monospace;*/
+/*  font-weight: 600;*/
+/*  color: var(--text-color);*/
+/*}*/
+
+/*.amount-paye {*/
+/*  color: #28a745;*/
+/*  font-weight: 700;*/
+/*}*/
+
+/*.amount-restant {*/
+/*  color: #dc3545;*/
+/*  font-weight: 700;*/
+/*}*/
+
+/*!* Status Badges *!*/
+/*.status-badge {*/
+/*  display: inline-block;*/
+/*  padding: 0.4rem 0.8rem;*/
+/*  border-radius: 20px;*/
+/*  font-size: 0.8rem;*/
+/*  font-weight: 600;*/
+/*  text-transform: capitalize;*/
+/*  white-space: nowrap;*/
+/*  min-width: 80px;*/
+/*  text-align: center;*/
+/*}*/
+
+/*.status-done {*/
+/*  background-color: #d4edda;*/
+/*  color: #155724;*/
+/*  border: 1px solid #c3e6cb;*/
+/*}*/
+
+/*.status-partial {*/
+/*  background-color: #fff3cd;*/
+/*  color: #856404;*/
+/*  border: 1px solid #ffeaa7;*/
+/*}*/
+
+/*.status-pending {*/
+/*  background-color: #f8d7da;*/
+/*  color: #721c24;*/
+/*  border: 1px solid #f1b0b7;*/
+/*}*/
+
+/*.status-cancelled {*/
+/*  background-color: #e2e3e5;*/
+/*  color: #383d41;*/
+/*  border: 1px solid #d6d8db;*/
+/*}*/
+
+/*.status-default {*/
+/*  background-color: var(--bg-secondary);*/
+/*  color: var(--text-secondary);*/
+/*  border: 1px solid var(--border-color);*/
+/*}*/
+
+/*!* Action Buttons *!*/
+/*.action-btn {*/
+/*  padding: 0.4rem 0.6rem;*/
+/*  border-radius: 6px;*/
+/*  border: 1px solid var(--border-color);*/
+/*  background-color: var(--primary-color);*/
+/*  color: var(--text-color);*/
+/*  transition: all 0.3s ease;*/
+/*  font-size: 0.85rem;*/
+/*  font-weight: 600;*/
+/*}*/
+
+/*.action-btn:hover:not(:disabled) {*/
+/*  background-color: var(--primary-dark);*/
+/*  border-color: var(--primary-dark);*/
+/*  transform: translateY(-1px);*/
+/*}*/
+
+/*.action-btn:disabled {*/
+/*  background-color: var(--bg-secondary);*/
+/*  border-color: var(--border-color);*/
+/*  color: var(--text-secondary);*/
+/*  cursor: not-allowed;*/
+/*  opacity: 0.6;*/
+/*  transform: none;*/
+/*}*/
+
+/*!* Loading and Empty States *!*/
+/*.loading-state, .error-state, .empty-state {*/
+/*  padding: 3rem 1rem;*/
+/*  text-align: center;*/
+/*}*/
+
+/*.spinner-custom {*/
+/*  color: var(--primary-color);*/
+/*  width: 2rem;*/
+/*  height: 2rem;*/
+/*}*/
+
+/*.error-icon, .empty-icon {*/
+/*  font-size: 3rem;*/
+/*  color: var(--text-secondary);*/
+/*  margin-bottom: 1rem;*/
+/*}*/
+
+/*.retry-btn {*/
+/*  background-color: var(--primary-color);*/
+/*  border-color: var(--primary-color);*/
+/*  color: var(--text-color);*/
+/*  padding: 0.6rem 1.5rem;*/
+/*  border-radius: 8px;*/
+/*  font-weight: 600;*/
+/*}*/
+
+/*.retry-btn:hover {*/
+/*  background-color: var(--primary-dark);*/
+/*  border-color: var(--primary-dark);*/
+/*}*/
+
+/*!* Pagination *!*/
+/*.pagination-container {*/
+/*  background-color: var(--card-bg);*/
+/*  padding: 1rem 1.5rem;*/
+/*  border-top: 1px solid var(--border-color);*/
+/*  display: flex;*/
+/*  justify-content: space-between;*/
+/*  align-items: center;*/
+/*}*/
+
+/*.pagination-info {*/
+/*  font-size: 0.9rem;*/
+/*  color: var(--text-secondary);*/
+/*}*/
+
+/*.pagination .page-link {*/
+/*  color: var(--text-secondary);*/
+/*  border-color: var(--border-color);*/
+/*  padding: 0.5rem 0.75rem;*/
+/*  margin: 0 0.2rem;*/
+/*  border-radius: 6px;*/
+/*  background-color: var(--bg-color);*/
+/*  border: none;*/
+/*}*/
+
+/*.pagination .page-link:hover:not(:disabled) {*/
+/*  background-color: var(--primary-light);*/
+/*  border-color: var(--primary-color);*/
+/*  color: var(--text-color);*/
+/*}*/
+
+/*.pagination .page-item.active .page-link {*/
+/*  background-color: var(--primary-color);*/
+/*  border-color: var(--primary-color);*/
+/*  color: var(--text-color);*/
+/*}*/
+
+/*.pagination .page-item.disabled .page-link {*/
+/*  color: var(--text-secondary);*/
+/*  background-color: var(--bg-secondary);*/
+/*  border-color: var(--border-color);*/
+/*  cursor: not-allowed;*/
+/*}*/
+
+/*.pagination .page-link:disabled {*/
+/*  opacity: 0.5;*/
+/*  cursor: not-allowed;*/
+/*}*/
+
+/*!* Responsive - Ajustements taille uniquement, sans masquer *!*/
+
+/*!* Mobile adaptations *!*/
+/*@media (max-width: 768px) {*/
+/*  .container-fluid {*/
+/*    padding: 1rem 0.5rem;*/
+/*  }*/
+
+/*  .page-header {*/
+/*    flex-direction: column;*/
+/*    align-items: stretch !important;*/
+/*    gap: 1rem;*/
+/*  }*/
+
+/*  .page-title {*/
+/*    font-size: 1.4rem;*/
+/*    margin-bottom: 0;*/
+/*  }*/
+
+/*  .card-body {*/
+/*    padding: 0.75rem;*/
+/*  }*/
+
+/*  !* Filtres en colonne sur mobile *!*/
+/*  .row.g-2 {*/
+/*    gap: 0.5rem !important;*/
+/*  }*/
+
+/*  .row.g-2 > [class*="col-"] {*/
+/*    width: 100%;*/
+/*  }*/
+
+/*  .table-responsive {*/
+/*    font-size: 0.75rem;*/
+/*  }*/
+
+/*  .pagination-container {*/
+/*    flex-direction: column;*/
+/*    gap: 1rem;*/
+/*  }*/
+
+/*  .custom-table tbody td {*/
+/*    padding: 0.5rem 0.3rem;*/
+/*  }*/
+
+/*  .custom-table thead th {*/
+/*    padding: 0.5rem 0.3rem;*/
+/*    font-size: 0.7rem;*/
+/*  }*/
+
+/*  .action-btn {*/
+/*    padding: 0.3rem 0.5rem;*/
+/*    font-size: 0.75rem;*/
+/*  }*/
+
+/*  .status-badge {*/
+/*    font-size: 0.7rem;*/
+/*    padding: 0.3rem 0.6rem;*/
+/*    min-width: 70px;*/
+/*  }*/
+
+/*  .reference-badge {*/
+/*    font-size: 0.7rem;*/
+/*    padding: 0.2rem 0.4rem;*/
+/*  }*/
+
+/*  .type-cell, .motif-cell {*/
+/*    font-size: 0.75rem;*/
+/*  }*/
+/*}*/
+
+/*!* Very small screens - Ajustements taille uniquement *!*/
+/*@media (max-width: 480px) {*/
+/*  .custom-table thead th {*/
+/*    font-size: 0.65rem;*/
+/*    padding: 0.4rem 0.2rem;*/
+/*  }*/
+
+/*  .custom-table tbody td {*/
+/*    padding: 0.4rem 0.2rem;*/
+/*    font-size: 0.7rem;*/
+/*  }*/
+
+/*  .action-btn {*/
+/*    padding: 0.25rem 0.4rem;*/
+/*    font-size: 0.7rem;*/
+/*  }*/
+
+/*  .status-badge {*/
+/*    font-size: 0.6rem;*/
+/*    padding: 0.2rem 0.3rem;*/
+/*    min-width: 60px;*/
+/*  }*/
+
+/*  .reference-badge {*/
+/*    font-size: 0.65rem;*/
+/*    padding: 0.15rem 0.3rem;*/
+/*  }*/
+
+/*  .type-cell, .motif-cell {*/
+/*    font-size: 0.7rem;*/
+/*  }*/
+/*}*/
+
+/*!* Print styles - Tout visible *!*/
+/*@media print {*/
+/*  .custom-table {*/
+/*    font-size: 0.7rem;*/
+/*  }*/
+
+/*  .action-btn {*/
+/*    display: none;*/
+/*  }*/
+
+/*  !* Séparateurs visibles à l'impression *!*/
+/*  .custom-table tbody tr td:nth-child(2),*/
+/*  .custom-table tbody tr td:nth-child(5),*/
+/*  .custom-table tbody tr td:nth-child(7),*/
+/*  .custom-table tbody tr td:nth-child(10) {*/
+/*    border-right: 2px solid #666 !important;*/
+/*  }*/
+/*}*/
+
 .container-fluid {
   max-width: 1600px;
   padding: 2rem 1rem;
@@ -16,45 +914,39 @@
   margin-bottom: 1rem;
 }
 
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
 /* Cards */
 .custom-card {
   background-color: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
   box-shadow: var(--shadow);
   margin-bottom: 1.5rem;
 }
 
 .card-body {
-  padding: 1.5rem;
+  padding: 1rem;
 }
 
-/* Form Controls */
-.form-label {
+/* Form Controls - Version Compacte */
+.form-label-compact {
   font-weight: 600;
   color: var(--text-color);
-  margin-bottom: 0.5rem;
-  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+  font-size: 0.8rem;
 }
 
-.form-control, .form-select {
-  border: 2px solid var(--border-color);
-  border-radius: 8px;
-  padding: 0.6rem 1rem;
-  font-size: 0.9rem;
+.form-control-sm, .form-select-sm {
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.85rem;
   transition: all 0.3s ease;
   background-color: var(--bg-color);
+  height: auto;
 }
 
-.form-control:focus, .form-select:focus {
+.form-control-sm:focus, .form-select-sm:focus {
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 0.2rem rgba(220, 220, 52, 0.25);
+  box-shadow: 0 0 0 0.15rem rgba(220, 220, 52, 0.2);
 }
 
 /* Export Buttons */
@@ -75,33 +967,86 @@
   background-color: var(--primary-light);
 }
 
-/* Table */
+/* Table Container - Avec scroll horizontal */
 .table-container {
   background-color: var(--card-bg);
-  border-radius: 12px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: visible;
   box-shadow: var(--shadow);
+}
+
+.table-responsive {
+  min-width: 100%;
+  overflow-x: auto;
 }
 
 .custom-table {
   margin-bottom: 0;
+  font-size: 0.85rem;
+  min-width: 1800px;
+  width: 100%;
 }
 
+/* Table Headers - Grouped avec séparateurs */
 .custom-table thead th {
   background-color: var(--bg-secondary);
   color: var(--text-color);
   font-weight: 700;
-  font-size: 0.9rem;
-  padding: 1rem 0.75rem;
+  font-size: 0.8rem;
+  padding: 0.75rem 0.5rem;
   border: none;
   text-transform: uppercase;
+  letter-spacing: 0.3px;
+  vertical-align: middle;
+  position: relative;
+}
+
+.custom-table thead th.group-header {
+  background-color: var(--text-color);
+  color: var(--bg-color);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.5rem;
+  border-bottom: 2px solid var(--primary-color);
   letter-spacing: 0.5px;
 }
 
+/* SÉPARATEURS ENTRE LES BLOCS - En gris */
+/* Séparateur après "Identifiants" (2ème colonne) */
+.custom-table thead tr:nth-child(1) th:nth-child(1),
+.custom-table tbody tr td:nth-child(2) {
+  border-right: 2px solid var(--border-color);
+}
+
+/* Séparateur après "Statut & Type" (5ème colonne) */
+.custom-table thead tr:nth-child(1) th:nth-child(2),
+.custom-table tbody tr td:nth-child(5) {
+  border-right: 2px solid var(--border-color);
+}
+
+/* Séparateur après "Annulation" (8ème colonne) */
+.custom-table thead tr:nth-child(1) th:nth-child(3),
+.custom-table tbody tr td:nth-child(8) {
+  border-right: 2px solid var(--border-color);
+}
+
+/* Séparateur après "Dates" (10ème colonne) */
+.custom-table thead tr:nth-child(1) th:nth-child(4),
+.custom-table tbody tr td:nth-child(10) {
+  border-right: 2px solid var(--border-color);
+}
+
+/* Séparateur après "Montants" (13ème colonne) */
+.custom-table thead tr:nth-child(1) th:nth-child(5),
+.custom-table tbody tr td:nth-child(13) {
+  border-right: 2px solid var(--border-color);
+}
+
+/* Table Body */
 .custom-table tbody td {
-  padding: 1rem 0.75rem;
+  padding: 0.75rem 0.5rem;
   border-bottom: 1px solid var(--border-color);
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   vertical-align: middle;
 }
 
@@ -114,7 +1059,7 @@
   background-color: var(--bg-secondary);
 }
 
-/* Pénalité Specific Styles */
+/* Specific Cell Styles */
 .reference-badge {
   background-color: var(--bg-secondary);
   color: var(--text-color);
@@ -125,13 +1070,60 @@
   border: 1px solid var(--border-color);
 }
 
-/* Status Badges pour Pénalités */
+.type-cell, .motif-cell {
+  font-size: 0.8rem;
+  color: var(--text-color);
+}
+
+/* Annulation Cells */
+.annulation-cell {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.justificatif-cell {
+  font-style: italic;
+}
+
+/* Date Cells */
+.date-cell {
+  white-space: nowrap;
+  font-size: 0.8rem;
+}
+
+.date-cell i {
+  color: var(--primary-color);
+  font-size: 0.7rem;
+}
+
+/* Amount Cells */
+.amount-cell {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.amount-paye {
+  color: #28a745;
+  font-weight: 700;
+}
+
+.amount-restant {
+  color: #dc3545;
+  font-weight: 700;
+}
+
+/* Status Badges */
 .status-badge {
+  display: inline-block;
   padding: 0.4rem 0.8rem;
   border-radius: 20px;
   font-size: 0.8rem;
   font-weight: 600;
   text-transform: capitalize;
+  white-space: nowrap;
+  min-width: 80px;
+  text-align: center;
 }
 
 .status-done {
@@ -152,28 +1144,33 @@
   border: 1px solid #f1b0b7;
 }
 
+.status-cancelled {
+  background-color: #e2e3e5;
+  color: #383d41;
+  border: 1px solid #d6d8db;
+}
+
 .status-default {
   background-color: var(--bg-secondary);
   color: var(--text-secondary);
   border: 1px solid var(--border-color);
 }
 
-/* Action Buttons - Spécifique aux pénalités */
+/* Action Buttons */
 .action-btn {
-  padding: 0.4rem 0.8rem;
+  padding: 0.4rem 0.6rem;
   border-radius: 6px;
   border: 1px solid var(--border-color);
   background-color: var(--primary-color);
   color: var(--text-color);
   transition: all 0.3s ease;
+  font-size: 0.85rem;
   font-weight: 600;
-  font-size: 0.8rem;
 }
 
 .action-btn:hover:not(:disabled) {
   background-color: var(--primary-dark);
   border-color: var(--primary-dark);
-  color: var(--text-color);
   transform: translateY(-1px);
 }
 
@@ -184,43 +1181,6 @@
   cursor: not-allowed;
   opacity: 0.6;
   transform: none;
-}
-
-.action-btn i {
-  font-size: 0.85rem;
-}
-
-/* Montants - Styling spécial pour les montants financiers */
-.montant-cell {
-  font-weight: 600;
-  font-family: 'Courier New', monospace;
-  color: var(--text-color);
-}
-
-.montant-paye {
-  color: #28a745;
-  font-weight: 700;
-}
-
-.montant-restant {
-  color: #dc3545;
-  font-weight: 700;
-}
-
-.montant-penalite {
-  color: var(--text-color);
-  font-weight: 600;
-}
-
-/* Type de pénalité */
-.type-penalite {
-  background-color: var(--primary-light);
-  color: var(--text-color);
-  padding: 0.3rem 0.6rem;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  border: 1px solid var(--primary-color);
 }
 
 /* Loading and Empty States */
@@ -304,6 +1264,11 @@
   cursor: not-allowed;
 }
 
+/* Utility Classes */
+.me-1 {
+  margin-right: 0.25rem;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .container-fluid {
@@ -316,18 +1281,25 @@
     gap: 1rem;
   }
 
-  .header-actions {
-    flex-direction: column;
-    gap: 1rem;
-  }
-
   .page-title {
     font-size: 1.4rem;
     margin-bottom: 0;
   }
 
+  .card-body {
+    padding: 0.75rem;
+  }
+
+  .row.g-2 {
+    gap: 0.5rem !important;
+  }
+
+  .row.g-2 > [class*="col-"] {
+    width: 100%;
+  }
+
   .table-responsive {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
   }
 
   .pagination-container {
@@ -336,7 +1308,12 @@
   }
 
   .custom-table tbody td {
-    padding: 0.75rem 0.5rem;
+    padding: 0.5rem 0.3rem;
+  }
+
+  .custom-table thead th {
+    padding: 0.5rem 0.3rem;
+    font-size: 0.7rem;
   }
 
   .action-btn {
@@ -344,13 +1321,10 @@
     font-size: 0.75rem;
   }
 
-  .action-btn .d-none {
-    display: none !important;
-  }
-
   .status-badge {
     font-size: 0.7rem;
     padding: 0.3rem 0.6rem;
+    min-width: 70px;
   }
 
   .reference-badge {
@@ -358,26 +1332,20 @@
     padding: 0.2rem 0.4rem;
   }
 
-  .type-penalite {
-    font-size: 0.7rem;
-    padding: 0.2rem 0.4rem;
-  }
-
-  /* Montants sur mobile */
-  .montant-cell {
-    font-size: 0.8rem;
+  .type-cell, .motif-cell, .annulation-cell {
+    font-size: 0.75rem;
   }
 }
 
 @media (max-width: 480px) {
   .custom-table thead th {
-    font-size: 0.8rem;
-    padding: 0.75rem 0.3rem;
+    font-size: 0.65rem;
+    padding: 0.4rem 0.2rem;
   }
 
   .custom-table tbody td {
-    padding: 0.5rem 0.3rem;
-    font-size: 0.8rem;
+    padding: 0.4rem 0.2rem;
+    font-size: 0.7rem;
   }
 
   .action-btn {
@@ -385,38 +1353,37 @@
     font-size: 0.7rem;
   }
 
-  .action-btn i {
-    font-size: 0.8rem;
-  }
-
-  .status-badge, .reference-badge, .type-penalite {
-    font-size: 0.65rem;
+  .status-badge {
+    font-size: 0.6rem;
     padding: 0.2rem 0.3rem;
+    min-width: 60px;
   }
 
-  .montant-cell {
-    font-size: 0.75rem;
+  .reference-badge {
+    font-size: 0.65rem;
+    padding: 0.15rem 0.3rem;
   }
-}
 
-/* Améliorations spécifiques aux pénalités */
-@media (max-width: 1200px) {
-  .custom-table thead th:nth-child(4),
-  .custom-table tbody td:nth-child(4) {
-    display: none;
+  .type-cell, .motif-cell, .annulation-cell {
+    font-size: 0.7rem;
   }
 }
 
-@media (max-width: 992px) {
-  .custom-table thead th:nth-child(7),
-  .custom-table tbody td:nth-child(7) {
+/* Print styles */
+@media print {
+  .custom-table {
+    font-size: 0.7rem;
+  }
+
+  .action-btn {
     display: none;
   }
-}
 
-@media (max-width: 768px) {
-  .custom-table thead th:nth-child(6),
-  .custom-table tbody td:nth-child(6) {
-    display: none;
+  .custom-table tbody tr td:nth-child(2),
+  .custom-table tbody tr td:nth-child(5),
+  .custom-table tbody tr td:nth-child(8),
+  .custom-table tbody tr td:nth-child(10),
+  .custom-table tbody tr td:nth-child(13) {
+    border-right: 2px solid #666 !important;
   }
 }

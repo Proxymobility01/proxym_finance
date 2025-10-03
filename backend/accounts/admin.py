@@ -27,9 +27,9 @@ class CustomUserAdmin(UserAdmin):
     search_fields = ('email', 'nom', 'prenom', 'tel')
     ordering = ('email',)
 
-    # Comme on a supprimé 'username'
+
     fieldsets = (
-        (None, {'fields': ('email', 'nom', 'prenom', 'tel', 'role')}),
+        (None, {'fields': ('email', 'nom', 'prenom', 'tel','password', 'role')}),
         ('Permissions', {'fields': ('is_active', 'is_staff', 'is_admin', 'groups', 'user_permissions')}),
         ('Dates', {'fields': ('last_login',)}),
     )

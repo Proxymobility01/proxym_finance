@@ -20,7 +20,7 @@ PENALITE_GRAVE  = 5000
 
 def _deadline_noon_from_jour(jour: date):
     tz = timezone.get_current_timezone()
-    return timezone.make_aware(datetime.combine(jour + timedelta(days=1), time(hour=12)), tz)
+    return timezone.make_aware(datetime.combine(jour + timedelta(days=1), time(hour=11)), tz)
 
 
 def _limit_14h_from_jour(jour: date):
@@ -90,6 +90,9 @@ def apply_penalties_for_now(force_window: str | None = None) -> dict:
                 if _is_paid_for_day(contrat, current_day):
                     paid_skipped += 1
                 else:
+
+                    date_limite_snapshot = contrat.date_limite or current_day
+
                     pen, was_created = Penalite.objects.get_or_create(
                         contrat_chauffeur=contrat,
                         date_paiement_manquee=current_day,
@@ -101,6 +104,8 @@ def apply_penalties_for_now(force_window: str | None = None) -> dict:
                             description=f"Pénalité automatique légère du {current_day.isoformat()}",
                             montant_paye=0,
                             montant_restant=PENALITE_LEGERE,
+                            echeance_paiement_penalite=now + timedelta(hours=72),
+                            date_limite_reference=date_limite_snapshot,
                         ),
                     )
                     if was_created:

@@ -1,200 +1,3 @@
-// // src/app/pages/leases/lease-list.ts
-// import { Component, OnInit, inject, signal, computed, effect } from '@angular/core';
-// import { CommonModule } from '@angular/common';
-// import { FormsModule } from '@angular/forms';
-// import { LeaseService } from '../../services/lease';
-// import { Lease } from '../../models/lease.model';
-// import {MatDialog} from '@angular/material/dialog';
-// import {AddContratBatterie} from '../../components/add-contrat-batterie/add-contrat-batterie';
-// import {AddPaiementLeaseComponent} from '../../components/add-paiement-lease/add-paiement-lease';
-// import {AddConge} from '../../components/add-conge/add-conge';
-//
-// type PageItem = { type: 'page'; index: number } | { type: 'dots' };
-//
-// @Component({
-//   selector: 'app-lease-list',
-//   standalone: true,
-//   imports: [CommonModule, FormsModule],
-//   templateUrl: './lease-list.html',
-//   styleUrls: ['./lease-list.css'],
-// })
-// export class LeaseList implements OnInit {
-//   private readonly leaseService = inject(LeaseService);
-//   private readonly dialog = inject(MatDialog)
-//
-//   // ---------- Source ----------
-//   readonly leases = this.leaseService.leases;
-//   readonly isLoading = this.leaseService.isLoadingLeases;
-//   readonly error = this.leaseService.errorLeases;
-//
-//   ngOnInit() {
-//     this.leaseService.fetchLeases();
-//   }
-//
-//   // ---------- Filtres ----------
-//   readonly query = signal<string>('');          // recherche multi-champs
-//   readonly statutPaiement = signal<string>('');          // liste déroulante
-//   readonly statutPenalite = signal<string>('');          // liste déroulante
-//   readonly payePar = signal<string>('');          // liste déroulante
-//   readonly stationPaiement = signal<string>('');          // liste déroulante
-//
-//   // ---------- Helpers ----------
-//   private normalize(s: unknown): string {
-//     return String(s ?? '')
-//       .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-//       .replace(/œ/g, 'oe').replace(/æ/g, 'ae').replace(/ß/g, 'ss')
-//       .replace(/[\u2019\u2018’]/g, "'")
-//       .toLowerCase()
-//       .trim();
-//   }
-//
-//   // Options dynamiques extraites des données (triées, uniques, non vides)
-//   private uniqueSorted(values: (string | null | undefined)[]): string[] {
-//     const set = new Set(values.filter(v => !!v).map(v => String(v)));
-//     return Array.from(set).sort((a, b) => a.localeCompare(b, 'fr'));
-//   }
-//
-//   readonly optionsStatutPaiement = computed<string[]>(() =>
-//     [''].concat(this.uniqueSorted(this.leases().map(l => l?.statut_paiement)))
-//   );
-//
-//   readonly optionsStatutPenalite = computed<string[]>(() =>
-//     [''].concat(this.uniqueSorted(this.leases().map(l => l?.statut_penalite)))
-//   );
-//
-//   readonly optionsPayePar = computed<string[]>(() =>
-//     [''].concat(this.uniqueSorted(this.leases().map(l => l?.paye_par)))
-//   );
-//
-//   readonly optionsStationPaiement = computed<string[]>(() =>
-//     [''].concat(this.uniqueSorted(this.leases().map(l => l?.station_paiement)))
-//   );
-//
-//   // ---------- Liste filtrée ----------
-//   readonly filtered = computed<Lease[]>(() => {
-//     const rows = this.leases();
-//     if (!rows?.length) return [];
-//
-//     const q = this.normalize(this.query());
-//     const f1 = this.statutPaiement();
-//     const f2 = this.statutPenalite();
-//     const f3 = this.payePar();
-//     const f4 = this.stationPaiement();
-//
-//     return rows.filter(l => {
-//       // Recherche multi-champs (insensible casse/accents) sur 4 champs
-//       let okSearch = true;
-//       if (q) {
-//         const a = this.normalize(l?.chauffeur_unique_id);
-//         const b = this.normalize(l?.chauffeur);
-//         const c = this.normalize(l?.moto_unique_id);
-//         const d = this.normalize(l?.moto_vin);
-//         okSearch = a.includes(q) || b.includes(q) || c.includes(q) || d.includes(q);
-//       }
-//
-//       // Filtres exacts si sélectionnés ('' = tous)
-//       const okStatutPaiement = !f1 || String(l?.statut_paiement ?? '') === f1;
-//       const okStatutPenalite = !f2 || String(l?.statut_penalite ?? '') === f2;
-//       const okPayePar = !f3 || String(l?.paye_par ?? '') === f3;
-//       const okStationPaiement = !f4 || String(l?.station_paiement ?? '') === f4;
-//
-//       return okSearch && okStatutPaiement && okStatutPenalite && okPayePar && okStationPaiement;
-//     });
-//   });
-//
-//   // ---------- Pagination ----------
-//   readonly pageSize = signal(50);
-//   readonly pageIndex = signal(0);
-//   readonly total = computed(() => this.filtered().length);
-//   readonly totalPages = computed(() => Math.max(1, Math.ceil(this.total() / this.pageSize())));
-//   readonly pageStart = computed(() => this.pageIndex() * this.pageSize());
-//   readonly pageEnd = computed(() => Math.min(this.pageStart() + this.pageSize(), this.total()));
-//   readonly paged = computed(() => this.filtered().slice(this.pageStart(), this.pageEnd()));
-//
-//   private _keepInRange = effect(() => {
-//     if (this.pageIndex() > this.totalPages() - 1) this.pageIndex.set(0);
-//   });
-//
-//   readonly visiblePages = computed<PageItem[]>(() => {
-//     const total = this.totalPages();
-//     const current = this.pageIndex();
-//     const last = total - 1;
-//     const around = 1;
-//     const out: PageItem[] = [];
-//     const addRange = (s: number, e: number) => {
-//       for (let i = s; i <= e; i++) out.push({type: 'page', index: i});
-//     };
-//
-//     if (total <= 7) {
-//       addRange(0, last);
-//       return out;
-//     }
-//
-//     out.push({type: 'page', index: 0});
-//     let s = Math.max(1, current - around);
-//     let e = Math.min(last - 1, current + around);
-//     if (s > 1) out.push({type: 'dots'});
-//     addRange(s, e);
-//     if (e < last - 1) out.push({type: 'dots'});
-//     out.push({type: 'page', index: last});
-//     return out;
-//   });
-//
-//   goToPage(i: number) {
-//     const clamped = Math.max(0, Math.min(i, this.totalPages() - 1));
-//     this.pageIndex.set(clamped);
-//   }
-//
-//   prev() {
-//     this.goToPage(this.pageIndex() - 1);
-//   }
-//
-//   next() {
-//     this.goToPage(this.pageIndex() + 1);
-//   }
-//
-//   changePageSize(size: number) {
-//     this.pageSize.set(size);
-//     this.pageIndex.set(0);
-//   }
-//
-//   // ---------- Utils ----------
-//   trackByLease = (_: number, l: Lease) => l?.id ?? `${l?.chauffeur_unique_id}-${l?.moto_unique_id}`;
-//
-//   clearFilters() {
-//     this.query.set('');
-//     this.statutPaiement.set('');
-//     this.statutPenalite.set('');
-//     this.payePar.set('');
-//     this.stationPaiement.set('');
-//     this.pageIndex.set(0);
-//   }
-//
-//   getStatusPaiementClass(statut: string | undefined): string {
-//     if (!statut) return 'status-default';
-//
-//     const normalized = statut.toLowerCase().replace(/\s+/g, '-');
-//     return `status-${normalized}`;
-//   }
-//
-//   getStatusPenaliteClass(statut: string | undefined): string {
-//     if (!statut) return 'penalite-default';
-//
-//     const normalized = statut.toLowerCase().replace(/\s+/g, '-');
-//     return `penalite-${normalized}`;
-//   }
-//
-//
-//
-//   openPaiementLeaseDialog(){
-//     this.dialog.open(AddPaiementLeaseComponent, {
-//       width: '90vw',
-//       maxWidth: '550px',
-//       panelClass: 'paiement-lease',
-//       disableClose: true
-//     }).afterClosed().subscribe(res => { if (res) this.leaseService.fetchLeases(); });
-//   }
-// }
 
 
 // src/app/pages/leases/lease-list.ts
@@ -202,14 +5,13 @@ import { Component, OnInit, inject, signal, computed, effect } from '@angular/co
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LeaseService } from '../../services/lease';
-import { Lease } from '../../models/lease.model';
+import {CombinedExportFilters, Lease, LeaseFilters} from '../../models/lease.model';
 import { MatDialog } from '@angular/material/dialog';
 import { AddPaiementLeaseComponent } from '../../components/add-paiement-lease/add-paiement-lease';
-import {NumberPipe} from '../../shared/number-pipe';
+import { NumberPipe } from '../../shared/number-pipe';
 
 type PageItem = { type: 'page'; index: number } | { type: 'dots' };
-type DateField = 'concernee' | 'created';
-type DateFilterMode = 'today' | 'week' | 'month' | 'year' | 'specific' | 'range' | 'all';
+type DateFilterMode = 'none' | 'today' | 'specific' | 'range';
 
 @Component({
   selector: 'app-lease-list',
@@ -221,162 +23,34 @@ type DateFilterMode = 'today' | 'week' | 'month' | 'year' | 'specific' | 'range'
 export class LeaseList implements OnInit {
   private readonly leaseService = inject(LeaseService);
   private readonly dialog = inject(MatDialog);
+  private readonly _lastParamsKey = signal<string>('');
 
   // ---------- Source ----------
-  readonly leases = this.leaseService.leases;
-  readonly isLoading = this.leaseService.isLoadingLeases;
-  readonly error = this.leaseService.errorLeases;
+  readonly leases      = this.leaseService.leases;           // 👈 déjà paginées par le backend
+  readonly isLoading   = this.leaseService.isLoadingLeases;
+  readonly error       = this.leaseService.errorLeases;
 
-  ngOnInit() {
-    this.leaseService.fetchLeases();
-  }
+  // ---------- Totaux (hors pagination, renvoyés par l’API) ----------
+  readonly totalPaidAmount    = this.leaseService.totalPaidAmount;    // number
+  readonly totalPaidCount     = this.leaseService.totalPaidCount;     // number
+  readonly totalNonPaidAmount = this.leaseService.totalNonPaidAmount; // number
+  readonly totalNonPaidCount  = this.leaseService.totalNonPaidCount;  // number
 
-  // ---------- Filtres basiques ----------
-  readonly query = signal<string>('');
-  readonly statutPaiement = signal<string>('');
-  readonly statutPenalite = signal<string>('');
-  readonly payePar = signal<string>('');
-  readonly stationPaiement = signal<string>('');
 
-  // ---------- Filtres dates (2 blocs) ----------
-  // Bloc Date concernée
-  readonly dateModeConcernee = signal<DateFilterMode>('all');
-  readonly dateSpecificConcernee = signal<string>('');
-  readonly dateStartConcernee = signal<string>('');
-  readonly dateEndConcernee = signal<string>('');
-
-  // Bloc Date paiement (created)
-  readonly dateModeCreated = signal<DateFilterMode>('all');
-  readonly dateSpecificCreated = signal<string>('');
-  readonly dateStartCreated = signal<string>('');
-  readonly dateEndCreated = signal<string>('');
-
-  // ---------- Helpers ----------
-  private normalize(s: unknown): string {
-    return String(s ?? '')
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-      .replace(/œ/g, 'oe').replace(/æ/g, 'ae').replace(/ß/g, 'ss')
-      .replace(/[\u2019\u2018’]/g, "'")
-      .toLowerCase()
-      .trim();
-  }
-
-  private parseDate(d: unknown): Date | null {
-    if (!d) return null;
-    const s = String(d);
-    const dt = new Date(s);
-    if (!isNaN(+dt)) return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
-    const m = s.match(/^(\d{4})[-/](\d{2})[-/](\d{2})$/);
-    if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
-    return null;
-  }
-
-  private startOfDay(d: Date) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
-  private endOfDay(d: Date) { return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999); }
-
-  private getPeriodRange(mode: DateFilterMode, specific: string, start: string, end: string): { from?: Date, to?: Date } {
-    const today = this.startOfDay(new Date());
-    if (mode === 'today') return { from: today, to: this.endOfDay(today) };
-    if (mode === 'week') {
-      const day = today.getDay();
-      const diffToMon = (day === 0 ? -6 : 1 - day);
-      const from = new Date(today); from.setDate(today.getDate() + diffToMon);
-      const to = new Date(from); to.setDate(from.getDate() + 6);
-      return { from, to: this.endOfDay(to) };
-    }
-    if (mode === 'month') {
-      const from = new Date(today.getFullYear(), today.getMonth(), 1);
-      const to = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-      return { from, to: this.endOfDay(to) };
-    }
-    if (mode === 'year') {
-      const from = new Date(today.getFullYear(), 0, 1);
-      const to = new Date(today.getFullYear(), 11, 31);
-      return { from, to: this.endOfDay(to) };
-    }
-    if (mode === 'specific') {
-      const d = this.parseDate(specific);
-      return d ? { from: d, to: this.endOfDay(d) } : {};
-    }
-    if (mode === 'range') {
-      const ds = this.parseDate(start);
-      const de = this.parseDate(end);
-      if (ds && de) return { from: ds, to: this.endOfDay(de) };
-      if (ds && !de) return { from: ds };
-      if (!ds && de) return { to: this.endOfDay(de) };
-      return {};
-    }
-    return {}; // all
-  }
-
-  // ---------- Liste filtrée ----------
-  readonly filtered = computed<Lease[]>(() => {
-    const rows = this.leases();
-    if (!rows?.length) return [];
-
-    const q = this.normalize(this.query());
-    const f1 = this.statutPaiement();
-    const f2 = this.statutPenalite();
-    const f3 = this.payePar();
-    const f4 = this.stationPaiement();
-
-    const { from: fromCon, to: toCon } =
-      this.getPeriodRange(this.dateModeConcernee(), this.dateSpecificConcernee(), this.dateStartConcernee(), this.dateEndConcernee());
-
-    const { from: fromCre, to: toCre } =
-      this.getPeriodRange(this.dateModeCreated(), this.dateSpecificCreated(), this.dateStartCreated(), this.dateEndCreated());
-
-    return rows.filter(l => {
-      // Recherche texte
-      let okSearch = true;
-      if (q) {
-        const a = this.normalize(l?.chauffeur_unique_id);
-        const b = this.normalize(l?.chauffeur);
-        const c = this.normalize(l?.moto_unique_id);
-        const d = this.normalize(l?.moto_vin);
-        okSearch = a.includes(q) || b.includes(q) || c.includes(q) || d.includes(q);
-      }
-
-      // Filtres exacts
-      const okStatutPaiement = !f1 || String(l?.statut_paiement ?? '') === f1;
-      const okStatutPenalite = !f2 || String(l?.statut_penalite ?? '') === f2;
-      const okPayePar = !f3 || String(l?.paye_par ?? '') === f3;
-      const okStation = !f4 || String(l?.station_paiement ?? '') === f4;
-
-      // Date concernée
-      let okConcernee = true;
-      if (fromCon || toCon) {
-        const d = this.parseDate(l?.date_concernee);
-        okConcernee = d ? (!fromCon || d >= fromCon) && (!toCon || d <= toCon) : false;
-      }
-
-      // Date paiement (created)
-      let okCreated = true;
-      if (fromCre || toCre) {
-        const d = this.parseDate(l?.created);
-        okCreated = d ? (!fromCre || d >= fromCre) && (!toCre || d <= toCre) : false;
-      }
-
-      return okSearch && okStatutPaiement && okStatutPenalite && okPayePar && okStation && okConcernee && okCreated;
-    });
+  // ---------- Pagination backend ----------
+  readonly backendCount  = this.leaseService.backendCount;   // total éléments filtrés (toutes pages)
+  readonly currentPage   = this.leaseService.currentPage;    // page courante (1-based)
+  readonly pageSize      = this.leaseService.pageSize;       // taille de page
+  readonly totalPages    = computed(() => {
+    const count = this.backendCount() || 0;
+    const size  = this.pageSize() || 1;
+    return Math.max(1, Math.ceil(count / size));
   });
 
-  // ---------- Pagination ----------
-  readonly pageSize = signal(50);
-  readonly pageIndex = signal(0);
-  readonly total = computed(() => this.filtered().length);
-  readonly totalPages = computed(() => Math.max(1, Math.ceil(this.total() / this.pageSize())));
-  readonly pageStart = computed(() => this.pageIndex() * this.pageSize());
-  readonly pageEnd = computed(() => Math.min(this.pageStart() + this.pageSize(), this.total()));
-  readonly paged = computed(() => this.filtered().slice(this.pageStart(), this.pageEnd()));
-
-  private _keepInRange = effect(() => {
-    if (this.pageIndex() > this.totalPages() - 1) this.pageIndex.set(0);
-  });
-
+  // Pages visibles (ui)
   readonly visiblePages = computed<PageItem[]>(() => {
     const total = this.totalPages();
-    const current = this.pageIndex();
+    const current = (this.currentPage() - 1); // 0-based interne pour le calcul
     const last = total - 1;
     const around = 1;
     const out: PageItem[] = [];
@@ -394,37 +68,189 @@ export class LeaseList implements OnInit {
     return out;
   });
 
-  goToPage(i: number) { this.pageIndex.set(Math.max(0, Math.min(i, this.totalPages() - 1))); }
-  prev() { this.goToPage(this.pageIndex() - 1); }
-  next() { this.goToPage(this.pageIndex() + 1); }
-  changePageSize(size: number) { this.pageSize.set(size); this.pageIndex.set(0); }
+  goToPage(iZeroBased: number) {
+    const pageOneBased = iZeroBased + 1;
+    this.leaseService.goToPageBackend(pageOneBased);
+  }
+  prev() { this.leaseService.prevPageBackend(); }
+  next() { this.leaseService.nextPageBackend(); }
+  setPageSize(size: number) { this.leaseService.setPageSizeBackend(size); }
 
-  // ---------- Utils ----------
-  trackByLease = (_: number, l: Lease) => l?.id ?? `${l?.chauffeur_unique_id}-${l?.moto_unique_id}`;
+  // =========================
+  //        FILTRES
+  // =========================
+
+  // Recherche texte -> backend (?q=)
+  readonly query = signal<string>('');
+
+  // Statut global -> backend (?statut=) ; défaut PAYE
+  readonly statutPaiement = signal<string>('');
+
+  // back: ?paye_par= & ?station=
+  readonly payePar = signal<string>('');
+  readonly stationPaiement = signal<string>('');
+
+
+  // Date CONCERNÉE — backend
+  readonly dateModeConcernee = signal<DateFilterMode>('none');
+  readonly dateSpecificConcernee = signal<string>(''); // YYYY-MM-DD
+  readonly dateStartConcernee = signal<string>('');    // YYYY-MM-DD
+  readonly dateEndConcernee = signal<string>('');      // YYYY-MM-DD
+
+  // Date PAIEMENT (created) — backend (par défaut: today)
+  readonly dateModeCreated = signal<DateFilterMode>('none');
+  readonly dateSpecificCreated = signal<string>('');
+  readonly dateStartCreated = signal<string>('');  // pour 'range'
+  readonly dateEndCreated = signal<string>('');    // pour 'range'
+
+  // Bypass ponctuel de l’effet (bouton “All”)
+  private readonly bypassOnce = signal<boolean>(false);
+
+  // Helpers
+  private todayISO(): string {
+    const d = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  }
+  private number(v: unknown): string {
+    const n = Number(v ?? 0);
+    return isFinite(n) ? n.toLocaleString('fr-FR') : '';
+  }
+  formatFCFA(n: number): string {
+    return n.toLocaleString('fr-FR') + ' FCFA';
+  }
+
+  // Construction des query params (filters) pour le backend
+  private buildBackendParams(): LeaseFilters | undefined {
+    const params: any = {};
+
+    const q = this.query().trim();
+    if (q) params.q = q;
+
+    const st = this.statutPaiement().trim();
+    if (st) params.statut = st; // '', 'PAYE', 'NON_PAYE' (on n’envoie rien si '')
+
+    const pp = this.payePar().trim();
+    if (pp) params.paye_par = pp;
+
+    const stn = this.stationPaiement().trim();
+    if (stn) params.station = stn;
+
+    // Date concernée
+    const modeCon = this.dateModeConcernee();
+    const cSpec = this.dateSpecificConcernee().trim();
+    const cStart = this.dateStartConcernee().trim();
+    const cEnd   = this.dateEndConcernee().trim();
+    if (modeCon === 'today') {
+      params.date_concernee = this.todayISO();
+    } else if (modeCon === 'specific' && cSpec) {
+      params.date_concernee = cSpec;
+    } else if (modeCon === 'range') {
+      if (cStart) params.date_concernee_after = cStart;
+      if (cEnd)   params.date_concernee_before = cEnd;
+    }
+
+    // Date paiement (created)
+    const modeCre = this.dateModeCreated();
+    const pSpec = this.dateSpecificCreated().trim();
+    const pStart = this.dateStartCreated().trim();
+    const pEnd   = this.dateEndCreated().trim();
+    if (modeCre === 'today') {
+      params.created = this.todayISO();
+    } else if (modeCre === 'specific' && pSpec) {
+      params.created = pSpec;
+    } else if (modeCre === 'range') {
+      if (pStart) params.created_after = pStart;
+      if (pEnd)   params.created_before = pEnd;
+    }
+    // 'none' => rien
+
+    return Object.keys(params).length ? params : undefined;
+  }
+
+  // Effet: (re)fetch quand un filtre backend change
+  private _backendSync = effect(() => {
+    if (this.bypassOnce()) { this.bypassOnce.set(false); return; }
+
+    // dépendances lues pour que l’effect réagisse
+    void this.query();
+    void this.statutPaiement();
+    void this.payePar();
+    void this.stationPaiement();
+    void this.dateModeConcernee(); void this.dateSpecificConcernee(); void this.dateStartConcernee(); void this.dateEndConcernee();
+    void this.dateModeCreated();   void this.dateSpecificCreated();   void this.dateStartCreated();   void this.dateEndCreated();
+    void this.pageSize(); // si la taille de page change, on refetch
+
+    const filters = this.buildBackendParams() ?? {};
+    const allForCreated = (this.dateModeCreated() === 'none');
+    const page = 1;
+    const pageSize = this.pageSize();
+
+    // 🔒 clé anti-doublon (si rien n’a changé, on ne rappelle pas l’API)
+    const key = JSON.stringify({ filters, allForCreated, page, pageSize });
+    if (this._lastParamsKey() === key) return;
+    this._lastParamsKey.set(key);
+
+    this.leaseService.fetchLeases(filters, { all: allForCreated, page, pageSize });
+  });
+
+  private uniqueSorted(values: (string | null | undefined)[]): string[] {
+    const set = new Set(values.filter(v => !!v).map(v => String(v)));
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'fr'));
+  }
+
+  readonly optionsPayePar = computed<string[]>(() =>
+    this.uniqueSorted(this.leases().map(l => l?.paye_par))
+  );
+  readonly optionsStationPaiement = computed<string[]>(() =>
+    this.uniqueSorted(this.leases().map(l => l?.station_paiement))
+  );
+
+  // Cycle de vie : l’effet déclenche le fetch initial (statut=PAYE + created=today)
+  ngOnInit() {}
+
+  // Actions UI
+  fetchAll() {
+    // empêcher l’effet de relancer un fetch avec des params
+    this.bypassOnce.set(true);
+
+    // vider tous les filtres
+    this.query.set('');
+    this.statutPaiement.set('');
+    this.payePar.set('');
+    this.stationPaiement.set('');
+
+    this.dateModeConcernee.set('none');
+    this.dateSpecificConcernee.set('');
+    this.dateStartConcernee.set('');
+    this.dateEndConcernee.set('');
+
+    this.dateModeCreated.set('none');   // désactive created
+    this.dateSpecificCreated.set('');
+    this.dateStartCreated.set('');
+    this.dateEndCreated.set('');
+
+    // appel explicite en mode all (désactive created côté PAYÉS) + reset page=1
+    this.leaseService.fetchLeases({}, { all: true, page: 1, pageSize: this.pageSize() });
+  }
 
   clearFilters() {
     this.query.set('');
     this.statutPaiement.set('');
-    this.statutPenalite.set('');
     this.payePar.set('');
     this.stationPaiement.set('');
-    this.dateModeConcernee.set('all');
+
+    this.dateModeConcernee.set('none');
     this.dateSpecificConcernee.set('');
     this.dateStartConcernee.set('');
     this.dateEndConcernee.set('');
-    this.dateModeCreated.set('all');
+
+    this.dateModeCreated.set('none');
     this.dateSpecificCreated.set('');
     this.dateStartCreated.set('');
     this.dateEndCreated.set('');
-    this.pageIndex.set(0);
+
   }
-
-  // getStatusPaiementClass(statut: string | undefined): string {
-  //   if (!statut) return 'status-default';
-  //   return `status-${statut.toLowerCase().replace(/\s+/g, '-')}`;
-  // }
-
-
 
   openPaiementLeaseDialog() {
     this.dialog.open(AddPaiementLeaseComponent, {
@@ -432,30 +258,82 @@ export class LeaseList implements OnInit {
       maxWidth: '550px',
       panelClass: 'paiement-lease',
       disableClose: true,
-    }).afterClosed().subscribe(res => { if (res) this.leaseService.fetchLeases(); });
+    }).afterClosed().subscribe(res => {
+      if (res) this.leaseService.fetchLeases({}, { all: true, page: 1, pageSize: this.pageSize() , force: true});
+    });
   }
-    private uniqueSorted(values: (string | null | undefined)[]): string[] {
-    const set = new Set(values.filter(v => !!v).map(v => String(v)));
-    return Array.from(set).sort((a, b) => a.localeCompare(b, 'fr'));
-  }
-    readonly optionsStatutPaiement = computed<string[]>(() =>
-    [''].concat(this.uniqueSorted(this.leases().map(l => l?.statut_paiement)))
-  );
 
-
-
-  readonly optionsPayePar = computed<string[]>(() =>
-    [''].concat(this.uniqueSorted(this.leases().map(l => l?.paye_par)))
-  );
-
-  readonly optionsStationPaiement = computed<string[]>(() =>
-    [''].concat(this.uniqueSorted(this.leases().map(l => l?.station_paiement)))
-  );
-
-    getStatusPaiementClass(statut: string | undefined): string {
+  getStatusPaiementClass(statut: string | undefined): string {
     if (!statut) return 'status-default';
-
     const normalized = statut.toLowerCase().replace(/\s+/g, '-');
     return `status-${normalized}`;
   }
+
+  // lease-list.ts (dans le composant)
+  private buildExportFilters(): CombinedExportFilters {
+    const params: CombinedExportFilters = {};
+
+    // texte & sélecteurs
+    if (this.query().trim()) params.q = this.query().trim();
+    if (this.statutPaiement().trim()) params.statut = this.statutPaiement().trim() as any;
+    if (this.payePar().trim()) params.paye_par = this.payePar().trim();
+    if (this.stationPaiement().trim()) params.station = this.stationPaiement().trim();
+
+    // date concernée
+    if (this.dateModeConcernee() === 'today') {
+      params.date_concernee = this.todayISO();
+    } else if (this.dateModeConcernee() === 'specific' && this.dateSpecificConcernee().trim()) {
+      params.date_concernee = this.dateSpecificConcernee().trim();
+    } else if (this.dateModeConcernee() === 'range') {
+      if (this.dateStartConcernee().trim())  params.date_concernee_after = this.dateStartConcernee().trim();
+      if (this.dateEndConcernee().trim())    params.date_concernee_before = this.dateEndConcernee().trim();
+    }
+
+    // date paiement (created) — même règle que la liste
+    if (this.dateModeCreated() === 'today') {
+      params.created = this.todayISO();
+    } else if (this.dateModeCreated() === 'specific' && this.dateSpecificCreated().trim()) {
+      params.created = this.dateSpecificCreated().trim();
+    } else if (this.dateModeCreated() === 'range') {
+      if (this.dateStartCreated().trim()) params.created_after = this.dateStartCreated().trim();
+      if (this.dateEndCreated().trim())   params.created_before = this.dateEndCreated().trim();
+    }
+    // 'none' => rien
+
+    return params;
+  }
+
+  exportCSV() {
+    const filters = this.buildExportFilters();
+    this.leaseService.downloadCSV(filters).subscribe({
+      next: (blob) => {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `leases_${new Date().toISOString().slice(0,10)}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        URL.revokeObjectURL(a.href);
+        a.remove();
+      },
+      error: (err) => console.error('[EXPORT CSV ERROR]:', err),
+    });
+  }
+
+  exportExcel() {
+    const filters = this.buildExportFilters();
+    this.leaseService.downloadXLSX(filters).subscribe({
+      next: (blob) => {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `leases_${new Date().toISOString().slice(0,10)}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        URL.revokeObjectURL(a.href);
+        a.remove();
+      },
+      error: (err) => console.error('[EXPORT XLSX ERROR]:', err),
+    });
+  }
+
+
 }

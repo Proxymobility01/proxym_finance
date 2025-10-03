@@ -36,9 +36,6 @@ class UserLiteSerializer(serializers.ModelSerializer):
             "prenom",
             "tel",
             "role",
-            "is_active",
-            "is_staff",
-            "is_admin",
         ]
 
 # Permission personnalisée : accès seulement pour superuser ou role.nomRole == "Administrateur"

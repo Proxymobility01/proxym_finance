@@ -1,10 +1,10 @@
 from xml import parsers
 
 from django.db.models import Q
-from rest_framework import generics, permissions, viewsets
+from rest_framework import generics
 from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
-from rest_framework.permissions import AllowAny
-
+from rest_framework.permissions import  IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from .models import ContratBatterie, ContratChauffeur
 from .serializers import (
     ContractBatteryListSerializer,
@@ -26,8 +26,8 @@ class ContratBatterieListCreateView(generics.ListCreateAPIView):
     POST: create battery contract with optional file upload
     """
     queryset = ContratBatterie.objects.all().order_by("-created")
-    permission_classes = [AllowAny]
-    authentication_classes = []
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
     parser_classes = (JSONParser, MultiPartParser, FormParser)
 
     def get_serializer_class(self):
@@ -57,8 +57,8 @@ class ContratBatterieDetailView(generics.RetrieveUpdateDestroyAPIView):
     DELETE: delete battery contract and its file
     """
     queryset = ContratBatterie.objects.all()
-    permission_classes = [AllowAny]
-    authentication_classes = []
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
     parser_classes = (JSONParser, MultiPartParser, FormParser)
 
     def get_serializer_class(self):
@@ -90,8 +90,9 @@ class ContractChauffeurListCreateView(generics.ListCreateAPIView):
     POST /api/contrats-chauffeurs      -> create (auto-computes date_fin & duree_jour)
     """
     queryset = ContratChauffeur.objects.all().order_by("-created")
-    permission_classes = [AllowAny]
-    parser_classes = [MultiPartParser, FormParser, JSONParser]  # accept JSON + multipart
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_serializer_class(self):
         return ContractDriverCreateSerializer if self.request.method == "POST" else ContractDriverListSerializer
@@ -105,7 +106,8 @@ class ContractChauffeurDetailView(generics.RetrieveUpdateDestroyAPIView):
     DELETE /api/contrats-chauffeurs/<id>  -> delete
     """
     queryset = ContratChauffeur.objects.all()
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
     parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_serializer_class(self):

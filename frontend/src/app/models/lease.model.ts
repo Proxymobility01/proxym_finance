@@ -9,6 +9,26 @@ export interface PaiementLeasePayload {
   reference_transaction: string;
 }
 
+export interface LeaseFilters {
+  q?: string;
+  statut?: '' | 'PAYE' | 'NON_PAYE';
+  paye_par?: string;
+  station?: string;
+  date_concernee?: string;
+  date_concernee_after?: string;
+  date_concernee_before?: string;
+  created?: string;
+  created_after?: string;
+  created_before?: string;
+}
+
+export interface CombinedExportFilters extends LeaseFilters {
+  q?: string;
+  statut?: 'PAYE' | 'NON_PAYE' | '';
+  paye_par?: string;
+  station?: string;
+}
+
 export interface Lease{
   id: number;
   chauffeur_unique_id: string;
@@ -17,19 +37,16 @@ export interface Lease{
   moto_vin:string;
   montant_moto: string;
   montant_batterie: string;
+  montant_total:number;
   date_concernee: string;
   date_limite: string;
-  methode_paiement: string;
+  methode_paiement: string | null;
   station_paiement: string;
   statut_paiement: string;
   statut_penalite:string;
   paye_par:string;
   created:string;
+  source?: 'PAYE' | 'NON_PAYE';
 }
 
-export interface LeaseApiResponse {
-  count: number;
-  next: string | null;
-  previous: string | null;
-  results: any[];
-}
+

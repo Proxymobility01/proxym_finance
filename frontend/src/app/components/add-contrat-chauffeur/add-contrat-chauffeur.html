@@ -297,7 +297,7 @@
             <div class="file-list-compact-contrat">
 
                 <div class="file-item-compact-contrat">
-                  <span class="file-name-contrat">{{ physChauff.value?.name }}</span>
+                  <span class="file-name-contrat">{{ physChauff.value.name }}</span>
                   <button type="button" class="file-remove-contrat" (click)="clearFile('contrat_physique_chauffeur')">
                     <i class="fas fa-times"></i>
                   </button>
@@ -339,7 +339,7 @@
           @if (physMoto.value)  {
             <div class="file-list-compact-contrat">
                 <div class="file-item-compact-contrat">
-                  <span class="file-name-contrat">{{ physMoto.value?.name }}</span>
+                  <span class="file-name-contrat">{{ physMoto.value.name }}</span>
                   <button type="button" class="file-remove-contrat" (click)="clearFile('contrat_physique_moto_garant')">
                     <i class="fas fa-times"></i>
                   </button>

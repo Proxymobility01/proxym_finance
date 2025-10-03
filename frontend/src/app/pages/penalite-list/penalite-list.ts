@@ -1,14 +1,17 @@
 import { Component, OnInit, inject, signal, computed, effect } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import {DatePipe, DecimalPipe, NgClass} from '@angular/common';
+import { DatePipe } from '@angular/common';
 import * as XLSX from 'xlsx';
 
 import { Penalite, StatutPenalite } from '../../models/penalite.model';
 import { HighlightPipe } from '../../shared/highlight-pipe';
 import { PenaliteService } from '../../services/penalite';
-import {NumberPipe} from '../../shared/number-pipe';
-import {AddPaiementPenalite} from '../../components/add-paiement-penalite/add-paiement-penalite';
-import {MatDialog} from '@angular/material/dialog';
+import { NumberPipe } from '../../shared/number-pipe';
+import { AddPaiementPenalite } from '../../components/add-paiement-penalite/add-paiement-penalite';
+import { MatDialog } from '@angular/material/dialog';
+import {MatSnackBar} from '@angular/material/snack-bar';
+import {AnnulerPenalite} from '../../components/annuler-penaliter/annuler-penalite';
+import {MatIconButton} from '@angular/material/button';
 
 type StatutFilter = '' | StatutPenalite;
 type DateFilterMode = 'today' | 'week' | 'month' | 'year' | 'specific' | 'range' | 'all';
@@ -19,36 +22,45 @@ type PageItem = { type: 'page'; index: number } | { type: 'dots' };
   imports: [
     HighlightPipe,
     DatePipe,
-        FormsModule,
+    FormsModule,
     NumberPipe
+
   ],
   templateUrl: './penalite-list.html',
   styleUrl: './penalite-list.css'
 })
-export class PenaliteList implements OnInit{
+export class PenaliteList implements OnInit {
   private readonly penaliteService = inject(PenaliteService);
-  private dialog = inject(MatDialog)
+  private dialog = inject(MatDialog);
+  private readonly snack  = inject(MatSnackBar);
 
   // ---------- Filtres ----------
   readonly query        = signal<string>('');             // chauffeur ou référence
   readonly statut       = signal<StatutFilter>('');       // non_paye | partiellement_paye | paye
-  readonly dateMode     = signal<DateFilterMode>('all');  // sur date_paiement_manquee
-  readonly dateSpecific = signal<string>('');             // YYYY-MM-DD
-  readonly dateStart    = signal<string>('');             // YYYY-MM-DD
-  readonly dateEnd      = signal<string>('');             // YYYY-MM-DD
+
+  // Filtres sur created (nouvelle référence de filtre)
+  readonly createdMode     = signal<DateFilterMode>('all');
+  readonly createdSpecific = signal<string>('');
+  readonly createdStart    = signal<string>('');
+  readonly createdEnd      = signal<string>('');
+
+  // Filtres sur echeance_paiement_penalite (DateTimeField)
+  readonly echeanceMode     = signal<DateFilterMode>('all');
+  readonly echeanceSpecific = signal<string>('');
+  readonly echeanceStart    = signal<string>('');
+  readonly echeanceEnd      = signal<string>('');
 
   // ---------- Source ----------
   readonly penalites = this.penaliteService.penalites;
   readonly isLoading = this.penaliteService.isLoadingPenalite;
   readonly error     = this.penaliteService.errorPenalite;
 
-  // ... dans la classe PenaliteList
-  readonly statutLabel: Record<'non_paye'|'paye'|'partiellement_paye'|string, string> = {
+  readonly statutLabel: Record<'non_paye'|'paye'|'partiellement_paye'| 'annulee'|string, string> = {
     non_paye: 'Non payé',
     paye: 'Payé',
     partiellement_paye: 'Partiellement payé',
+    annulee:'Annulée'
   };
-
 
   ngOnInit() {
     this.penaliteService.fetchPenalites();
@@ -64,12 +76,32 @@ export class PenaliteList implements OnInit{
       .trim();
   }
 
-  private parseISO(d: unknown): Date | null {
-    if (!d) return null;
-    const dt = new Date(String(d));
-    if (!isNaN(+dt)) return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
-    return null;
+  /** Parse robuste pour Date ou DateTime (DRF, microsecondes, TZ, espaces) */
+  private toDateTime(value: unknown): Date | null {
+    if (!value) return null;
+    if (value instanceof Date) return isNaN(+value) ? null : value;
+
+    let s = String(value).trim();
+
+    // "YYYY-MM-DD" -> date locale à minuit
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+      const y = +s.slice(0,4), m = +s.slice(5,7)-1, d = +s.slice(8,10);
+      return new Date(y, m, d);
+    }
+
+    // Remplacer éventuel espace entre date et heure par 'T'
+    s = s.replace(/^(\d{4}-\d{2}-\d{2})\s+/, '$1T');
+
+    // Réduire microsecondes à millisecondes pour JS
+    // ex ".123456Z" -> ".123Z", ".123456+01:00" -> ".123+01:00", ".123456" -> ".123"
+    s = s
+      .replace(/(\.\d{3})\d+(Z|[+\-]\d{2}:\d{2})$/, '$1$2')
+      .replace(/(\.\d{3})\d+$/, '$1');
+
+    const dt = new Date(s);
+    return isNaN(+dt) ? null : dt;
   }
+
   private startOfDay(d: Date) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
   private endOfDay(d: Date)   { return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23,59,59,999); }
 
@@ -79,7 +111,7 @@ export class PenaliteList implements OnInit{
     if (mode === 'today') return { from: today, to: this.endOfDay(today) };
 
     if (mode === 'week') {
-      const day = today.getDay(); // 0 = Dim
+      const day = today.getDay(); // 0 = Dimanche
       const diffToMon = (day === 0 ? -6 : 1 - day);
       const from = new Date(today); from.setDate(today.getDate() + diffToMon);
       const to = new Date(from);    to.setDate(from.getDate() + 6);
@@ -99,15 +131,17 @@ export class PenaliteList implements OnInit{
     }
 
     if (mode === 'specific') {
-      const d = this.parseISO(specific);
-      return d ? { from: d, to: this.endOfDay(d) } : {};
+      const d = this.toDateTime(specific);
+      if (!d) return {};
+      const day = this.startOfDay(d);
+      return { from: day, to: this.endOfDay(day) };
     }
 
     if (mode === 'range') {
-      const ds = this.parseISO(start);
-      const de = this.parseISO(end);
-      if (ds && de)   return { from: ds, to: this.endOfDay(de) };
-      if (ds && !de)  return { from: ds };
+      const ds = this.toDateTime(start);
+      const de = this.toDateTime(end);
+      if (ds && de)   return { from: this.startOfDay(ds), to: this.endOfDay(de) };
+      if (ds && !de)  return { from: this.startOfDay(ds) };
       if (!ds && de)  return { to: this.endOfDay(de) };
       return {};
     }
@@ -115,14 +149,15 @@ export class PenaliteList implements OnInit{
     return {}; // 'all'
   }
 
-  private isWithin(d?: string, from?: Date, to?: Date): boolean {
-    if (!from && !to) return true;
-    const dt = d ? this.parseISO(d) : null;
+  /** Compare un champ (date ou datetime) au JOUR avec une période {from,to} */
+  private isWithinDay(fieldValue: unknown, from?: Date, to?: Date): boolean {
+    if (!from && !to) return true; // Pas de filtre actif
+    const dt = this.toDateTime(fieldValue);
     if (!dt) return false;
-    const t  = dt.getTime();
+    const dayTs = this.startOfDay(dt).getTime();
     const f  = from ? from.getTime() : Number.NEGATIVE_INFINITY;
     const tt = to   ? to.getTime()   : Number.POSITIVE_INFINITY;
-    return f <= t && t <= tt;
+    return f <= dayTs && dayTs <= tt;
   }
 
   // ---------- Liste filtrée ----------
@@ -132,28 +167,34 @@ export class PenaliteList implements OnInit{
 
     const q  = this.normalize(this.query());
     const st = this.normalize(this.statut());
-    const { from, to } = this.getPeriod(this.dateMode(), this.dateSpecific(), this.dateStart(), this.dateEnd());
+
+    // Période sur created (nouvelle référence)
+    const { from, to } = this.getPeriod(this.createdMode(), this.createdSpecific(), this.createdStart(), this.createdEnd());
+
+    // Période sur échéance
+    const { from: ef, to: et } = this.getPeriod(this.echeanceMode(), this.echeanceSpecific(), this.echeanceStart(), this.echeanceEnd());
 
     return rows.filter(p => {
       // Recherche: chauffeur + référence contrat
       let okSearch = true;
       if (q) {
-        const tit = this.normalize(p?.chauffeur);
-        const ref = this.normalize(p?.reference_contrat);
+        const tit = this.normalize((p as any)?.chauffeur);
+        const ref = this.normalize((p as any)?.reference_contrat);
         okSearch = tit.includes(q) || ref.includes(q);
       }
 
       // Statut
       let okStatut = true;
       if (st) {
-        const val = this.normalize(p?.statut_penalite);
+        const val = this.normalize((p as any)?.statut_penalite);
         okStatut = val === st;
       }
 
-      // Date (sur date_paiement_manquee)
-      const okDate = this.isWithin(p?.date_paiement_manquee, from, to);
+      // Dates (par JOUR)
+      const okCreated  = this.isWithinDay((p as any)?.created, from, to);
+      const okEcheance = this.isWithinDay((p as any)?.echeance_paiement_penalite, ef, et);
 
-      return okSearch && okStatut && okDate;
+      return okSearch && okStatut && okCreated && okEcheance;
     });
   });
 
@@ -220,20 +261,21 @@ export class PenaliteList implements OnInit{
   }
 
   private fmtDate(s?: string): string {
-    const d = s ? new Date(s) : null;
-    return d && !isNaN(+d) ? d.toLocaleDateString('fr-FR') : '';
+    const dt = this.toDateTime(s);
+    return dt ? this.startOfDay(dt).toLocaleDateString('fr-FR') : '';
   }
 
   private mapRow(p: Penalite) {
     return {
-      'Chauffeur': p?.chauffeur ?? '',
-      'Référence contrat': p?.reference_contrat ?? '',
-      'Statut pénalité': p?.statut_penalite ?? '',
-      'Type': p?.type_penalite ?? '',
-      'Date paiement manquée': this.fmtDate(p?.date_paiement_manquee),
-      'Montant pénalité': this.number(p?.montant_penalite),
-      'Montant payé': this.number(p?.montant_paye),
-      'Montant restant': this.number(p?.montant_restant),
+      'Chauffeur': (p as any)?.chauffeur ?? '',
+      'Référence contrat': (p as any)?.reference_contrat ?? '',
+      'Statut pénalité': (p as any)?.statut_penalite ?? '',
+      'Type': (p as any)?.type_penalite ?? '',
+      'Date création': this.fmtDate((p as any)?.created),
+      'Échéance paiement pénalité': this.fmtDate((p as any)?.echeance_paiement_penalite),
+      'Montant pénalité': this.number((p as any)?.montant_penalite),
+      'Montant payé': this.number((p as any)?.montant_paye),
+      'Montant restant': this.number((p as any)?.montant_restant),
     };
   }
 
@@ -265,7 +307,8 @@ export class PenaliteList implements OnInit{
       { wch: 20 }, // Référence
       { wch: 18 }, // Statut pénalité
       { wch: 10 }, // Type
-      { wch: 18 }, // Date manquée
+      { wch: 16 }, // Date création
+      { wch: 22 }, // Échéance paiement pénalité
       { wch: 16 }, // Montant pénalité
       { wch: 16 }, // Montant payé
       { wch: 16 }, // Montant restant
@@ -286,9 +329,24 @@ export class PenaliteList implements OnInit{
       data: { penalite: p }
     }).afterClosed().subscribe(res => {
       if (res) {
-        // on rafraîchit pour voir la pénalité mise à jour
         this.penaliteService.fetchPenalites();
       }
+    });
+  }
+  openCancelDialog(p: Penalite) {
+    const canCancel = p.type_penalite === 'legere' && p.statut_penalite === 'non_paye';
+    if (!canCancel) return; // guard
+
+    this.dialog.open(AnnulerPenalite, {
+      width: '300px',
+      data: { id: p.id, chauffeur: p.chauffeur, type_penalite: p.type_penalite as 'legere'|'grave' },
+      disableClose: true
+    }).afterClosed().subscribe(res => {
+      if (!res?.justificatif) return;
+      this.penaliteService.cancelPenalite(p.id, res.justificatif, () => {
+        this.snack.open('Pénalité annulée', 'OK', { duration: 2500 });
+        // Rien d’autre à faire : cancelPenalite appelle fetchPenalites() pour resynchroniser
+      });
     });
   }
 }

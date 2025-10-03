@@ -18,11 +18,16 @@ export class PenaliteService {
   private readonly _isPenaliteSubmitting = signal<boolean>(false);
   private readonly _isPenaliteSubmitError = signal<string | null>(null);
 
+  private readonly _isCancelling = signal<boolean>(false);
+  private readonly _cancelError  = signal<string | null>(null);
+
   readonly penalites = this._penalites.asReadonly();
   readonly isLoadingPenalite = this._isLoadingPenalite.asReadonly();
   readonly errorPenalite = this._errorPenalite.asReadonly();
   readonly isPenaliteSubmitting = this._isPenaliteSubmitting.asReadonly();
   readonly isPenaliteSubmitError = this._isPenaliteSubmitError.asReadonly();
+  readonly isCancelling = this._isCancelling.asReadonly();
+  readonly cancelError  = this._cancelError.asReadonly();
 
   fetchPenalites(){
     this._isLoadingPenalite.set(true);
@@ -73,5 +78,41 @@ export class PenaliteService {
       .subscribe();
   }
 
+  cancelPenalite(id: number, justificatif: string, onSuccess?: () => void) {
+    this._isCancelling.set(true);
+    this._cancelError.set(null);
+
+    this.http.post<{ success: boolean; message?: string }>(
+      `${this.config.apiUrl}/penalites/${id}/annuler`,
+      { justificatif }
+    )
+      .pipe(
+        tap(res => {
+          if (res?.success) {
+            // 🔄 Re-synchronisation depuis le backend
+            this.fetchPenalites();
+            onSuccess?.();
+          } else {
+            this._cancelError.set(res?.message || 'Annulation non effectuée.');
+          }
+        }),
+        catchError(err => {
+          let msg = 'Erreur lors de l’annulation.';
+          const e = err?.error;
+          if (e?.detail) msg = e.detail;
+          else if (typeof e === 'string') msg = e;
+          else if (e && typeof e === 'object') {
+            msg = Object.entries(e)
+              .map(([k, v]: any) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`)
+              .join(' | ');
+          }
+          this._cancelError.set(msg);
+          console.error('[PENALITE CANCEL ERROR]:', err);
+          return of(null);
+        }),
+        finalize(() => this._isCancelling.set(false)),
+      )
+      .subscribe();
+  }
 
 }

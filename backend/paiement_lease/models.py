@@ -21,7 +21,6 @@ class PaiementLease(TimeStampedModel):
     date_concernee = models.DateField()
     date_limite = models.DateField()
     statut = models.CharField(max_length=50)
-
     employe = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -36,6 +35,7 @@ class PaiementLease(TimeStampedModel):
 
     class Meta:
         db_table = "paiement_lease"
+        ordering = ('-created',)
 
     def __str__(self):
         return self.reference_paiement or f"PaiementLease #{self.pk}"

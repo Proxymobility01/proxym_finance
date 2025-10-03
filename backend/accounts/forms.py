@@ -75,10 +75,6 @@ class CustomUserCreationForm(UserCreationForm, RequiredLabelMixin):
 
 
 class CustomUserChangeForm(UserChangeForm):
-    """
-    Formulaire d’édition pour l’admin.
-    """
-    password = None  # masque le champ password hashé par défaut
 
     class Meta:
         model = CustomUser

@@ -1,18 +1,65 @@
+
+
 <div class="container-fluid">
+
   <!-- Header -->
-  <div class="page-header d-flex align-items-center justify-content-between flex-wrap mb-4">
+  <div class="page-header">
     <h2 class="page-title">Gestion des Leases</h2>
+  </div>
+
+  <!-- Section Stats + Bouton d'action -->
+  <div class="stats-and-action">
+    <!-- Stats (agrégats hors pagination) -->
+    <div class="stats-card">
+      <div class="stats-container">
+
+        <!-- PAYÉ -->
+        <div class="stat-item">
+          <i class="fas fa-check-circle stat-icon text-success"></i>
+          <div class="stat-content">
+            <small class="stat-label">Payé (montant / nombre)</small>
+            <div class="d-flex flex-column">
+              <div class="stat-value text-success">
+                {{ formatFCFA(totalPaidAmount()) }}
+              </div>
+              <small class="text-muted">{{ totalPaidCount() }} paiement(s)</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- NON PAYÉ -->
+        <div class="stat-item">
+          <i class="fas fa-times-circle stat-icon text-danger"></i>
+          <div class="stat-content">
+            <small class="stat-label">Non payé (montant / nombre)</small>
+            <div class="d-flex flex-column">
+              <div class="stat-value text-danger">
+                {{ formatFCFA(totalNonPaidAmount()) }}
+              </div>
+              <small class="text-muted">{{ totalNonPaidCount() }} non-paiement(s)</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action -->
     <button class="btn btn-nouveau" (click)="openPaiementLeaseDialog()">
       <i class="fas fa-money-bill-wave me-2"></i>
       Payer un lease
     </button>
   </div>
 
-  <!-- Filtres Compactés -->
+  <!-- =======================
+       Filtres (compactés)
+       ======================= -->
   <div class="custom-card">
     <div class="card-body">
-      <!-- Ligne 1 : Filtres principaux -->
+
+      <!-- Ligne 1 : Recherche + Statut + Payé par + Station + Exports -->
       <div class="row g-2 align-items-end mb-2">
+
+        <!-- Recherche -->
         <div class="col-md-3">
           <label class="form-label-compact">Recherche</label>
           <input class="form-control form-control-sm"
@@ -21,52 +68,68 @@
                  (ngModelChange)="query.set($event)">
         </div>
 
+        <!-- Statut paiement (par défaut PAYE ; avec 'Tous') -->
         <div class="col-md-2">
-          <label class="form-label-compact">Statut</label>
+          <label class="form-label-compact">Statut paiement</label>
           <select class="form-select form-select-sm"
                   [ngModel]="statutPaiement()"
                   (ngModelChange)="statutPaiement.set($event)">
-            @for (opt of optionsStatutPaiement(); track opt) {
-              <option [value]="opt">{{ opt || 'Tous' }}</option>
-            }
+            <option [value]="''">Tous</option>
+            <option value="PAYE">PAYE</option>
+            <option value="NON_PAYE">NON_PAYE</option>
           </select>
         </div>
 
+        <!-- Payé par -->
         <div class="col-md-2">
           <label class="form-label-compact">Payé par</label>
           <select class="form-select form-select-sm"
                   [ngModel]="payePar()"
                   (ngModelChange)="payePar.set($event)">
+            <option [value]="''">Tous</option>
             @for (opt of optionsPayePar(); track opt) {
-              <option [value]="opt">{{ opt || 'Tous' }}</option>
+              <option [value]="opt">{{ opt }}</option>
             }
           </select>
         </div>
 
+        <!-- Station -->
         <div class="col-md-2">
           <label class="form-label-compact">Station</label>
           <select class="form-select form-select-sm"
                   [ngModel]="stationPaiement()"
                   (ngModelChange)="stationPaiement.set($event)">
+            <option [value]="''">Tous</option>
             @for (opt of optionsStationPaiement(); track opt) {
-              <option [value]="opt">{{ opt || 'Toutes' }}</option>
+              <option [value]="opt">{{ opt }}</option>
             }
           </select>
         </div>
+
+        <!-- Exports -->
+        <div class="col-md-3 text-end">
+          <div class="btn-group">
+            <button class="btn btn-export" (click)="exportCSV()">
+              <i class="fas fa-file-csv me-1"></i> CSV
+            </button>
+            <button class="btn btn-export" (click)="exportExcel()">
+              <i class="fas fa-file-excel me-1"></i> Excel
+            </button>
+          </div>
+        </div>
       </div>
 
-      <!-- Ligne 2 : Filtres de dates compacts -->
+      <!-- Ligne 2 : Dates backend (dynamique) -->
       <div class="row g-2 align-items-end">
+
         <!-- Date concernée -->
         <div class="col-md-2">
           <label class="form-label-compact">Date concernée</label>
           <select class="form-select form-select-sm"
                   [ngModel]="dateModeConcernee()"
                   (ngModelChange)="dateModeConcernee.set($event)">
-            <option value="all">Toutes</option>
+            <option value="none">Tous</option>
             <option value="today">Aujourd'hui</option>
-            <option value="week">Semaine</option>
-            <option value="month">Mois</option>
             <option value="specific">Spécifique</option>
             <option value="range">Période</option>
           </select>
@@ -96,16 +159,14 @@
           </div>
         }
 
-        <!-- Date paiement -->
+        <!-- Date paiement (created) -->
         <div class="col-md-2">
           <label class="form-label-compact">Date paiement</label>
           <select class="form-select form-select-sm"
                   [ngModel]="dateModeCreated()"
                   (ngModelChange)="dateModeCreated.set($event)">
-            <option value="all">Toutes</option>
+            <option value="none">Tous</option>
             <option value="today">Aujourd'hui</option>
-            <option value="week">Semaine</option>
-            <option value="month">Mois</option>
             <option value="specific">Spécifique</option>
             <option value="range">Période</option>
           </select>
@@ -135,48 +196,47 @@
           </div>
         }
       </div>
+
+      <!-- Ligne 3 : Boutons Reset / All -->
+      <div class="row mt-2">
+        <div class="col-md-12 text-end">
+          <div class="btn-group">
+            <button class="btn btn-secondary btn-sm" (click)="clearFilters()">
+              <i class="fas fa-undo me-1"></i> Reset
+            </button>
+            <button class="btn btn-primary btn-sm" (click)="fetchAll()">
+              <i class="fas fa-list me-1"></i> All
+            </button>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 
-  <!-- Tableau Groupé -->
+  <!-- Tableau -->
   <div class="table-container">
     <div class="table-responsive">
       <table class="table custom-table table-hover mb-0">
         <thead>
         <tr>
-          <!-- Groupe: Identifiants -->
           <th class="text-center group-header" colspan="2">Identifiants</th>
-          <!-- Groupe: Montants -->
           <th class="text-center group-header" colspan="2">Montants</th>
-          <!-- Groupe: Dates -->
           <th class="text-center group-header hide-on-medium" colspan="3">Dates</th>
-          <!-- Groupe: Paiement -->
           <th class="text-center group-header hide-on-large" colspan="4">Informations paiement</th>
-          <!-- Groupe: Actions -->
-          <th class="text-center group-header">Actions</th>
         </tr>
         <tr>
-          <!-- Groupe: Identifiants -->
           <th class="text-center">Chauffeur</th>
           <th class="text-center">Moto</th>
-
-          <!-- Groupe: Montants -->
           <th class="text-center">Moto</th>
           <th class="text-center">Batterie</th>
-
-          <!-- Groupe: Dates -->
           <th class="text-center hide-on-medium">Concernée</th>
           <th class="text-center hide-on-medium">Limite</th>
           <th class="text-center hide-on-medium">Paiement</th>
-
-          <!-- Groupe: Paiement -->
           <th class="text-center hide-on-large">Statut</th>
-          <th class="text-center hide-on-large">Payé par</th>
+          <th class="text-center hide-on-large">Éffectué par</th>
           <th class="text-center hide-on-large">Méthode</th>
           <th class="text-center hide-on-large">Station</th>
-
-          <!-- Groupe: Actions -->
-          <th class="text-center">Actions</th>
         </tr>
         </thead>
 
@@ -195,83 +255,72 @@
                   <i class="fas fa-exclamation-triangle error-icon"></i>
                   <div>{{ error() }}</div>
                 </div>
-                <button class="btn retry-btn" (click)="ngOnInit()">
-                  <i class="fas fa-refresh me-1"></i> Réessayer
+                <button class="btn retry-btn" (click)="clearFilters()">
+                  <i class="fas fa-refresh me-1"></i> Réessayer (reset)
                 </button>
               </td>
             </tr>
-          } @else if (!isLoading() && !error() && filtered().length === 0) {
+          } @else if (!isLoading() && !error() && leases().length === 0) {
             <tr>
               <td colspan="12" class="empty-state">
                 <i class="fas fa-file-invoice-dollar empty-icon"></i>
                 <h6 class="text-muted mb-2">Aucun lease trouvé</h6>
-                <p class="text-muted mb-0">Aucun élément ne correspond aux critères de recherche.</p>
+                <p class="text-muted mb-0">Aucun élément ne correspond aux critères.</p>
               </td>
             </tr>
           } @else {
-            @for (l of paged(); track l.id) {
+            @for (l of leases(); track l.id) {
               <tr class="lease-row">
-                <!-- Groupe: Identifiants -->
+                <!-- Identifiants -->
                 <td class="text-center chauffeur-cell">
                   <div class="id-text">{{ l?.chauffeur_unique_id || '—' }}</div>
                   <div class="name-text">{{ l?.chauffeur || 'Non renseigné' }}</div>
                 </td>
-
                 <td class="text-center moto-cell">
                   <div class="id-text">{{ l?.moto_unique_id || '—' }}</div>
                   <div class="vin-text">{{ l?.moto_vin || '—' }}</div>
                 </td>
 
-                <!-- Groupe: Montants -->
+                <!-- Montants -->
                 <td class="text-center amount-cell">
                   {{ l?.montant_moto | noGroupNumber }} <small>FCFA</small>
                 </td>
-
                 <td class="text-center amount-cell">
                   {{ l?.montant_batterie | noGroupNumber }} <small>FCFA</small>
                 </td>
 
-                <!-- Groupe: Dates -->
+                <!-- Dates -->
                 <td class="text-center hide-on-medium date-cell">
                   <i class="fas fa-calendar-check me-1"></i>
                   {{ l?.date_concernee | date: 'dd/MM/yyyy' }}
                 </td>
-
                 <td class="text-center hide-on-medium date-cell">
                   <i class="fas fa-calendar-times me-1"></i>
                   {{ l?.date_limite | date: 'dd/MM/yyyy' }}
                 </td>
-
                 <td class="text-center hide-on-medium date-cell">
-                  <i class="fas fa-calendar-alt me-1"></i>
-                  {{ l?.created | date: 'dd/MM/yyyy' }}
+                  @if (l?.created) {
+                    <i  class="fas fa-calendar-alt me-1"></i>
+                  }
+                  {{ l?.created ? (l.created | date:'dd/MM/yyyy HH:mm') : '—' }}
                 </td>
 
-                <!-- Groupe: Paiement -->
+
+                <!-- Paiement -->
                 <td class="text-center hide-on-large">
                   <span class="status-badge"
                         [ngClass]="getStatusPaiementClass(l?.statut_paiement)">
                     {{ l?.statut_paiement || 'N/A' }}
                   </span>
                 </td>
-
                 <td class="text-center hide-on-large">
                   {{ l?.paye_par || '—' }}
                 </td>
-
                 <td class="text-center hide-on-large">
                   {{ l?.methode_paiement || '—' }}
                 </td>
-
                 <td class="text-center hide-on-large">
                   {{ l?.station_paiement || '—' }}
-                </td>
-
-                <!-- Groupe: Actions -->
-                <td class="text-center" (click)="$event.stopPropagation()">
-                  <button class="action-btn" title="Payer" (click)="openPaiementLeaseDialog()">
-                    <i class="fas fa-credit-card"></i>
-                  </button>
                 </td>
               </tr>
             }
@@ -280,20 +329,24 @@
       </table>
     </div>
 
-    <!-- Footer pagination -->
+    <!-- Pagination (backend) -->
     <div class="pagination-container">
       <div class="pagination-info">
         <small>
-          Affichage de {{ total() ? (pageStart() + 1) : 0 }}
-          à {{ pageEnd() }} sur {{ total() }} lease(s)
+          <!-- bornes visibles de la page courante -->
+          Affichage de
+          {{ backendCount() ? ((currentPage()-1) * pageSize() + 1) : 0 }}
+          à
+          {{ ((currentPage()-1) * pageSize()) + leases().length }}
+          sur {{ backendCount() }} élément(s)
         </small>
       </div>
 
       @if (totalPages() > 1) {
         <nav aria-label="Pagination des leases">
           <ul class="pagination pagination-sm mb-0">
-            <li class="page-item" [class.disabled]="pageIndex() === 0">
-              <button class="page-link" (click)="prev()" [disabled]="pageIndex() === 0">
+            <li class="page-item" [class.disabled]="currentPage() <= 1">
+              <button class="page-link" (click)="prev()" [disabled]="currentPage() <= 1">
                 <i class="fas fa-chevron-left"></i>
               </button>
             </li>
@@ -301,7 +354,7 @@
             @for (p of visiblePages(); track p) {
               <li class="page-item"
                   [class.disabled]="p.type === 'dots'"
-                  [class.active]="p.type === 'page' && p.index === pageIndex()">
+                  [class.active]="p.type === 'page' && (p.index + 1) === currentPage()">
                 @if (p.type === 'dots') {
                   <span class="page-link">…</span>
                 } @else {
@@ -310,8 +363,8 @@
               </li>
             }
 
-            <li class="page-item" [class.disabled]="pageIndex() >= totalPages() - 1">
-              <button class="page-link" (click)="next()" [disabled]="pageIndex() >= totalPages() - 1">
+            <li class="page-item" [class.disabled]="currentPage() >= totalPages()">
+              <button class="page-link" (click)="next()" [disabled]="currentPage() >= totalPages()">
                 <i class="fas fa-chevron-right"></i>
               </button>
             </li>

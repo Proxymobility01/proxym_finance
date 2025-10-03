@@ -5,11 +5,16 @@ export interface Penalite {
   montant_penalite: string;
   type_penalite: string;
   motif_penalite: string;
+  echeance_paiement_penalite:string;
   description:string;
   statut_penalite:string;
   date_paiement_manquee:string;
   montant_paye:string;
   montant_restant:string;
+  created:string;
+  annulee_par_label:string;
+  justificatif_annulation:string;
+  date_annulation:string;
 }
 
 export type StatutPenalite = 'non_paye' | 'partiellement_paye' | 'paye';

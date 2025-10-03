@@ -91,7 +91,9 @@ REST_FRAMEWORK = {
   ],
 'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.OrderingFilter',
     ],
+
 }
 
 
@@ -145,12 +147,6 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
         'OPTIONS': {'min_length': 8}
     },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
 ]
 
 
@@ -160,11 +156,8 @@ AUTH_PASSWORD_VALIDATORS = [
 LANGUAGE_CODE = 'fr-fr'
 
 TIME_ZONE = "Africa/Douala"
-
 USE_I18N = True
-
 USE_TZ = True
-
 AUTH_USER_MODEL = 'accounts.CustomUser'
 
 

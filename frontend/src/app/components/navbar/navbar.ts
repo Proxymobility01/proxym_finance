@@ -3,6 +3,7 @@
 
 import { Component, HostListener, inject, signal, computed, OnInit } from '@angular/core';
 import {Router, NavigationEnd, RouterLink, RouterLinkActive} from '@angular/router';
+import {AuthService} from '../../core/auth/auth';
 
 type DropKey = 'contrats' | 'paiements' | 'stations' | 'profile' | null;
 
@@ -29,6 +30,19 @@ export class Navbar implements OnInit {
   // État unifié pour TOUS les dropdowns
   readonly openKey = signal<DropKey>(null);
   readonly searchVisible = signal<boolean>(false);
+
+  private readonly auth = inject(AuthService);
+
+
+
+  // ⚡️ Initiales calculées depuis AuthService
+  readonly initials = computed(() => {
+    const nom = this.auth.nom();
+    const prenom = this.auth.prenom();
+    const firstNom = nom ? nom.charAt(0).toUpperCase() : '';
+    const firstPrenom = prenom ? prenom.charAt(0).toUpperCase() : '';
+    return `${firstNom}${firstPrenom}`;
+  });
 
   // Notifications (exemple)
   readonly notificationsSig = signal<Notification[]>([
@@ -76,8 +90,8 @@ export class Navbar implements OnInit {
 
   // Déconnexion (placeholder)
   logout() {
-    // TODO: logique de déconnexion
-    this.closeAllDropdowns();
+    this.auth.logout(); // purge tokens + signaux
+    this.router.navigate(['/login']);
   }
 
 

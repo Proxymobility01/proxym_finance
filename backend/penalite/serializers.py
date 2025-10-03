@@ -12,6 +12,10 @@ class PenaliteListSerializer(serializers.ModelSerializer):
     contrat_id = serializers.IntegerField(source="contrat_chauffeur.id", read_only=True)
     reference_contrat = serializers.CharField(source="contrat_chauffeur.reference_contrat", read_only=True)
     chauffeur = serializers.SerializerMethodField()
+    justificatif_annulation = serializers.CharField(read_only=True)
+    annulee_par_id = serializers.IntegerField(source="annulee_par.id", read_only=True)
+    annulee_par_label = serializers.SerializerMethodField()
+    date_annulation = serializers.DateTimeField(read_only=True)  # ISO 8601 par défaut
 
     class Meta:
         model = Penalite
@@ -20,11 +24,16 @@ class PenaliteListSerializer(serializers.ModelSerializer):
             "type_penalite",
             "montant_penalite",
             "motif_penalite",
-            "description",
+            "echeance_paiement_penalite",
             "statut_penalite",
             "date_paiement_manquee",
             "montant_paye",
             "montant_restant",
+            "created",
+            "justificatif_annulation",
+            "date_annulation",
+            "annulee_par_id",
+            "annulee_par_label",
             # infos contrat
             "contrat_id",
             "reference_contrat",
@@ -41,6 +50,12 @@ class PenaliteListSerializer(serializers.ModelSerializer):
             return full or None
         return None
 
+    def get_annulee_par_label(self, obj):
+        u = getattr(obj, "annulee_par", None)
+        if not u:
+            return None
+        full = f"{(u.nom or '').strip()} {(u.prenom or '').strip()}".strip()
+        return full or u.username
 
 
 

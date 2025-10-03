@@ -164,11 +164,7 @@ class ContratChauffeur(TimeStampedModel):
         # Congés
         if self.jour_conge_utilise > self.jour_conge_total:
             raise ValidationError(_("Les congés utilisés ne peuvent pas dépasser le total."))
-        # Dates order
-        if self.date_signature and self.date_debut and self.date_signature > self.date_debut:
-            raise ValidationError(_("La date de signature doit précéder la date de début."))
-        if self.created and self.date_debut and self.created.date() > self.date_debut:
-            raise ValidationError(_("La date de création doit précéder la date de début."))
+
         # AFTER — set midnight of the end day; make aware if USE_TZ
         if self.date_debut and self.duree_jour and not self.date_fin:
             end_date = self.date_debut + timedelta(days=int(self.duree_jour) - 1)

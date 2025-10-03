@@ -3,7 +3,7 @@
     <!-- Logo et titre -->
     <div class="logo-section">
       <div class="logo-icon">
-        <img width="100px" height="auto" src="logo.png" alt="logo proxym">
+        <img width="100px" height="auto" src="logo.png" alt="logo proxym" />
       </div>
       <h1 class="title">Proxym Finance</h1>
     </div>
@@ -20,6 +20,10 @@
           placeholder="exemple@proxym.com"
           class="form-input"
         />
+        <small class="error" *ngIf="loginForm.get('email')?.touched && loginForm.get('email')?.invalid">
+          <span *ngIf="loginForm.get('email')?.errors?.['required']">L'email est obligatoire</span>
+          <span *ngIf="loginForm.get('email')?.errors?.['email']">Format email invalide</span>
+        </small>
       </div>
 
       <!-- Champ Mot de passe -->
@@ -32,26 +36,32 @@
           placeholder="Votre mot de passe"
           class="form-input"
         />
+        <small class="error" *ngIf="loginForm.get('password')?.touched && loginForm.get('password')?.invalid">
+          <span *ngIf="loginForm.get('password')?.errors?.['required']">Mot de passe obligatoire</span>
+          <span *ngIf="loginForm.get('password')?.errors?.['minlength']">
+            Minimum {{ loginForm.get('password')?.errors?.['minlength'].requiredLength }} caractères
+          </span>
+        </small>
       </div>
 
       <!-- Checkbox Se souvenir -->
       <div class="form-group checkbox-group">
         <label class="checkbox-label">
-          <input
-            type="checkbox"
-            formControlName="rememberMe"
-            class="checkbox-input"
-          />
+          <input type="checkbox" formControlName="rememberMe" class="checkbox-input" />
           <span class="checkbox-text">Se souvenir de moi</span>
         </label>
       </div>
 
       <!-- Bouton de connexion -->
-      <button type="submit" class="login-button">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="button-icon">
-          <path d="M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3H5c-1.1 0-2 .9-2 2v4h2V5h14v14H5v-4H3v4c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/>
+      <button type="submit" class="login-button" [disabled]="isLoading || loginForm.invalid">
+        <svg *ngIf="!isLoading" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="button-icon">
+          <path
+            d="M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3H5c-1.1 0-2
+            .9-2 2v4h2V5h14v14H5v-4H3v4c0 1.1.9 2 2
+            2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"
+          />
         </svg>
-        Se connecter
+        {{ isLoading ? 'Connexion...' : 'Se connecter' }}
       </button>
     </form>
   </div>

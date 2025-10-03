@@ -1,107 +1,472 @@
+<!--<div class="container-fluid">-->
+<!--  &lt;!&ndash; Header &ndash;&gt;-->
+<!--  <div class="page-header d-flex align-items-center justify-content-between flex-wrap mb-4">-->
+<!--    <h2 class="page-title">Liste des Pénalités</h2>-->
+<!--    <div class="btn-group">-->
+<!--      <button class="btn btn-export" (click)="exportCSV()">-->
+<!--        <i class="fas fa-file-csv me-1"></i> CSV-->
+<!--      </button>-->
+<!--      <button class="btn btn-export" (click)="exportExcel()">-->
+<!--        <i class="fas fa-file-excel me-1"></i> Excel-->
+<!--      </button>-->
+<!--    </div>-->
+<!--  </div>-->
+
+<!--  &lt;!&ndash; Filtres Compacts &ndash;&gt;-->
+<!--  <div class="custom-card">-->
+<!--    <div class="card-body">-->
+<!--      &lt;!&ndash; Ligne 1 : Tous les filtres principaux &ndash;&gt;-->
+<!--      <div class="row g-2 align-items-end">-->
+<!--        <div class="col-md-3">-->
+<!--          <label class="form-label-compact">Recherche</label>-->
+<!--          <input class="form-control form-control-sm"-->
+<!--                 placeholder="Chauffeur, référence…"-->
+<!--                 [ngModel]="query()"-->
+<!--                 (ngModelChange)="query.set($event)">-->
+<!--        </div>-->
+
+<!--        <div class="col-md-2">-->
+<!--          <label class="form-label-compact">Statut</label>-->
+<!--          <select class="form-select form-select-sm"-->
+<!--                  [ngModel]="statut()"-->
+<!--                  (ngModelChange)="statut.set($event)">-->
+<!--            <option value="">Tous</option>-->
+<!--            <option value="non_paye">Non payé</option>-->
+<!--            <option value="partiellement_paye">Partiellement payé</option>-->
+<!--            <option value="paye">Payé</option>-->
+<!--            <option value="annulee">Annulée</option>-->
+<!--          </select>-->
+<!--        </div>-->
+
+<!--        <div class="col-md-2">-->
+<!--          <label class="form-label-compact">Création</label>-->
+<!--          <select class="form-select form-select-sm"-->
+<!--                  [ngModel]="createdMode()"-->
+<!--                  (ngModelChange)="createdMode.set($event)">-->
+<!--            <option value="all">Toutes</option>-->
+<!--            <option value="today">Aujourd'hui</option>-->
+<!--            <option value="week">Semaine</option>-->
+<!--            <option value="month">Mois</option>-->
+<!--            <option value="specific">Spécifique</option>-->
+<!--            <option value="range">Période</option>-->
+<!--          </select>-->
+<!--        </div>-->
+
+<!--        @if (createdMode() === 'specific') {-->
+<!--          <div class="col-md-2">-->
+<!--            <label class="form-label-compact">Date</label>-->
+<!--            <input type="date" class="form-control form-control-sm"-->
+<!--                   [ngModel]="createdSpecific()"-->
+<!--                   (ngModelChange)="createdSpecific.set($event)">-->
+<!--          </div>-->
+<!--        }-->
+
+<!--        @if (createdMode() === 'range') {-->
+<!--          <div class="col-md-2">-->
+<!--            <label class="form-label-compact">Début</label>-->
+<!--            <input type="date" class="form-control form-control-sm"-->
+<!--                   [ngModel]="createdStart()"-->
+<!--                   (ngModelChange)="createdStart.set($event)">-->
+<!--          </div>-->
+<!--          <div class="col-md-2">-->
+<!--            <label class="form-label-compact">Fin</label>-->
+<!--            <input type="date" class="form-control form-control-sm"-->
+<!--                   [ngModel]="createdEnd()"-->
+<!--                   (ngModelChange)="createdEnd.set($event)">-->
+<!--          </div>-->
+<!--        }-->
+
+<!--        <div class="col-md-2">-->
+<!--          <label class="form-label-compact">Échéance</label>-->
+<!--          <select class="form-select form-select-sm"-->
+<!--                  [ngModel]="echeanceMode()"-->
+<!--                  (ngModelChange)="echeanceMode.set($event)">-->
+<!--            <option value="all">Toutes</option>-->
+<!--            <option value="today">Aujourd'hui</option>-->
+<!--            <option value="week">Semaine</option>-->
+<!--            <option value="month">Mois</option>-->
+<!--            <option value="specific">Spécifique</option>-->
+<!--            <option value="range">Période</option>-->
+<!--          </select>-->
+<!--        </div>-->
+
+<!--        @if (echeanceMode() === 'specific') {-->
+<!--          <div class="col-md-2">-->
+<!--            <label class="form-label-compact">Date</label>-->
+<!--            <input type="date" class="form-control form-control-sm"-->
+<!--                   [ngModel]="echeanceSpecific()"-->
+<!--                   (ngModelChange)="echeanceSpecific.set($event)">-->
+<!--          </div>-->
+<!--        }-->
+
+<!--        @if (echeanceMode() === 'range') {-->
+<!--          <div class="col-md-2">-->
+<!--            <label class="form-label-compact">Début</label>-->
+<!--            <input type="date" class="form-control form-control-sm"-->
+<!--                   [ngModel]="echeanceStart()"-->
+<!--                   (ngModelChange)="echeanceStart.set($event)">-->
+<!--          </div>-->
+<!--          <div class="col-md-2">-->
+<!--            <label class="form-label-compact">Fin</label>-->
+<!--            <input type="date" class="form-control form-control-sm"-->
+<!--                   [ngModel]="echeanceEnd()"-->
+<!--                   (ngModelChange)="echeanceEnd.set($event)">-->
+<!--          </div>-->
+<!--        }-->
+<!--      </div>-->
+<!--    </div>-->
+<!--  </div>-->
+
+<!--  &lt;!&ndash; Tableau Groupé &ndash;&gt;-->
+<!--  <div class="table-container">-->
+<!--    <div class="table-responsive">-->
+<!--      <table class="table custom-table table-hover mb-0">-->
+<!--        <thead>-->
+<!--        <tr>-->
+<!--          &lt;!&ndash; Groupe: Identifiants &ndash;&gt;-->
+<!--          <th class="text-center group-header" colspan="2">Identifiants</th>-->
+<!--          &lt;!&ndash; Groupe: Statut & Type &ndash;&gt;-->
+<!--          <th class="text-center group-header" colspan="3">Statut & Type</th>-->
+<!--          &lt;!&ndash; Groupe: Dates &ndash;&gt;-->
+<!--          <th class="text-center group-header" colspan="2">Dates</th>-->
+<!--          &lt;!&ndash; Groupe: Montants &ndash;&gt;-->
+<!--          <th class="text-center group-header" colspan="3">Montants (FCFA)</th>-->
+<!--          &lt;!&ndash; Groupe: Actions &ndash;&gt;-->
+<!--          <th class="text-center group-header">Actions</th>-->
+<!--        </tr>-->
+<!--        <tr>-->
+<!--          &lt;!&ndash; Groupe: Identifiants &ndash;&gt;-->
+<!--          <th class="text-center">Chauffeur</th>-->
+<!--          <th class="text-center">Référence</th>-->
+
+<!--          &lt;!&ndash; Groupe: Statut & Type &ndash;&gt;-->
+<!--          <th class="text-center">Statut</th>-->
+<!--          <th class="text-center">Type</th>-->
+<!--          <th class="text-center">Motif</th>-->
+
+<!--          &lt;!&ndash; Groupe: Dates &ndash;&gt;-->
+<!--          <th class="text-center">Date manquée</th>-->
+<!--          <th class="text-center">Échéance</th>-->
+
+<!--          &lt;!&ndash; Groupe: Montants &ndash;&gt;-->
+<!--          <th class="text-center">À payer</th>-->
+<!--          <th class="text-center">Payé</th>-->
+<!--          <th class="text-center">Restant</th>-->
+
+<!--          &lt;!&ndash; Groupe: Actions &ndash;&gt;-->
+<!--          <th class="text-center">Actions</th>-->
+<!--        </tr>-->
+<!--        </thead>-->
+
+<!--        <tbody>-->
+<!--          @if (isLoading()) {-->
+<!--            <tr>-->
+<!--              <td colspan="11" class="loading-state">-->
+<!--                <div class="spinner-border spinner-custom" role="status"></div>-->
+<!--                <div class="mt-2">Chargement des pénalités…</div>-->
+<!--              </td>-->
+<!--            </tr>-->
+<!--          } @else if (error() && !isLoading()) {-->
+<!--            <tr>-->
+<!--              <td colspan="11" class="error-state">-->
+<!--                <div class="text-danger mb-3">-->
+<!--                  <i class="fas fa-exclamation-triangle error-icon"></i>-->
+<!--                  <div>{{ error() }}</div>-->
+<!--                </div>-->
+<!--                <button class="btn retry-btn" (click)="refresh()">-->
+<!--                  <i class="fas fa-refresh me-1"></i> Réessayer-->
+<!--                </button>-->
+<!--              </td>-->
+<!--            </tr>-->
+<!--          } @else if (!isLoading() && !error() && filtered().length === 0) {-->
+<!--            <tr>-->
+<!--              <td colspan="11" class="empty-state">-->
+<!--                <i class="fas fa-ban empty-icon"></i>-->
+<!--                <h6 class="text-muted mb-2">Aucune pénalité trouvée</h6>-->
+<!--                <p class="text-muted mb-0">Aucun élément ne correspond aux critères de recherche.</p>-->
+<!--              </td>-->
+<!--            </tr>-->
+<!--          } @else {-->
+<!--            @for (p of paged(); track p.id) {-->
+<!--              <tr class="penalite-row">-->
+<!--                &lt;!&ndash; Groupe: Identifiants &ndash;&gt;-->
+<!--                <td class="text-center">-->
+<!--                  <span [innerHTML]="(p.chauffeur || 'Non renseigné') | highlight: query()"></span>-->
+<!--                </td>-->
+
+<!--                <td class="text-center">-->
+<!--                  <span class="reference-badge" [innerHTML]="(p.reference_contrat || '—') | highlight: query()"></span>-->
+<!--                </td>-->
+
+<!--                &lt;!&ndash; Groupe: Statut & Type &ndash;&gt;-->
+<!--                <td class="text-center">-->
+<!--                  <span class="status-badge"-->
+<!--                        [class.status-done]="p.statut_penalite === 'paye'"-->
+<!--                        [class.status-partial]="p.statut_penalite === 'partiellement_paye'"-->
+<!--                        [class.status-pending]="p.statut_penalite === 'non_paye'"-->
+<!--                        [class.status-cancelled]="p.statut_penalite === 'annulee'">-->
+<!--                    {{ statutLabel[p.statut_penalite] || p.statut_penalite }}-->
+<!--                  </span>-->
+<!--                </td>-->
+
+<!--                <td class="text-center type-cell">{{ p.type_penalite || '—' }}</td>-->
+
+<!--                <td class="text-center motif-cell">{{ p.motif_penalite || '—' }}</td>-->
+
+<!--                &lt;!&ndash; Groupe: Dates &ndash;&gt;-->
+<!--                <td class="text-center date-cell">-->
+<!--                  <i class="fas fa-calendar-times me-1"></i>-->
+<!--                  {{ p.date_paiement_manquee | date:'dd/MM/yyyy' }}-->
+<!--                </td>-->
+
+<!--                <td class="text-center date-cell">-->
+<!--                  @if (p.echeance_paiement_penalite){-->
+<!--                    <i class="fas fa-calendar-check me-1"></i>-->
+<!--                  }-->
+
+<!--                  {{ p.echeance_paiement_penalite ? (p.echeance_paiement_penalite | date:'dd/MM/yyyy' ) : '—' }}-->
+<!--                </td>-->
+<!--                &lt;!&ndash; Groupe: Montants &ndash;&gt;-->
+<!--                <td class="text-center amount-cell">-->
+<!--                  {{ p.montant_penalite | noGroupNumber }}-->
+<!--                </td>-->
+
+<!--                <td class="text-center amount-cell amount-paye">-->
+<!--                  {{ p.montant_paye | noGroupNumber }}-->
+<!--                </td>-->
+
+<!--                <td class="text-center amount-cell amount-restant">-->
+<!--                  {{ p.montant_restant | noGroupNumber }}-->
+<!--                </td>-->
+
+<!--                &lt;!&ndash; Groupe: Actions &ndash;&gt;-->
+<!--                <td class="text-center" (click)="$event.stopPropagation()">-->
+<!--                  <button class="action-btn me-1"-->
+<!--                          title="Payer cette pénalité"-->
+<!--                          (click)="openPaiementPenaliteDialog(p)"-->
+<!--                          [disabled]="p.statut_penalite === 'paye' || +p.montant_restant <= 0">-->
+<!--                    <i class="fas fa-wallet"></i>-->
+<!--                  </button>-->
+<!--                  <button-->
+<!--                    class="action-btn"-->
+<!--                    title="Annuler la pénalité"-->
+<!--                    (click)="openCancelDialog(p)"-->
+<!--                    [disabled]="!(p.type_penalite === 'legere' && p.statut_penalite === 'non_paye')">-->
+<!--                    <i class="fas fa-times-circle"></i>-->
+<!--                  </button>-->
+<!--                </td>-->
+<!--              </tr>-->
+<!--            }-->
+<!--          }-->
+<!--        </tbody>-->
+<!--      </table>-->
+<!--    </div>-->
+
+<!--    &lt;!&ndash; Footer pagination &ndash;&gt;-->
+<!--    <div class="pagination-container">-->
+<!--      <div class="pagination-info">-->
+<!--        <small>-->
+<!--          Affichage de {{ total() ? (pageStart() + 1) : 0 }}-->
+<!--          à {{ pageEnd() }} sur {{ total() }} pénalité(s)-->
+<!--        </small>-->
+<!--      </div>-->
+
+<!--      @if (totalPages() > 1) {-->
+<!--        <nav aria-label="Pagination des pénalités">-->
+<!--          <ul class="pagination pagination-sm mb-0">-->
+<!--            <li class="page-item" [class.disabled]="pageIndex() === 0">-->
+<!--              <button class="page-link" (click)="prev()" [disabled]="pageIndex() === 0">-->
+<!--                <i class="fas fa-chevron-left"></i>-->
+<!--              </button>-->
+<!--            </li>-->
+
+<!--            @for (p of visiblePages(); track p) {-->
+<!--              <li class="page-item"-->
+<!--                  [class.disabled]="p.type === 'dots'"-->
+<!--                  [class.active]="p.type === 'page' && p.index === pageIndex()">-->
+<!--                @if (p.type === 'dots') {-->
+<!--                  <span class="page-link">…</span>-->
+<!--                } @else {-->
+<!--                  <button class="page-link" (click)="goToPage(p.index)">{{ p.index + 1 }}</button>-->
+<!--                }-->
+<!--              </li>-->
+<!--            }-->
+
+<!--            <li class="page-item" [class.disabled]="pageIndex() >= totalPages() - 1">-->
+<!--              <button class="page-link" (click)="next()" [disabled]="pageIndex() >= totalPages() - 1">-->
+<!--                <i class="fas fa-chevron-right"></i>-->
+<!--              </button>-->
+<!--            </li>-->
+<!--          </ul>-->
+<!--        </nav>-->
+<!--      }-->
+<!--    </div>-->
+<!--  </div>-->
+<!--</div>-->
+
 <div class="container-fluid">
   <!-- Header -->
   <div class="page-header d-flex align-items-center justify-content-between flex-wrap mb-4">
     <h2 class="page-title">Liste des Pénalités</h2>
-    <div class="header-actions">
-      <div class="btn-group ms-2">
-        <button class="btn btn-export" (click)="exportCSV()">
-          <i class="fas fa-file-csv me-1"></i>
-          CSV
-        </button>
-        <button class="btn btn-export" (click)="exportExcel()">
-          <i class="fas fa-file-excel me-1"></i>
-          Excel
-        </button>
-      </div>
+    <div class="btn-group">
+      <button class="btn btn-export" (click)="exportCSV()">
+        <i class="fas fa-file-csv me-1"></i> CSV
+      </button>
+      <button class="btn btn-export" (click)="exportExcel()">
+        <i class="fas fa-file-excel me-1"></i> Excel
+      </button>
     </div>
   </div>
 
-  <!-- Filtres -->
+  <!-- Filtres Compacts -->
   <div class="custom-card">
     <div class="card-body">
-      <div class="row g-3 align-items-end">
-        <!-- Recherche chauffeur / référence -->
-        <div class="col-md-4">
-          <label class="form-label">Recherche</label>
-          <input class="form-control"
-                 placeholder="Chauffeur ou référence contrat…"
+      <!-- Ligne 1 : Tous les filtres principaux -->
+      <div class="row g-2 align-items-end">
+        <div class="col-md-3">
+          <label class="form-label-compact">Recherche</label>
+          <input class="form-control form-control-sm"
+                 placeholder="Chauffeur, référence…"
                  [ngModel]="query()"
                  (ngModelChange)="query.set($event)">
         </div>
 
-        <!-- Statut pénalité -->
-        <div class="col-md-3">
-          <label class="form-label">Statut pénalité</label>
-          <select class="form-select"
+        <div class="col-md-2">
+          <label class="form-label-compact">Statut</label>
+          <select class="form-select form-select-sm"
                   [ngModel]="statut()"
                   (ngModelChange)="statut.set($event)">
             <option value="">Tous</option>
             <option value="non_paye">Non payé</option>
             <option value="partiellement_paye">Partiellement payé</option>
             <option value="paye">Payé</option>
+            <option value="annulee">Annulée</option>
           </select>
         </div>
 
-        <!-- Période (sur date_paiement_manquee) -->
-        <div class="col-md-3">
-          <label class="form-label">Période</label>
-          <select class="form-select"
-                  [ngModel]="dateMode()"
-                  (ngModelChange)="dateMode.set($event)">
+        <div class="col-md-2">
+          <label class="form-label-compact">Création</label>
+          <select class="form-select form-select-sm"
+                  [ngModel]="createdMode()"
+                  (ngModelChange)="createdMode.set($event)">
+            <option value="all">Toutes</option>
             <option value="today">Aujourd'hui</option>
-            <option value="week">Cette semaine</option>
-            <option value="month">Ce mois</option>
-            <option value="year">Cette année</option>
-            <option value="specific">Date spécifique</option>
-            <option value="range">Plage de dates</option>
-            <option value="all" selected>Tout l'historique</option>
+            <option value="week">Semaine</option>
+            <option value="month">Mois</option>
+            <option value="specific">Spécifique</option>
+            <option value="range">Période</option>
           </select>
         </div>
-      </div>
 
-      <!-- Champs dynamiques de période -->
-      <div class="row g-3 mt-2">
-        @if (dateMode() === 'specific') {
-          <div class="col-md-3">
-            <label class="form-label">Date</label>
-            <input type="date" class="form-control"
-                   [ngModel]="dateSpecific()"
-                   (ngModelChange)="dateSpecific.set($event)">
+        @if (createdMode() === 'specific') {
+          <div class="col-md-2">
+            <label class="form-label-compact">Date</label>
+            <input type="date" class="form-control form-control-sm"
+                   [ngModel]="createdSpecific()"
+                   (ngModelChange)="createdSpecific.set($event)">
           </div>
         }
-        @if (dateMode() === 'range') {
-          <div class="col-md-3">
-            <label class="form-label">Début</label>
-            <input type="date" class="form-control"
-                   [ngModel]="dateStart()"
-                   (ngModelChange)="dateStart.set($event)">
+
+        @if (createdMode() === 'range') {
+          <div class="col-md-2">
+            <label class="form-label-compact">Début</label>
+            <input type="date" class="form-control form-control-sm"
+                   [ngModel]="createdStart()"
+                   (ngModelChange)="createdStart.set($event)">
           </div>
-          <div class="col-md-3">
-            <label class="form-label">Fin</label>
-            <input type="date" class="form-control"
-                   [ngModel]="dateEnd()"
-                   (ngModelChange)="dateEnd.set($event)">
+          <div class="col-md-2">
+            <label class="form-label-compact">Fin</label>
+            <input type="date" class="form-control form-control-sm"
+                   [ngModel]="createdEnd()"
+                   (ngModelChange)="createdEnd.set($event)">
+          </div>
+        }
+
+        <div class="col-md-2">
+          <label class="form-label-compact">Échéance</label>
+          <select class="form-select form-select-sm"
+                  [ngModel]="echeanceMode()"
+                  (ngModelChange)="echeanceMode.set($event)">
+            <option value="all">Toutes</option>
+            <option value="today">Aujourd'hui</option>
+            <option value="week">Semaine</option>
+            <option value="month">Mois</option>
+            <option value="specific">Spécifique</option>
+            <option value="range">Période</option>
+          </select>
+        </div>
+
+        @if (echeanceMode() === 'specific') {
+          <div class="col-md-2">
+            <label class="form-label-compact">Date</label>
+            <input type="date" class="form-control form-control-sm"
+                   [ngModel]="echeanceSpecific()"
+                   (ngModelChange)="echeanceSpecific.set($event)">
+          </div>
+        }
+
+        @if (echeanceMode() === 'range') {
+          <div class="col-md-2">
+            <label class="form-label-compact">Début</label>
+            <input type="date" class="form-control form-control-sm"
+                   [ngModel]="echeanceStart()"
+                   (ngModelChange)="echeanceStart.set($event)">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label-compact">Fin</label>
+            <input type="date" class="form-control form-control-sm"
+                   [ngModel]="echeanceEnd()"
+                   (ngModelChange)="echeanceEnd.set($event)">
           </div>
         }
       </div>
     </div>
   </div>
 
-  <!-- Tableau -->
+  <!-- Tableau Groupé -->
   <div class="table-container">
     <div class="table-responsive">
       <table class="table custom-table table-hover mb-0">
         <thead>
         <tr>
+          <!-- Groupe: Identifiants -->
+          <th class="text-center group-header" colspan="2">Identifiants</th>
+          <!-- Groupe: Statut & Type -->
+          <th class="text-center group-header" colspan="3">Statut & Type</th>
+          <!-- Groupe: Annulation -->
+          <th class="text-center group-header" colspan="3">Annulation</th>
+          <!-- Groupe: Dates -->
+          <th class="text-center group-header" colspan="2">Dates</th>
+          <!-- Groupe: Montants -->
+          <th class="text-center group-header" colspan="3">Montants (FCFA)</th>
+          <!-- Groupe: Actions -->
+          <th class="text-center group-header">Actions</th>
+        </tr>
+        <tr>
+          <!-- Groupe: Identifiants -->
           <th class="text-center">Chauffeur</th>
-          <th class="text-center">Référence contrat</th>
+          <th class="text-center">Référence</th>
+
+          <!-- Groupe: Statut & Type -->
           <th class="text-center">Statut</th>
           <th class="text-center">Type</th>
-          <th class="text-center">Date manquée</th>
           <th class="text-center">Motif</th>
-          <th class="text-center">Montant à payer</th>
+
+          <!-- Groupe: Annulation -->
+          <th class="text-center">Annulée par</th>
+          <th class="text-center">Justificatif</th>
+          <th class="text-center">Date annulation</th>
+
+          <!-- Groupe: Dates -->
+          <th class="text-center">Date manquée</th>
+          <th class="text-center">Échéance</th>
+
+          <!-- Groupe: Montants -->
+          <th class="text-center">À payer</th>
           <th class="text-center">Payé</th>
           <th class="text-center">Restant</th>
+
+          <!-- Groupe: Actions -->
           <th class="text-center">Actions</th>
         </tr>
         </thead>
@@ -109,14 +474,14 @@
         <tbody>
           @if (isLoading()) {
             <tr>
-              <td colspan="8" class="loading-state">
+              <td colspan="14" class="loading-state">
                 <div class="spinner-border spinner-custom" role="status"></div>
                 <div class="mt-2">Chargement des pénalités…</div>
               </td>
             </tr>
           } @else if (error() && !isLoading()) {
             <tr>
-              <td colspan="8" class="error-state">
+              <td colspan="14" class="error-state">
                 <div class="text-danger mb-3">
                   <i class="fas fa-exclamation-triangle error-icon"></i>
                   <div>{{ error() }}</div>
@@ -128,7 +493,7 @@
             </tr>
           } @else if (!isLoading() && !error() && filtered().length === 0) {
             <tr>
-              <td colspan="8" class="empty-state">
+              <td colspan="14" class="empty-state">
                 <i class="fas fa-ban empty-icon"></i>
                 <h6 class="text-muted mb-2">Aucune pénalité trouvée</h6>
                 <p class="text-muted mb-0">Aucun élément ne correspond aux critères de recherche.</p>
@@ -137,36 +502,95 @@
           } @else {
             @for (p of paged(); track p.id) {
               <tr class="penalite-row">
+                <!-- Groupe: Identifiants -->
                 <td class="text-center">
-                  <span [innerHTML]="(p.chauffeur ?? '') | highlight: query()"></span>
-                </td>
-                <td class="text-center">
-                  <span class="reference-badge" [innerHTML]="(p.reference_contrat ?? '') | highlight: query()"></span>
-                </td>
-                <td class="text-center">
-                      <span class="status-badge"
-                            [class]="
-                              (p.statut_penalite === 'paye') ? 'status-done' :
-                              (p.statut_penalite === 'partiellement_paye') ? 'status-partial' :
-                              (p.statut_penalite === 'non_paye') ? 'status-pending' : 'status-default'
-                            ">
-                        {{ statutLabel[p.statut_penalite] || p.statut_penalite }}
-                      </span>
+                  <span [innerHTML]="(p.chauffeur || 'Non renseigné') | highlight: query()"></span>
                 </td>
 
-                <td class="text-center">{{ p.type_penalite }}</td>
-                <td class="text-center">{{ p.date_paiement_manquee | date:'dd/MM/yyyy' }}</td>
-                <td class="text-center">{{ p.motif_penalite }}</td>
-                <td class="text-center">{{ p.montant_penalite | noGroupNumber  }} FCFA</td>
-                <td class="text-center">{{ p.montant_paye | noGroupNumber  }} FCFA</td>
-                <td class="text-center">{{ p.montant_restant | noGroupNumber  }} FCFA</td>
+                <td class="text-center">
+                  <span class="reference-badge" [innerHTML]="(p.reference_contrat || '—') | highlight: query()"></span>
+                </td>
+
+                <!-- Groupe: Statut & Type -->
+                <td class="text-center">
+                  <span class="status-badge"
+                        [class.status-done]="p.statut_penalite === 'paye'"
+                        [class.status-partial]="p.statut_penalite === 'partiellement_paye'"
+                        [class.status-pending]="p.statut_penalite === 'non_paye'"
+                        [class.status-cancelled]="p.statut_penalite === 'annulee'">
+                    {{ statutLabel[p.statut_penalite] || p.statut_penalite }}
+                  </span>
+                </td>
+
+                <td class="text-center type-cell">{{ p.type_penalite || '—' }}</td>
+
+                <td class="text-center motif-cell">{{ p.motif_penalite || '—' }}</td>
+
+                <!-- Groupe: Annulation -->
+                <td class="text-center annulation-cell">
+                  {{ p.statut_penalite === 'annulee' ? (p.annulee_par_label || '—') : '—' }}
+                </td>
+
+                <td class="text-center annulation-cell justificatif-cell"
+                    [title]="p.statut_penalite === 'annulee' ? p.justificatif_annulation : ''">
+                  @if (p.statut_penalite === 'annulee' && p.justificatif_annulation) {
+                    <span class="text-truncate d-inline-block" style="max-width: 150px;">
+                      {{ p.justificatif_annulation }}
+                    </span>
+                  } @else {
+                    —
+                  }
+                </td>
+
+                <td class="text-center annulation-cell date-cell">
+                  @if (p.statut_penalite === 'annulee' && p.date_annulation) {
+                    <i class="fas fa-calendar-times me-1"></i>
+                    {{ p.date_annulation | date:'dd/MM/yyyy' }}
+                  } @else {
+                    —
+                  }
+                </td>
+
+                <!-- Groupe: Dates -->
+                <td class="text-center date-cell">
+                  <i class="fas fa-calendar-times me-1"></i>
+                  {{ p.date_paiement_manquee | date:'dd/MM/yyyy' }}
+                </td>
+
+                <td class="text-center date-cell">
+                  @if (p.echeance_paiement_penalite){
+                    <i class="fas fa-calendar-check me-1"></i>
+                  }
+                  {{ p.echeance_paiement_penalite ? (p.echeance_paiement_penalite | date:'dd/MM/yyyy' ) : '—' }}
+                </td>
+
+                <!-- Groupe: Montants -->
+                <td class="text-center amount-cell">
+                  {{ p.montant_penalite | noGroupNumber }}
+                </td>
+
+                <td class="text-center amount-cell amount-paye">
+                  {{ p.montant_paye | noGroupNumber }}
+                </td>
+
+                <td class="text-center amount-cell amount-restant">
+                  {{ p.montant_restant | noGroupNumber }}
+                </td>
+
+                <!-- Groupe: Actions -->
                 <td class="text-center" (click)="$event.stopPropagation()">
-                  <button class="action-btn"
+                  <button class="action-btn me-1"
                           title="Payer cette pénalité"
                           (click)="openPaiementPenaliteDialog(p)"
                           [disabled]="p.statut_penalite === 'paye' || +p.montant_restant <= 0">
                     <i class="fas fa-wallet"></i>
-                    <span class="ms-1 d-none d-md-inline">Payer</span>
+                  </button>
+                  <button
+                    class="action-btn"
+                    title="Annuler la pénalité"
+                    (click)="openCancelDialog(p)"
+                    [disabled]="!(p.type_penalite === 'legere' && p.statut_penalite === 'non_paye')">
+                    <i class="fas fa-times-circle"></i>
                   </button>
                 </td>
               </tr>

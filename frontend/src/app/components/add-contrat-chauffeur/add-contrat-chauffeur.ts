@@ -151,8 +151,8 @@ export class AddContratChauffeur implements OnInit{
       date_signature: new FormControl<string>('',  Validators.pattern(CONTRACT_VALIDATION.DATE_PATTERN)),
       date_debut:     new FormControl<string>('',  Validators.pattern(CONTRACT_VALIDATION.DATE_PATTERN)),
 
-      date_concernee: new FormControl<string>('', [Validators.required, Validators.pattern(CONTRACT_VALIDATION.DATE_PATTERN)]),
-      date_limite:    new FormControl<string>('', [Validators.required, Validators.pattern(CONTRACT_VALIDATION.DATE_PATTERN)]),
+      date_concernee: new FormControl<string>('', { validators: [Validators.pattern(CONTRACT_VALIDATION.DATE_PATTERN)], updateOn: 'change' }),
+      date_limite:    new FormControl<string>('', { validators: [Validators.pattern(CONTRACT_VALIDATION.DATE_PATTERN)], updateOn: 'change' }),
 
       // Un fichier par champ (requis)
       contrat_physique_chauffeur:   new FormControl<File | null>(null, [Validators.required]),
@@ -162,7 +162,7 @@ export class AddContratChauffeur implements OnInit{
       // Congés
       jour_conge_total: new FormControl<number | null>(30, [Validators.required, Validators.min(0), Validators.max(200)])
     },
-    { validators: [dateCoherenceValidator, engagedNotAboveTotalValidator], updateOn: 'blur' }
+    { validators: [dateCoherenceValidator, engagedNotAboveTotalValidator]}
   );
 
   // Getters pratiques
@@ -258,6 +258,8 @@ export class AddContratChauffeur implements OnInit{
     const montant_total   = normalizeMoneyString(this.total.value ?? '');
     const montant_engage  = normalizeMoneyString(this.engage.value ?? '');
     const montant_par_paiement  = normalizeMoneyString(this.mpp.value    ?? '');
+    const dc = this.conc.value?.trim() || '';
+    const dl = this.lim.value?.trim()  || '';
 
     // Construire le FormData attendu (un fichier par champ)
     const fd = new FormData();
@@ -278,8 +280,8 @@ export class AddContratChauffeur implements OnInit{
     fd.append('contrat_physique_moto_garant', this.physMoto.value   as File);
     fd.append('contrat_physique_batt_garant', this.physBatt.value   as File);
 
-    fd.append('date_concernee', this.conc.value!);
-    fd.append('date_limite',    this.lim.value!);
+    if (dc) fd.append('date_concernee', dc);
+    if (dl) fd.append('date_limite', dl);
 
     // Appel service: HttpClient accepte FormData; si la signature TS est stricte, adapter le type en union FormData | Omit<...>
     // ou caster localement: (fd as any).

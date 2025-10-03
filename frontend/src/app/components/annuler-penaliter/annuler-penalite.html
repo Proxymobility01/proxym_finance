@@ -1,0 +1,68 @@
+<!-- src/app/components/annuler-penalite/annuler-penalite.html -->
+<div class="modal-container">
+  <div class="modal-header">
+    <h4 class="modal-title">
+      <i class="fas fa-ban me-2"></i>Annuler la pénalité
+    </h4>
+    <button type="button" class="btn-close" (click)="close()">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+
+  <form class="modal-content" [formGroup]="form">
+    @if (submitError()) {
+      <div class="submit-error">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        {{ submitError() }}
+      </div>
+    }
+
+    <!-- Info pénalité -->
+    <div class="penalite-info">
+      @if (data.chauffeur) {
+        <div><strong>Chauffeur :</strong> {{ data.chauffeur }}</div>
+      }
+      <div><strong>Type :</strong> {{ data.type_penalite | uppercase }}</div>
+    </div>
+
+    <div class="form-grid">
+      <!-- Justificatif -->
+      <div class="form-field">
+        <label class="field-label" for="justif">
+          Justificatif d'annulation <span class="required">*</span>
+        </label>
+        <textarea
+          id="justif"
+          class="field-textarea"
+          formControlName="justificatif"
+          rows="4"
+          placeholder="Motif d'annulation..."
+        ></textarea>
+        @if (form.controls['justificatif'].touched && form.controls['justificatif'].invalid) {
+          <div class="field-error">
+            Le justificatif est requis (minimum 5 caractères).
+          </div>
+        }
+      </div>
+    </div>
+  </form>
+
+  <div class="modal-footer">
+    <button type="button" class="btn-cancel" (click)="close()">
+      <i class="fas fa-times me-1"></i> Fermer
+    </button>
+
+    <button
+      type="button"
+      class="btn-save"
+      (click)="submit()"
+      [disabled]="form.invalid || submitting()"
+    >
+      @if (submitting()) {
+        <span class="spinner-border spinner-border-sm me-1"></span> Annulation...
+      } @else {
+        <i class="fas fa-ban me-1"></i> Annuler la pénalité
+      }
+    </button>
+  </div>
+</div>

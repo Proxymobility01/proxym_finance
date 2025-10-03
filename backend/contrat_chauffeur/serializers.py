@@ -325,6 +325,14 @@ class ContractDriverCreateSerializer(serializers.ModelSerializer):
     contrat_physique_batt = serializers.FileField(required=False, allow_null=True)
     contrat_physique_moto_garant = serializers.FileField(required=False, allow_null=True)
     contrat_physique_batt_garant = serializers.FileField(required=False, allow_null=True)
+    date_concernee = serializers.DateField(
+        required=False, allow_null=True,
+        input_formats=['%Y-%m-%d', '%d/%m/%Y']
+    )
+    date_limite = serializers.DateField(
+        required=False, allow_null=True,
+        input_formats=['%Y-%m-%d', '%d/%m/%Y']
+    )
 
     class Meta:
         model = ContratChauffeur
@@ -347,6 +355,8 @@ class ContractDriverCreateSerializer(serializers.ModelSerializer):
             "contrat_batt",
             "garant",
             "regle_penalite",
+            "date_concernee",
+            "date_limite",
         ]
         read_only_fields = ("duree_jour", "date_fin", "montant_restant")
 
@@ -366,6 +376,11 @@ class ContractDriverCreateSerializer(serializers.ModelSerializer):
         # defaults
         if attrs.get("montant_paye") is None:
             attrs["montant_paye"] = 0
+
+        dc = attrs.get("date_concernee")
+        dl = attrs.get("date_limite")
+        if dc and dl and dl < dc:
+            raise serializers.ValidationError({"date_limite": "La date limite doit être ≥ la date concernée."})
 
         # montant_restant
         mt = attrs.get("montant_total")
@@ -407,8 +422,6 @@ class ContractDriverCreateSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def create(self, validated_data):
         today = timezone.now().date()
-        validated_data.setdefault("date_concernee", today)
-        validated_data.setdefault("date_limite", today + timedelta(days=1))
         contrat = ContratChauffeur.objects.create(**validated_data)
 
         # --- Attribuer le proprietaire de la batterie si vide
@@ -450,6 +463,15 @@ class ContractDriverUpdateSerializer(serializers.ModelSerializer):
     contrat_physique_moto_garant = serializers.FileField(required=False, allow_null=True)
     contrat_physique_batt_garant = serializers.FileField(required=False, allow_null=True)
 
+    date_concernee = serializers.DateField(
+        required=False, allow_null=True,
+        input_formats=['%Y-%m-%d', '%d/%m/%Y']
+    )
+    date_limite = serializers.DateField(
+        required=False, allow_null=True,
+        input_formats=['%Y-%m-%d', '%d/%m/%Y']
+    )
+
     class Meta:
         model = ContratChauffeur
         fields = [
@@ -470,6 +492,8 @@ class ContractDriverUpdateSerializer(serializers.ModelSerializer):
             "contrat_batt",
             "garant",
             "regle_penalite",
+            "date_concernee",
+            "date_limite",
         ]
         read_only_fields = ("duree_jour", "date_fin", "montant_restant")
 
@@ -482,6 +506,11 @@ class ContractDriverUpdateSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         inst = self.instance
         today = timezone.now().date()
+
+        dc = attrs.get("date_concernee", getattr(inst, "date_concernee"))
+        dl = attrs.get("date_limite", getattr(inst, "date_limite"))
+        if dc and dl and dl < dc:
+            raise serializers.ValidationError({"date_limite": "La date limite doit être ≥ la date concernée."})
 
         # ✅ clamp date_signature on update as well
         sig = attrs.get("date_signature", getattr(inst, "date_signature", None))

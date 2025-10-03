@@ -255,31 +255,34 @@
                 </div>
 
                 <!-- Profil utilisateur -->
-                <div class="dropdown profile-dropdown" [class.show]="isOpen('profile')">
-                    <button class="btn-profile" type="button" (click)="toggle('profile')">
-                        <div class="profile-circle"><i class="fas fa-user"></i></div>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end" [class.show]="isOpen('profile')">
-                        <li>
-                            <a class="dropdown-item" [routerLink]="['/profile']" (click)="closeAllDropdowns()">
-                                <i class="fas fa-user me-2"></i>Mon profil
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" [routerLink]="['/settings']" (click)="closeAllDropdowns()">
-                                <i class="fas fa-cog me-2"></i>Paramètres
-                            </a>
-                        </li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li>
-                            <a class="dropdown-item text-danger" href="#" (click)="logout()">
-                                <i class="fas fa-sign-out-alt me-2"></i>Déconnexion
-                            </a>
-                        </li>
-                    </ul>
-                </div>
+              <div class="dropdown profile-dropdown" [class.show]="isOpen('profile')">
+                <button class="btn-profile" type="button" (click)="toggle('profile')">
+                  <div class="profile-circle">
+                    {{ initials() || 'U' }}
+                  </div>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" [class.show]="isOpen('profile')">
+                  <li>
+                    <a class="dropdown-item" [routerLink]="['/profile']" (click)="closeAllDropdowns()">
+                      <i class="fas fa-user me-2"></i>Mon profil
+                    </a>
+                  </li>
+                  <li>
+                    <a class="dropdown-item" [routerLink]="['/settings']" (click)="closeAllDropdowns()">
+                      <i class="fas fa-cog me-2"></i>Paramètres
+                    </a>
+                  </li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li>
+                    <a class="dropdown-item text-danger" (click)="logout()">
+                      <i class="fas fa-sign-out-alt me-2"></i>Déconnexion
+                    </a>
+                  </li>
+                </ul>
+              </div>
 
-                <!-- Bouton thème (placeholder) -->
+
+              <!-- Bouton thème (placeholder) -->
                 <button class="btn-theme"><i class="fas fa-adjust"></i></button>
 
             </div>

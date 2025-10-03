@@ -47,10 +47,7 @@ export class AddPaiementLeaseComponent implements OnInit {
 
   ngOnInit(): void {
     this.contratService.fetchContratChauffeur();
-    this.leaseService.fetchLeases();
-    // valeur par défaut
     this.methodeCtrl.setValue('espece');
-
     this.contratIdCtrl.valueChanges.subscribe((contratId) => {
       if (!contratId) return;
       const contrat = this.contrats().find(c => c.id === contratId);
