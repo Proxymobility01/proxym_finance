@@ -6,9 +6,15 @@ from django.db import models
 
 class UsersAgences(models.Model):
     id = models.PositiveBigIntegerField(primary_key=True)
+    nom = models.CharField(max_length=255, blank=True, null=True)
+    prenom = models.CharField(max_length=255, blank=True, null=True)
     class Meta:
         managed = False
         db_table = "users_agences"
+
+    def __str__(self):
+        full = f"{(self.nom or '').strip()} {(self.prenom or '').strip()}".strip()
+        return full  or f"Agence {self.id}"
 
 
 
@@ -28,7 +34,7 @@ class ValidatedUser(models.Model):
 
 class MotoValide(models.Model):
     id = models.BigAutoField(primary_key=True)
-    moto_unique_id = models.CharField(max_length=255, blank=True, null=True) 
+    moto_unique_id = models.CharField(max_length=255, blank=True, null=True)
     vin = models.CharField(max_length=255, blank=True, null=True) 
     model = models.CharField(max_length=255, blank=True, null=True) 
     gps_imei = models.CharField(max_length=255, blank=True, null=True) 
@@ -55,4 +61,13 @@ class AssociationUserMoto(models.Model):
 
     class Meta:
         db_table = "association_user_motos"  
+        managed = False
+
+
+class Agences(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    nom_agence = models.CharField(max_length=255, blank=True, null=True)
+
+    class Meta:
+        db_table = "agences"
         managed = False

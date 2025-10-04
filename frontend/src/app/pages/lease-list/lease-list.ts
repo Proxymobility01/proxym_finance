@@ -203,7 +203,7 @@ export class LeaseList implements OnInit {
     this.uniqueSorted(this.leases().map(l => l?.paye_par))
   );
   readonly optionsStationPaiement = computed<string[]>(() =>
-    this.uniqueSorted(this.leases().map(l => l?.station_paiement))
+    this.uniqueSorted(this.leases().map(l => l?.agenges))
   );
 
   // Cycle de vie : l’effet déclenche le fetch initial (statut=PAYE + created=today)

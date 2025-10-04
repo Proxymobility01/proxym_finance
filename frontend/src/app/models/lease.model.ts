@@ -41,7 +41,7 @@ export interface Lease{
   date_concernee: string;
   date_limite: string;
   methode_paiement: string | null;
-  station_paiement: string;
+  agenges: string;
   statut_paiement: string;
   statut_penalite:string;
   paye_par:string;

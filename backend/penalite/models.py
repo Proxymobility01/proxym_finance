@@ -94,8 +94,11 @@ class ReglePenalite(TimeStampedModel):
     type_regle = models.CharField(max_length=50, null=True, blank=True)
     description = models.TextField(blank=True, null=True)
 
+    class Meta:
+        db_table = "penalite_regle"
     def __str__(self):
         return self.titre or f"ReglePenalite #{self.pk}"
+
 
 
 class PaiementPenalite(TimeStampedModel):

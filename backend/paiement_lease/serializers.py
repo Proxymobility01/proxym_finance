@@ -11,7 +11,7 @@ class LeasePaymentLiteSerializer(serializers.ModelSerializer):
     chauffeur = serializers.SerializerMethodField(read_only=True)
     moto_unique_id = serializers.SerializerMethodField(read_only=True)
     moto_vin = serializers.SerializerMethodField(read_only=True)
-    station_paiement = serializers.SerializerMethodField(read_only=True)
+    agences = serializers.SerializerMethodField(read_only=True)
     paye_par = serializers.SerializerMethodField(read_only=True)
     statut_paiement = serializers.SerializerMethodField(read_only=True)
     statut_penalite = serializers.SerializerMethodField(read_only=True)
@@ -35,7 +35,7 @@ class LeasePaymentLiteSerializer(serializers.ModelSerializer):
             "date_concernee",
             "date_limite",
             "methode_paiement",
-            "station_paiement",
+            "agences",
             "statut_paiement",
             "statut_penalite",
             "paye_par",
@@ -64,24 +64,34 @@ class LeasePaymentLiteSerializer(serializers.ModelSerializer):
         mv = getattr(assoc, "moto_valide", None) if assoc else None
         return getattr(mv, "vin", None) if mv else None
 
-    def get_station_paiement(self, obj):
-        ua = getattr(obj, "user_agence", None)
+    def get_agences(self, obj):
+        na = getattr(obj, "agences", None)
         # adapte au champ réel (name / label / code)
-        return getattr(ua, "name", None) or getattr(ua, "code", None) if ua else None
+        return getattr(na, "nom_agence", "")
 
-    def get_paye_par(self, obj):
-        u = getattr(obj, "employe", None)
-        if not u:
-            return None
-        # adapte si tu as first_name/last_name
-        full = (" ".join(x for x in [getattr(u, "first_name", ""), getattr(u, "last_name", "")] if x).strip()) or getattr(u, "username", None)
-        return full or None
 
     def get_statut_paiement(self, obj):
         # côté paiements, c'est PAYE
         return "PAYE"
 
     def get_statut_penalite(self, obj):
+        return None
+
+    def get_paye_par(self, obj):
+        u = getattr(obj, "employe", None)
+        if u:
+            nom = getattr(u, "nom", "") or getattr(u, "first_name", "")
+            prenom = getattr(u, "prenom", "") or getattr(u, "last_name", "")
+            full = f"{nom.strip()} {prenom.strip()}".strip()
+            return full or getattr(u, "username", None)
+
+        ua = getattr(obj, "user_agence", None)
+        if ua:
+            nom = getattr(ua, "nom", "") or getattr(ua, "name", "")
+            prenom = getattr(ua, "prenom", "")
+            full = f"{nom.strip()} {prenom.strip()}".strip()
+            return full or getattr(ua, "code", None) or f"Agence #{ua.id}"
+
         return None
 
     def get_source(self, obj):

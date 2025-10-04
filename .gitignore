@@ -2,10 +2,23 @@
 # PYTHON / DJANGO (BACKEND)
 # ----------------------------
 
-# Byte-compiled / cache
-*.py[cod]
+
+# --- Python cache ---
 __pycache__/
+*.py[cod]
+*$py.class
 *.so
+
+# --- caches spécifiques au dossier backend ---
+/backend/**/__pycache__/
+/backend/**/*.pyc
+/backend/**/*.pyo
+/backend/**/*.pyd
+
+# --- si tu veux ignorer aussi les fichiers compilés dans les migrations ---
+/backend/**/migrations/__pycache__/
+/backend/**/migrations/*.pyc
+
 
 # SQLite database (local)
 db.sqlite3
@@ -64,6 +77,7 @@ karma-*.log
 
 # Angular environments
 frontend/src/environments/environment*.ts
+/backend/backend/settings/__init__.py
 
 
 # ----------------------------

@@ -157,7 +157,7 @@ export class LeaseService {
           date_concernee: item.date_concernee ?? null,
           date_limite: item.date_limite ?? null,
           methode_paiement: item.methode_paiement ?? null,
-          station_paiement: item.station_paiement ?? 'N/A',
+          agenges: item.agences ?? 'N/A',
           statut_paiement: item.statut_paiement ?? 'INCONNU',
           statut_penalite: item.statut_penalite ?? 'N/A',
           paye_par: item.paye_par ?? 'N/A',

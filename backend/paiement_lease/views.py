@@ -462,7 +462,7 @@ class LeaseCombinedExportCSV(APIView):
             "id","chauffeur","moto_unique_id","moto_vin",
             "montant_moto","montant_batt","montant_total",
             "date_concernee","date_limite","methode_paiement",
-            "station_paiement","statut_paiement","statut_penalite",
+            "agences","agences",
             "paye_par","created","source"
         ]
         writer = csv.DictWriter(response, fieldnames=fieldnames)
@@ -498,8 +498,8 @@ class LeaseCombinedExportXLSX(APIView):
         ws.title = "Leases"
 
         headers = [
-            "Chauffeur","Moto (ID)","VIN","Statut paiement",
-            "Effectué par","Station de paiement","Date concernée","Date paiement (création)",
+            "Chauffeur","Moto (ID)","VIN",
+            "Effectué par","Agence","Date concernée","Date paiement (création)",
             "Montant moto","Montant batt.","Montant total","Source"
         ]
         ws.append(headers)
@@ -519,7 +519,7 @@ class LeaseCombinedExportXLSX(APIView):
                 getv(r, "moto_vin"),
                 getv(r, "statut_paiement"),
                 getv(r, "paye_par"),
-                getv(r, "station_paiement"),
+                getv(r, "agences"),
                 getv(r, "date_concernee"),
                 getv(r, "created"),
                 getv(r, "montant_moto"),

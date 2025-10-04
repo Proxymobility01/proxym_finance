@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.db import models
 
-from app_legacy.models import UsersAgences
+from app_legacy.models import UsersAgences, Agences
 from contrat_chauffeur.models import ContratChauffeur
 from shared.models import TimeStampedModel
 
@@ -31,6 +31,15 @@ class PaiementLease(TimeStampedModel):
         on_delete=models.PROTECT,
         db_column='user_agence_id',
         null=True, blank=True
+    )
+
+    agences = models.ForeignKey(
+        Agences,
+        on_delete=models.PROTECT,
+        null=True, blank=True,
+        db_column='agences_id',
+        to_field='id',
+        db_constraint=False,
     )
 
     class Meta:
