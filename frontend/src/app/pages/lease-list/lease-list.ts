@@ -105,6 +105,9 @@ export class LeaseList implements OnInit {
 
   // Bypass ponctuel de l’effet (bouton “All”)
   private readonly bypassOnce = signal<boolean>(false);
+  readonly allPayePar = signal<string[]>([]);
+  readonly allAgences = signal<string[]>([]);
+
 
   // Helpers
   private todayISO(): string {
@@ -168,6 +171,18 @@ export class LeaseList implements OnInit {
     return Object.keys(params).length ? params : undefined;
   }
 
+  private _optionsSync = effect(() => {
+    const leases = this.leases();
+    if (!leases || leases.length === 0) return;
+
+    const payeurs = Array.from(new Set(leases.map(l => l?.paye_par).filter(Boolean)));
+    const agences = Array.from(new Set(leases.map(l => l?.agence).filter(Boolean)));
+
+    // ✅ fusionner avec les anciennes pour ne pas perdre les anciennes valeurs
+    this.allPayePar.update(prev => Array.from(new Set([...prev, ...payeurs])));
+    this.allAgences.update(prev => Array.from(new Set([...prev, ...agences])));
+  });
+
   // Effet: (re)fetch quand un filtre backend change
   private _backendSync = effect(() => {
     if (this.bypassOnce()) { this.bypassOnce.set(false); return; }
@@ -200,11 +215,12 @@ export class LeaseList implements OnInit {
   }
 
   readonly optionsPayePar = computed<string[]>(() =>
-    this.uniqueSorted(this.leases().map(l => l?.paye_par))
+    this.uniqueSorted(this.allPayePar())
   );
   readonly optionsAgencePaiement = computed<string[]>(() =>
-    this.uniqueSorted(this.leases().map(l => l?.agence))
+    this.uniqueSorted(this.allAgences())
   );
+
 
   // Cycle de vie : l’effet déclenche le fetch initial (statut=PAYE + created=today)
   ngOnInit() {}
