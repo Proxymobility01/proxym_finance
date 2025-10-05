@@ -97,10 +97,10 @@
         <div class="col-md-2">
           <label class="form-label-compact">Station</label>
           <select class="form-select form-select-sm"
-                  [ngModel]="stationPaiement()"
-                  (ngModelChange)="stationPaiement.set($event)">
+                  [ngModel]="agencePaiement()"
+                  (ngModelChange)="agencePaiement.set($event)">
             <option [value]="''">Tous</option>
-            @for (opt of optionsStationPaiement(); track opt) {
+            @for (opt of optionsAgencePaiement(); track opt) {
               <option [value]="opt">{{ opt }}</option>
             }
           </select>
@@ -234,7 +234,7 @@
           <th class="text-center hide-on-medium">Limite</th>
           <th class="text-center hide-on-medium">Paiement</th>
           <th class="text-center hide-on-large">Statut</th>
-          <th class="text-center hide-on-large">Éffectué par</th>
+          <th class="text-center hide-on-large">Payé par</th>
           <th class="text-center hide-on-large">Méthode</th>
           <th class="text-center hide-on-large">Station</th>
         </tr>
@@ -256,7 +256,7 @@
                   <div>{{ error() }}</div>
                 </div>
                 <button class="btn retry-btn" (click)="clearFilters()">
-                  <i class="fas fa-refresh me-1"></i> Réessayer (reset)
+                  <i class="fas fa-refresh me-1"></i> Réessayer
                 </button>
               </td>
             </tr>
@@ -320,7 +320,7 @@
                   {{ l?.methode_paiement || '—' }}
                 </td>
                 <td class="text-center hide-on-large">
-                  {{ l?.agenges || '—' }}
+                  {{ l?.agence || '—' }}
                 </td>
               </tr>
             }

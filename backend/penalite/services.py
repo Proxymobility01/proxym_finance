@@ -20,7 +20,7 @@ PENALITE_GRAVE  = 5000
 
 def _deadline_noon_from_jour(jour: date):
     tz = timezone.get_current_timezone()
-    return timezone.make_aware(datetime.combine(jour + timedelta(days=1), time(hour=11)), tz)
+    return timezone.make_aware(datetime.combine(jour + timedelta(days=1), time(hour=4)), tz)
 
 
 def _limit_14h_from_jour(jour: date):

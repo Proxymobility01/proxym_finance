@@ -88,7 +88,7 @@ export class LeaseList implements OnInit {
 
   // back: ?paye_par= & ?station=
   readonly payePar = signal<string>('');
-  readonly stationPaiement = signal<string>('');
+  readonly agencePaiement = signal<string>('');
 
 
   // Date CONCERNÉE — backend
@@ -128,13 +128,13 @@ export class LeaseList implements OnInit {
     if (q) params.q = q;
 
     const st = this.statutPaiement().trim();
-    if (st) params.statut = st; // '', 'PAYE', 'NON_PAYE' (on n’envoie rien si '')
+    if (st) params.statut = st;
 
     const pp = this.payePar().trim();
     if (pp) params.paye_par = pp;
 
-    const stn = this.stationPaiement().trim();
-    if (stn) params.station = stn;
+    const stn = this.agencePaiement().trim();
+    if (stn) params.agence = stn;
 
     // Date concernée
     const modeCon = this.dateModeConcernee();
@@ -176,7 +176,7 @@ export class LeaseList implements OnInit {
     void this.query();
     void this.statutPaiement();
     void this.payePar();
-    void this.stationPaiement();
+    void this.agencePaiement();
     void this.dateModeConcernee(); void this.dateSpecificConcernee(); void this.dateStartConcernee(); void this.dateEndConcernee();
     void this.dateModeCreated();   void this.dateSpecificCreated();   void this.dateStartCreated();   void this.dateEndCreated();
     void this.pageSize(); // si la taille de page change, on refetch
@@ -202,8 +202,8 @@ export class LeaseList implements OnInit {
   readonly optionsPayePar = computed<string[]>(() =>
     this.uniqueSorted(this.leases().map(l => l?.paye_par))
   );
-  readonly optionsStationPaiement = computed<string[]>(() =>
-    this.uniqueSorted(this.leases().map(l => l?.agenges))
+  readonly optionsAgencePaiement = computed<string[]>(() =>
+    this.uniqueSorted(this.leases().map(l => l?.agence))
   );
 
   // Cycle de vie : l’effet déclenche le fetch initial (statut=PAYE + created=today)
@@ -218,7 +218,7 @@ export class LeaseList implements OnInit {
     this.query.set('');
     this.statutPaiement.set('');
     this.payePar.set('');
-    this.stationPaiement.set('');
+    this.agencePaiement.set('');
 
     this.dateModeConcernee.set('none');
     this.dateSpecificConcernee.set('');
@@ -238,7 +238,7 @@ export class LeaseList implements OnInit {
     this.query.set('');
     this.statutPaiement.set('');
     this.payePar.set('');
-    this.stationPaiement.set('');
+    this.agencePaiement.set('');
 
     this.dateModeConcernee.set('none');
     this.dateSpecificConcernee.set('');
@@ -277,8 +277,7 @@ export class LeaseList implements OnInit {
     if (this.query().trim()) params.q = this.query().trim();
     if (this.statutPaiement().trim()) params.statut = this.statutPaiement().trim() as any;
     if (this.payePar().trim()) params.paye_par = this.payePar().trim();
-    if (this.stationPaiement().trim()) params.station = this.stationPaiement().trim();
-
+    if (this.agencePaiement().trim()) params.agence = this.agencePaiement().trim();
     // date concernée
     if (this.dateModeConcernee() === 'today') {
       params.date_concernee = this.todayISO();

@@ -95,7 +95,7 @@ export class LeaseService {
     if (filters.q)        qp.append('q', String(filters.q));
     if (filters.statut)   qp.append('statut', String(filters.statut));
     if (filters.paye_par) qp.append('paye_par', String(filters.paye_par));
-    if (filters.station)  qp.append('station', String(filters.station));
+    if (filters.agence)  qp.append('agence', String(filters.agence));
 
     // --- date_concernee ---
     if (filters.date_concernee)        qp.append('date_concernee', filters.date_concernee);
@@ -157,7 +157,7 @@ export class LeaseService {
           date_concernee: item.date_concernee ?? null,
           date_limite: item.date_limite ?? null,
           methode_paiement: item.methode_paiement ?? null,
-          agenges: item.agences ?? 'N/A',
+          agence: item.agences ?? 'N/A',
           statut_paiement: item.statut_paiement ?? 'INCONNU',
           statut_penalite: item.statut_penalite ?? 'N/A',
           paye_par: item.paye_par ?? 'N/A',

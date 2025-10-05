@@ -13,7 +13,7 @@ export interface LeaseFilters {
   q?: string;
   statut?: '' | 'PAYE' | 'NON_PAYE';
   paye_par?: string;
-  station?: string;
+  agence?: string;
   date_concernee?: string;
   date_concernee_after?: string;
   date_concernee_before?: string;
@@ -41,7 +41,7 @@ export interface Lease{
   date_concernee: string;
   date_limite: string;
   methode_paiement: string | null;
-  agenges: string;
+  agence: string;
   statut_paiement: string;
   statut_penalite:string;
   paye_par:string;

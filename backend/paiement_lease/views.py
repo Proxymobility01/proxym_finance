@@ -68,13 +68,21 @@ def noon_aware(d):
         dt = timezone.make_aware(dt, timezone.get_current_timezone())
     return dt
 
-
 def next_working_day(d):
-    """J+1 avec saut du dimanche (comme Laravel)."""
+    """Retourne le jour suivant, en sautant le dimanche."""
     nxt = d + timedelta(days=1)
-    if nxt.weekday() == 6:
+    while nxt.weekday() == 6:  # 6 = dimanche
         nxt += timedelta(days=1)
     return nxt
+
+def add_days_skip_sunday(d, n=1):
+    """Ajoute n jours à une date, en sautant les dimanches."""
+    result = d
+    for _ in range(n):
+        result += timedelta(days=1)
+        while result.weekday() == 6:
+            result += timedelta(days=1)
+    return result
 
 
 class PaiementLeaseAPIView(APIView):
@@ -90,43 +98,50 @@ class PaiementLeaseAPIView(APIView):
             with transaction.atomic():
                 contrat = ContratChauffeur.objects.select_for_update().get(pk=data["contrat_id"])
 
-                # ✅ Source de vérité : dates du contrat
                 base_concernee = data.get("date_paiement_concerne") or contrat.date_concernee
                 base_limite = data.get("date_limite_paiement") or contrat.date_limite
 
                 today = timezone.localdate()
+                today_start = timezone.make_aware(datetime.combine(today, time.min))
+                today_end = timezone.make_aware(datetime.combine(today, time.max))
+
                 count_today = (
                     PaiementLease.objects
-                    .select_for_update()  # verrouille les lignes existantes pour éviter les courses
-                    .filter(contrat_chauffeur=contrat, created__date=today)
+                    .select_for_update()  # verrouille les lignes correspondantes (si existantes)
+                    .filter(
+                        contrat_chauffeur=contrat,
+                        created__range=(today_start, today_end)
+                    )
                     .count()
                 )
+
                 if count_today >= 2:
                     return Response(
-                        {"success": False,
-                         "message": "Limite de 2 paiements par jour atteinte pour ce contrat."},
+                        {
+                            "success": False,
+                            "message": (
+                                "Limite de 2 paiements par jour atteinte pour ce contrat."
+                            )
+                        },
                         status=status.HTTP_400_BAD_REQUEST
                     )
 
                 # Montants
-                m_moto  = Decimal(data.get("montant_moto") or 0)
-                m_batt  = Decimal(data.get("montant_batt") or 0)
-                m_total = Decimal(data.get("montant_total") or (m_moto + m_batt))
-                if (m_moto + m_batt) != m_total:
-                    m_total = m_moto + m_batt
+                m_moto = Decimal(data.get("montant_moto") or 0)
+                m_batt = Decimal(data.get("montant_batt") or 0)
+                m_total = m_moto + m_batt
 
                 now = timezone.now()
                 reference = f"PL-{now.strftime('%Y%m%d-%H%M%S')}-{uuid.uuid4().hex[:5].upper()}"
                 statut_global = "PAYE" if m_total > 0 else "IMPAYE"
 
-                # ✅ Enregistrer le paiement
                 PaiementLease.objects.create(
                     reference_paiement=reference,
                     montant_moto=m_moto,
                     montant_batt=m_batt,
                     montant_total=m_total,
                     methode_paiement=data["methode_paiement"],
-                    reference_transaction=data.get("reference_transaction", None),
+                    reference_transaction=data.get("reference_transaction"),
                     type_contrat="CHAUFFEUR",
                     statut=statut_global,
                     contrat_chauffeur=contrat,
@@ -144,13 +159,12 @@ class PaiementLeaseAPIView(APIView):
                 )
 
                 next_concernee = next_working_day(base_concernee)
-                next_limite = next_concernee + timedelta(days=1)
+                next_limite = add_days_skip_sunday(next_concernee, 1)
 
                 contrat.date_concernee = next_concernee
-                contrat.date_limite    = next_limite
+                contrat.date_limite = next_limite
                 contrat.save()
 
-                # ✅ Mise à jour du contrat batterie lié
                 if contrat.contrat_batt:
                     batt = contrat.contrat_batt
                     batt.montant_paye = (batt.montant_paye or Decimal("0")) + m_batt
@@ -184,7 +198,7 @@ def build_combined_queryset(request):
     q       = (request.GET.get("q") or "").strip()
     statut  = (request.GET.get("statut") or "").upper().strip()  # "PAYE" | "NON_PAYE" | ''
     paye_par = (request.GET.get("paye_par") or "").strip()
-    station  = (request.GET.get("station") or "").strip()
+    agence  = (request.GET.get("agence") or "").strip()
 
     # ---------- PAYÉS ----------
     paid_qs = (PaiementLease.objects
@@ -206,16 +220,24 @@ def build_combined_queryset(request):
             Q(contrat_chauffeur__association_user_moto__moto_valide__moto_unique_id__icontains=q) |
             Q(contrat_chauffeur__association_user_moto__moto_valide__vin__icontains=q)
         )
-    if paye_par:
-        paid_qs = paid_qs.filter(
-            Q(employe__username__icontains=paye_par) |
-            Q(employe__first_name__icontains=paye_par) |
-            Q(employe__last_name__icontains=paye_par)
-        )
-    if station:
-        paid_qs = paid_qs.filter(
-            Q(user_agence__name__icontains=station) | Q(user_agence__code__icontains=station)
-        )
+    if paye_par := (request.GET.get("paye_par") or "").strip():
+        terms = [t.strip() for t in paye_par.split() if t.strip()]
+        q_paye_par = Q()
+        for term in terms:
+            q_paye_par |= (
+                    Q(employe__nom__icontains=term) |
+                    Q(employe__prenom__icontains=term) |
+                    Q(user_agence__nom__icontains=term) |
+                    Q(user_agence__prenom__icontains=term)
+            )
+
+        paid_qs = paid_qs.filter(q_paye_par)
+    if agence := (request.GET.get("agence") or "").strip():
+        terms = [t.strip() for t in agence.split() if t.strip()]
+        q_agence = Q()
+        for term in terms:
+            q_agence |= Q(agences__nom_agence__icontains=term)
+        paid_qs = paid_qs.filter(q_agence)
 
     paid_ser = LeasePaymentLiteSerializer(paid_qs, many=True)
     paid_rows = [dict(x) for x in paid_ser.data]
@@ -230,7 +252,6 @@ def build_combined_queryset(request):
                  "contrat_chauffeur__contrat_batt",
              )
              .filter(
-                 contrat_chauffeur__statut=StatutContrat.ENCOURS,
                 statut_penalite__in=[StatutPenalite.NON_PAYE, StatutPenalite.PAYE, StatutPenalite.PARTIELLEMENT_PAYE],
              ))
     np_qs = NonPaiementLeaseFilter(request.GET, queryset=np_qs).qs
@@ -343,9 +364,9 @@ class LeaseCombinedListAPIView(APIView):
     def get(self, request, *args, **kwargs):
 
         q = (request.GET.get("q") or "").strip()
-        statut = (request.GET.get("statut") or "").upper().strip()  # PAYE | NON_PAYE | ''
+        statut = (request.GET.get("statut") or "").upper().strip()
         paye_par = (request.GET.get("paye_par") or "").strip()
-        station = (request.GET.get("station") or "").strip()
+        agence = (request.GET.get("station") or "").strip()
 
         # -------- PAYÉS --------
         paid_qs = (PaiementLease.objects
@@ -367,18 +388,24 @@ class LeaseCombinedListAPIView(APIView):
                 Q(contrat_chauffeur__association_user_moto__moto_valide__moto_unique_id__icontains=q) |
                 Q(contrat_chauffeur__association_user_moto__moto_valide__vin__icontains=q)
             )
-        if paye_par:
-            paid_qs = paid_qs.filter(
-                Q(employe__username__icontains=paye_par) |
-                Q(employe__first_name__icontains=paye_par) |
-                Q(employe__last_name__icontains=paye_par)
-            )
-        if station:
-            paid_qs = paid_qs.filter(
-                Q(user_agence__name__icontains=station) |
-                Q(user_agence__code__icontains=station)
-            )
+        if paye_par := (request.GET.get("paye_par") or "").strip():
+            terms = [t.strip() for t in paye_par.split() if t.strip()]
+            q_paye_par = Q()
+            for term in terms:
+                q_paye_par |= (
+                        Q(employe__nom__icontains=term) |
+                        Q(employe__prenom__icontains=term) |
+                        Q(user_agence__nom__icontains=term) |
+                        Q(user_agence__prenom__icontains=term)
+                )
 
+            paid_qs = paid_qs.filter(q_paye_par)
+        if agence := (request.GET.get("agence") or "").strip():
+            terms = [t.strip() for t in agence.split() if t.strip()]
+            q_agence = Q()
+            for term in terms:
+                q_agence |= Q(agences__nom_agence__icontains=term)
+            paid_qs = paid_qs.filter(q_agence)
         # -------- NON PAYÉS --------
         np_qs = (Penalite.objects
                  .select_related(
@@ -389,7 +416,6 @@ class LeaseCombinedListAPIView(APIView):
                      "contrat_chauffeur__contrat_batt",
                  )
                  .filter(
-                     contrat_chauffeur__statut=StatutContrat.ENCOURS,
                     statut_penalite__in=[StatutPenalite.NON_PAYE,StatutPenalite.PAYE,StatutPenalite.PARTIELLEMENT_PAYE],
                  ))
         # NB: NonPaiementLeaseFilter ne définit PAS 'created' → il ne s’applique pas ici
