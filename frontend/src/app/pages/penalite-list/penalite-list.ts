@@ -345,7 +345,6 @@ export class PenaliteList implements OnInit {
       if (!res?.justificatif) return;
       this.penaliteService.cancelPenalite(p.id, res.justificatif, () => {
         this.snack.open('Pénalité annulée', 'OK', { duration: 2500 });
-        // Rien d’autre à faire : cancelPenalite appelle fetchPenalites() pour resynchroniser
       });
     });
   }

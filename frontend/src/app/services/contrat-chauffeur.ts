@@ -127,4 +127,54 @@ export class ContratChauffeurService {
       )
       .subscribe();
   }
+
+  private readonly _isChangingStatut = signal<boolean>(false);
+  private readonly _changeStatutError = signal<string | null>(null);
+
+  readonly isChangingStatut = this._isChangingStatut.asReadonly();
+  readonly changeStatutError = this._changeStatutError.asReadonly();
+
+  /**
+   * Changer le statut d’un contrat chauffeur
+   * @param id ID du contrat
+   * @param payload { nouveau_statut, motif }
+   * @param onSuccess callback optionnel après succès
+   */
+  changeStatutContrat(
+    id: number,
+    payload: { nouveau_statut: string; motif: string },
+    onSuccess?: (res: any) => void
+  ) {
+    const url = `${this.config.apiUrl}/contrats-chauffeurs/${id}/changer-statut/`;
+
+    this._isChangingStatut.set(true);
+    this._changeStatutError.set(null);
+
+    this.http.post<any>(url, payload)
+      .pipe(
+        tap(res => {
+          // ✅ Mise à jour locale du statut dans la liste des contrats
+          const current = this._contratsCh();
+          const updated = current.map(c => c.id === id ? { ...c, statut: res.statut } : c);
+          this._contratsCh.set(updated);
+
+          onSuccess?.(res);
+        }),
+        catchError(err => {
+          let msg = 'Erreur lors du changement de statut du contrat.';
+          const e = err?.error;
+          if (e?.detail) msg = e.detail;
+          else if (e && typeof e === 'object') {
+            msg = Object.entries(e)
+              .map(([k, v]: any) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`)
+              .join(' | ');
+          }
+          this._changeStatutError.set(msg);
+          console.error('[CHANGE STATUT ERROR]:', err);
+          return of(null);
+        }),
+        finalize(() => this._isChangingStatut.set(false))
+      )
+      .subscribe();
+  }
 }

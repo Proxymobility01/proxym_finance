@@ -1,0 +1,92 @@
+<!-- src/app/components/change-contrat-status/change-contrat-status.html -->
+<div class="modal-container">
+  <div class="modal-header">
+    <h4 class="modal-title">
+      <i class="fas fa-sync-alt me-2"></i>Changer le statut du contrat
+    </h4>
+    <button type="button" class="btn-close" (click)="close()">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+
+  <form class="modal-content" [formGroup]="form" (ngSubmit)="submit()">
+    @if (changeError()) {
+      <div class="submit-error">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        {{ changeError() }}
+      </div>
+    }
+
+    <!-- Info contrat -->
+    <div class="contrat-info">
+      <div><strong>Contrat lié à :</strong> {{ data.chauffeur || '—' }}</div>
+    </div>
+
+    <div class="form-grid">
+      <!-- Nouveau statut -->
+      <div class="form-field">
+        <label class="field-label" for="nouveau_statut">
+          Nouveau statut <span class="required">*</span>
+        </label>
+        <select
+          id="nouveau_statut"
+          class="field-select"
+          formControlName="nouveau_statut"
+          [class.input-error]="form.controls['nouveau_statut'].touched && form.controls['nouveau_statut'].invalid">
+          <option value="">— Sélectionner —</option>
+          <option value="encours">En cours</option>
+          <option value="suspendu">Suspendu</option>
+          <option value="termine">Terminé</option>
+          <option value="annule">Annulé</option>
+        </select>
+        @if (form.controls['nouveau_statut'].touched && form.controls['nouveau_statut'].invalid) {
+          <div class="field-error">
+            Ce champ est obligatoire.
+          </div>
+        }
+      </div>
+
+      <!-- Motif -->
+      <div class="form-field">
+        <label class="field-label" for="motif">
+          Motif du changement <span class="required">*</span>
+        </label>
+        <textarea
+          id="motif"
+          class="field-textarea"
+          formControlName="motif"
+          rows="3"
+          placeholder="Décrivez brièvement la raison du changement..."
+          [class.input-error]="form.controls['motif'].touched && form.controls['motif'].invalid"
+        ></textarea>
+        @if (form.controls['motif'].touched && form.controls['motif'].invalid) {
+          <div class="field-error">
+            Motif requis (minimum 5 caractères).
+          </div>
+        }
+      </div>
+    </div>
+  </form>
+
+  <div class="modal-footer">
+    <button
+      type="button"
+      class="btn-cancel"
+      (click)="close()"
+      [disabled]="isChanging()">
+      <i class="fas fa-times me-1"></i> Annuler
+    </button>
+
+    <button
+      type="button"
+      class="btn-save"
+      (click)="submit()"
+      [disabled]="form.invalid || isChanging()">
+      @if (isChanging()) {
+        <span class="spinner-border spinner-border-sm me-1"></span> Enregistrement...
+      } @else {
+        <i class="fas fa-save me-1"></i> Enregistrer
+      }
+    </button>
+  </div>
+</div>

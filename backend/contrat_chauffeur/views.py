@@ -5,7 +5,7 @@ from rest_framework import generics
 from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 from rest_framework.permissions import  IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from .models import ContratBatterie, ContratChauffeur
+from .models import ContratBatterie, ContratChauffeur, StatutContrat
 from .serializers import (
     ContractBatteryListSerializer,
     ContractBatteryDetailSerializer,
@@ -85,10 +85,6 @@ class ContratBatterieDetailView(generics.RetrieveUpdateDestroyAPIView):
 # Chauffeur contracts
 # -------------------------------------------------------------------
 class ContractChauffeurListCreateView(generics.ListCreateAPIView):
-    """
-    GET  /api/contrats-chauffeurs      -> list
-    POST /api/contrats-chauffeurs      -> create (auto-computes date_fin & duree_jour)
-    """
     queryset = ContratChauffeur.objects.all().order_by("-created")
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
@@ -112,3 +108,72 @@ class ContractChauffeurDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_serializer_class(self):
         return ContractDriverUpdateSerializer if self.request.method in ("PUT", "PATCH") else ContractDriverDetailSerializer
+
+
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status
+from django.db import transaction
+from django.utils import timezone
+class ModifierStatutContratAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def post(self, request, pk, *args, **kwargs):
+        """
+        Modifie le statut d’un contrat chauffeur.
+        Nécessite les champs :
+          - nouveau_statut
+          - motif
+        """
+        nouveau_statut = request.data.get("nouveau_statut")
+        motif = (request.data.get("motif") or "").strip()
+
+        if not nouveau_statut or nouveau_statut not in StatutContrat.values:
+            return Response(
+                {"detail": "Statut invalide."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        if not motif:
+            return Response(
+                {"detail": "Un motif de modification est obligatoire."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            with transaction.atomic():
+                contrat = ContratChauffeur.objects.select_for_update().get(pk=pk)
+
+                # Si le statut est déjà le même, inutile de changer
+                if contrat.statut == nouveau_statut:
+                    return Response(
+                        {"detail": f"Le contrat est déjà au statut '{contrat.statut}'."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                # Mise à jour du statut et du suivi
+                contrat.statut = nouveau_statut
+                contrat.date_modification_statut = timezone.now()
+                contrat.motif_modification_statut = motif
+                contrat.statut_modifie_par = request.user
+                contrat.save(update_fields=[
+                    "statut", "date_modification_statut",
+                    "motif_modification_statut", "statut_modifie_par", "updated"
+                ])
+
+            return Response(
+                {"success": True, "message": f"Statut du contrat modifié en '{nouveau_statut}'."},
+                status=status.HTTP_200_OK
+            )
+
+        except ContratChauffeur.DoesNotExist:
+            return Response(
+                {"detail": "Contrat introuvable."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {"detail": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )

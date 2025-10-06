@@ -8,6 +8,9 @@ import { ContratChauffeurService} from "../../services/contrat-chauffeur";
 import {AddContratChauffeur} from "../../components/add-contrat-chauffeur/add-contrat-chauffeur";
 import {HighlightPipe} from "../../shared/highlight-pipe";
 import * as XLSX from 'xlsx';
+import {ContratChauffeur} from '../../models/contrat-chauffeur.model';
+import {ChangerStatutContrat} from '../../components/changer-statut-contrat/changer-statut-contrat';
+import {MatSnackBar} from '@angular/material/snack-bar';
 
 
 type StatusFilter = '' | 'termine' | 'encours' | 'suspendu' | 'annule';
@@ -31,6 +34,7 @@ export class ContratChauffeurList implements OnInit {
 
   private readonly dialog = inject(MatDialog);
   private readonly contratChService = inject(ContratChauffeurService);
+  private readonly snackBar = inject(MatSnackBar);
 
   readonly query       = signal<string>('');
   readonly status      = signal<StatusFilter>('');
@@ -50,6 +54,25 @@ export class ContratChauffeurList implements OnInit {
   refresh() {
     this.contratChService.fetchContratChauffeur()
   }
+
+  openChangeStatutDialog(c: ContratChauffeur) {
+    this.dialog.open(ChangerStatutContrat, {
+      width: '400px',
+      data: { id: c.id, currentStatut: c.statut, chauffeur: c.chauffeur },
+      disableClose: true
+    }).afterClosed().subscribe(res => {
+      if (res?.success) {
+        this.snackBar.open(
+          'Statut du contrat mis à jour ✅',
+          'Ok',
+          {duration: 3000}
+        );
+        this.contratChService.fetchContratChauffeur();
+      }
+    });
+  }
+
+
   openContratChauffeurDialog() {
     const dialogRef = this.dialog.open(AddContratChauffeur, {
       width: '90vw',

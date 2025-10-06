@@ -274,7 +274,7 @@ class ContractDriverListSerializer(_DureeJourOutMixin):
             "jour_conge_total",
             "jour_conge_utilise",
             "jour_conge_restant",
-            "association_user_moto_id",  # expose FK id in list
+            "association_user_moto_id",
             "contrat_batt",
             "garant",
             "regle_penalite",

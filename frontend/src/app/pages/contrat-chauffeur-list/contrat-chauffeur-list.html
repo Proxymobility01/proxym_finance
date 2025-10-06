@@ -266,8 +266,9 @@
                 </td>
 
                 <td class="text-center" (click)="$event.stopPropagation()">
-                  <button class="action-btn me-1" title="Détails">
-                    <i class="fas fa-info-circle"></i>
+                  <button class="action-btn me-1" title="Changer le statut"
+                          (click)="openChangeStatutDialog(c)">
+                    <i class="fas fa-exchange-alt"></i>
                   </button>
                   <button class="action-btn" title="Modifier">
                     <i class="fas fa-edit"></i>

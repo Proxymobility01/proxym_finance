@@ -135,6 +135,21 @@ class ContratChauffeur(TimeStampedModel):
         related_name="contrats_chauffeur",
     )
 
+    statut_modifie_par = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="contrats_modifies",
+        verbose_name=_("Employé ayant modifié le statut"),
+    )
+    date_modification_statut = models.DateTimeField(
+        null=True, blank=True, verbose_name=_("Date de modification du statut")
+    )
+    motif_modification_statut = models.TextField(
+        null=True, blank=True, verbose_name=_("Motif du changement de statut")
+    )
+
     class Meta:
         db_table = "contrat_chauffeur"
         indexes = [
