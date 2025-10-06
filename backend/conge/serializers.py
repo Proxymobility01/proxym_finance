@@ -3,7 +3,7 @@ from django.utils import timezone
 from django.conf import settings
 from django.db import transaction
 from rest_framework import serializers
-
+from datetime import timedelta
 from contrat_chauffeur.models import ContratChauffeur
 from .models import Conge
 
@@ -102,8 +102,8 @@ class CongeCreateSerializer(CongeBaseSerializer):
         return super().create(validated_data)
 
 
+
 class CongeUpdateSerializer(CongeBaseSerializer):
-    # contrat_id optionnel → pas besoin de required=True
     contrat_id = serializers.PrimaryKeyRelatedField(
         source="contrat",
         queryset=ContratChauffeur.objects.all(),
@@ -128,7 +128,7 @@ class CongeUpdateSerializer(CongeBaseSerializer):
 
         # 🔒 Règle 2 : impossible de passer de ANNULÉ → REJETÉ ou REJETÉ → ANNULÉ
         if (old_statut == StatutConge.ANNULE and new_statut == StatutConge.REJETE) or \
-                (old_statut == StatutConge.REJETE and new_statut == StatutConge.ANNULE):
+           (old_statut == StatutConge.REJETE and new_statut == StatutConge.ANNULE):
             raise serializers.ValidationError(
                 {"statut": "Impossible de changer un congé annulé en rejeté ou inversement."}
             )
@@ -138,17 +138,29 @@ class CongeUpdateSerializer(CongeBaseSerializer):
         contrat: ContratChauffeur = instance.contrat
         nb_jour = instance.nb_jour
 
-        # Cas 1 : approbation → consomme des jours
+        # Cas 1 : approbation → consomme des jours + ajuste le calendrier de paiement
         if old_statut != StatutConge.APPROUVE and new_statut == StatutConge.APPROUVE:
             if nb_jour > contrat.jour_conge_restant:
                 raise serializers.ValidationError(
                     {"nb_jour": "Pas assez de jours de congés restants."}
                 )
+
+            # -- maj des jours de congé --
             contrat.jour_conge_utilise += nb_jour
             contrat.jour_conge_restant = max(
                 contrat.jour_conge_total - contrat.jour_conge_utilise, 0
             )
-            contrat.save(update_fields=["jour_conge_utilise", "jour_conge_restant"])
+
+            # -- maj du calendrier de paiement --
+            if contrat.date_concernee:
+                contrat.date_concernee += timedelta(days=nb_jour)
+            if contrat.date_limite:
+                contrat.date_limite += timedelta(days=nb_jour)
+
+            contrat.save(update_fields=[
+                "jour_conge_utilise", "jour_conge_restant",
+                "date_concernee", "date_limite"
+            ])
 
         # Cas 2 : annulation ou rejet d’un congé déjà approuvé → restitution
         elif old_statut == StatutConge.APPROUVE and new_statut in [StatutConge.ANNULE, StatutConge.REJETE]:
@@ -156,8 +168,18 @@ class CongeUpdateSerializer(CongeBaseSerializer):
             contrat.jour_conge_restant = max(
                 contrat.jour_conge_total - contrat.jour_conge_utilise, 0
             )
-            contrat.save(update_fields=["jour_conge_utilise", "jour_conge_restant"])
+
+            # 🕓 rétablir les dates initiales (retirer les jours ajoutés)
+            if contrat.date_concernee:
+                contrat.date_concernee -= timedelta(days=nb_jour)
+            if contrat.date_limite:
+                contrat.date_limite -= timedelta(days=nb_jour)
+
+            contrat.save(update_fields=[
+                "jour_conge_utilise", "jour_conge_restant",
+                "date_concernee", "date_limite"
+            ])
 
         # Cas 3 : passage à "termine" → pas d’effet sur les jours
-
         return instance
+
