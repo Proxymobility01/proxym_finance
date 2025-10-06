@@ -351,7 +351,7 @@ class ContractDriverCreateSerializer(serializers.ModelSerializer):
             "jour_conge_total",
             "jour_conge_utilise",
             "jour_conge_restant",
-            "association_user_moto",  # ✅ writable FK
+            "association_user_moto",
             "contrat_batt",
             "garant",
             "regle_penalite",
@@ -488,7 +488,7 @@ class ContractDriverUpdateSerializer(serializers.ModelSerializer):
             "jour_conge_total",
             "jour_conge_utilise",
             "jour_conge_restant",
-            "association_user_moto",  # ✅ writable FK for updates too
+            "association_user_moto",
             "contrat_batt",
             "garant",
             "regle_penalite",

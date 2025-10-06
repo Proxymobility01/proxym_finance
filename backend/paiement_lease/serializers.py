@@ -40,7 +40,7 @@ class LeasePaymentLiteSerializer(serializers.ModelSerializer):
             "statut_penalite",
             "paye_par",
             "created",
-            "source",            # "PAYE"
+            "source",
         ]
 
     # ---- getters ----
