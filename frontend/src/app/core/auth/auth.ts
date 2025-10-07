@@ -3,6 +3,7 @@ import { inject, Injectable, signal } from "@angular/core";
 import { API_CONFIG, ApiConfig } from "../api-config.token";
 import { STORAGE_KEYS, LoginResponse } from "./auth.model";
 import { catchError, map, of, tap } from "rxjs";
+import {Router} from '@angular/router';
 
 @Injectable({
   providedIn: "root",
@@ -10,6 +11,7 @@ import { catchError, map, of, tap } from "rxjs";
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly config: ApiConfig = inject(API_CONFIG);
+  private readonly router = inject(Router);
 
   private refreshScheduler: any = null; // 👈 intervalle pour auto-refresh
 
@@ -61,6 +63,33 @@ export class AuthService {
 
   // 🔓 logout
   logout() {
+    const refreshToken = this._refreshToken();
+
+    // --- Étape 1 : appelle le backend pour blacklister le token
+    if (refreshToken) {
+      this.http
+        .post(`${this.config.apiUrl}/auth/logout/`, { refresh: refreshToken })
+        .pipe(
+          catchError((err) => {
+            console.warn("[LOGOUT WARNING]", err);
+            // même si le backend échoue, on nettoie quand même côté frontend
+            return of(null);
+          }),
+          tap(() => {
+            this.clearSession(); // 👈 supprime les tokens + signaux
+            this.router.navigate(["/login"]); // 👈 redirige vers login
+          })
+        )
+        .subscribe();
+    } else {
+      // Pas de refresh token => nettoyage direct
+      this.clearSession();
+      this.router.navigate(["/login"]);
+    }
+  }
+
+  // 🔒 Nettoyage complet localStorage + signaux
+  private clearSession() {
     localStorage.removeItem(STORAGE_KEYS.access);
     localStorage.removeItem(STORAGE_KEYS.refresh);
     localStorage.removeItem(STORAGE_KEYS.userId);
@@ -75,7 +104,7 @@ export class AuthService {
     this._prenom.set(null);
     this._role.set(null);
 
-    this.stopRefreshScheduler(); // 👈 stop auto-refresh
+    this.stopRefreshScheduler();
   }
 
   // 👤 fullname
@@ -139,14 +168,18 @@ export class AuthService {
 
   // --- Auto-refresh scheduler ---
   private startRefreshScheduler() {
-    this.stopRefreshScheduler(); // au cas où
+    this.stopRefreshScheduler(); // 🔁 stoppe un ancien intervalle avant d'en créer un nouveau
 
-    // 🔄 ACCESS_TOKEN_LIFETIME = 55 min → on rafraîchit à 50 min
-    const interval = 50 * 60 * 1000; // 50 minutes en ms
+    // 🕒 ACCESS_TOKEN_LIFETIME = 5 min → on rafraîchit à 4 min (240 000 ms)
+    const interval = 4 * 60 * 1000; // 4 minutes en ms
 
     this.refreshScheduler = setInterval(() => {
       if (this.isLoggedIn()) {
-        this.refresh().subscribe();
+        console.log('[AUTO REFRESH] Rafraîchissement du token...');
+        this.refresh().subscribe({
+          next: () => console.log('[AUTO REFRESH] ✅ Token rafraîchi'),
+          error: (err) => console.error('[AUTO REFRESH] ❌ Erreur de rafraîchissement', err),
+        });
       }
     }, interval);
   }
@@ -155,6 +188,8 @@ export class AuthService {
     if (this.refreshScheduler) {
       clearInterval(this.refreshScheduler);
       this.refreshScheduler = null;
+      console.log('[AUTO REFRESH] ⏹️ Scheduler arrêté');
     }
   }
+
 }
