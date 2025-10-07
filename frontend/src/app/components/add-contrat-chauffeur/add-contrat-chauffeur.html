@@ -273,10 +273,10 @@
           <label class="field-label-contrat">
             Contrat physique (chauffeur) <span class="required-mark-contrat">*</span>
           </label>
-          @if (mode() === 'edit' && data?.contrat?.contrat_physique_chauffeur) {
+          @if (mode() === 'edit' && data.contrat?.contrat_physique_chauffeur) {
             <div class="existing-file-contrat">
               <i class="fas fa-paperclip me-1"></i>
-              <a [href]="data?.contrat?.contrat_physique_chauffeur" target="_blank">
+              <a [href]="data.contrat?.contrat_physique_chauffeur" target="_blank">
                 Voir fichier Chauffeur
               </a>
             </div>
@@ -324,10 +324,10 @@
           <label class="field-label-contrat">
             Contrat physique (garant) <span class="required-mark-contrat">*</span>
           </label>
-          @if (mode() === 'edit' && data?.contrat?.contrat_physique_moto_garant) {
+          @if (mode() === 'edit' && data.contrat?.contrat_physique_moto_garant) {
             <div class="existing-file-contrat">
               <i class="fas fa-paperclip me-1"></i>
-              <a [href]="data?.contrat?.contrat_physique_moto_garant" target="_blank">
+              <a [href]="data.contrat?.contrat_physique_moto_garant" target="_blank">
                 Voir fichier Moto/Garant
               </a>
             </div>
@@ -373,10 +373,10 @@
           <label class="field-label-contrat">
             Contrat physique (garant) <span class="required-mark-contrat">*</span>
           </label>
-          @if (mode() === 'edit' && data?.contrat?.contrat_physique_batt_garant) {
+          @if (mode() === 'edit' && data.contrat?.contrat_physique_batt_garant) {
             <div class="existing-file-contrat">
               <i class="fas fa-paperclip me-1"></i>
-              <a [href]="data?.contrat?.contrat_physique_batt_garant" target="_blank">
+              <a [href]="data.contrat?.contrat_physique_batt_garant" target="_blank">
                 Voir fichier Batt/Garant
               </a>
             </div>
