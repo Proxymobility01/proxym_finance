@@ -81,7 +81,7 @@ export class ContratChauffeurList implements OnInit {
       maxHeight: 'none',
       panelClass: 'contrat_chauffeur',
       disableClose: true,
-      data: { mode: 'create' }  // 🟢 mode création
+      data: { mode: 'create' }
     }).afterClosed().subscribe((result) => {
       if (result) this.refresh();
     });
@@ -97,14 +97,16 @@ export class ContratChauffeurList implements OnInit {
       panelClass: 'contrat_chauffeur',
       disableClose: true,
       data: {
-        mode: 'edit',     // 🟠 mode édition
-        id: c.id,         // identifiant du contrat à modifier
-        contrat: c        // objet complet pour préremplir le formulaire
+        mode: 'edit',
+        id: c.id,
+        contrat: c
       }
     }).afterClosed().subscribe((result) => {
       if (result) this.refresh();
     });
   }
+
+
 
 
   // helpers normalisation + dates
@@ -189,6 +191,7 @@ export class ContratChauffeurList implements OnInit {
         if (st === 'termine')  okStatus = (valBool === true) || valString === 'termine';
         if (st === 'encours')  okStatus = (valBool === false) || valString === 'en cours' || valString === 'encours';
         if (st === 'suspendu') okStatus = valString === 'suspendu';
+        if (st === 'annule')   okStatus = valString === 'annule';
       }
 
       // Période
