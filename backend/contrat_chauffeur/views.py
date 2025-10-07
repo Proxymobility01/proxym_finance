@@ -178,46 +178,20 @@ class ModifierStatutContratAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-
-class ContratChauffeurRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
+class ContratChauffeurUpdateAPIView(generics.UpdateAPIView):
     """
-    GET  -> Détail d’un contrat chauffeur
-    PUT  -> Mise à jour complète
-    PATCH -> Mise à jour partielle
+    Permet de modifier un contrat chauffeur existant.
+    Seuls les champs autorisés peuvent être modifiés.
+    Les champs calculés (montant_restant, date_fin, etc.) sont recalculés automatiquement.
     """
-    queryset = ContratChauffeur.objects.all().select_related(
-        "association_user_moto",
-        "contrat_batt",
-        "garant",
-        "regle_penalite",
-    )
-    parser_classes = [MultiPartParser, FormParser, JSONParser]
-    # permission_classes = [IsAuthenticated]
-    # authentication_classes = [JWTAuthentication]
+    queryset = ContratChauffeur.objects.all()
+    serializer_class = ContractDriverUpdateSerializer
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+    parser_classes = (MultiPartParser, FormParser, JSONParser)
 
-    def get_serializer_class(self):
-        if self.request.method in ["PUT", "PATCH"]:
-            return ContractDriverUpdateSerializer
-        return ContractDriverDetailSerializer
+    def get_queryset(self):
+        return ContratChauffeur.objects.all()
 
-    @transaction.atomic
-    def put(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data)
-        serializer.is_valid(raise_exception=True)
-        updated = serializer.save()
-        return Response(
-            ContractDriverDetailSerializer(updated).data,
-            status=status.HTTP_200_OK,
-        )
-
-    @transaction.atomic
-    def patch(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        updated = serializer.save()
-        return Response(
-            ContractDriverDetailSerializer(updated).data,
-            status=status.HTTP_200_OK,
-        )
+    def update(self, request, *args, **kwargs):
+        return super().update(request, *args, **kwargs)

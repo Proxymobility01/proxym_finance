@@ -1,9 +1,8 @@
 // src/app/auth/auth.interceptor.ts
-import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
+import { HttpInterceptorFn, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { catchError, switchMap, throwError } from 'rxjs';
-import {AuthService} from './auth';
-
+import { AuthService } from './auth';
 
 let isRefreshing = false;
 
@@ -15,43 +14,61 @@ const AUTH_URLS_SKIP = [
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
-
   const shouldSkip = AUTH_URLS_SKIP.some(u => req.url.includes(u));
   const token = auth.getToken();
 
-  // Ajoute Authorization sauf pour les routes d’auth
-  const authReq = token && !shouldSkip
-    ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
-    : req;
+  let clonedReq = req;
 
-  return next(authReq).pipe(
+  // ✅ Ajoute Authorization sauf pour les routes d’auth
+  if (token && !shouldSkip) {
+    const isFormData = req.body instanceof FormData;
+
+    // ✅ Si c’est un FormData → ne pas forcer Content-Type
+    if (isFormData) {
+      clonedReq = req.clone({
+        setHeaders: {
+          Authorization: `Bearer ${token}`
+        },
+        headers: req.headers.delete('Content-Type') // 🔥 important
+      });
+    } else {
+      clonedReq = req.clone({
+        setHeaders: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+    }
+  }
+
+  return next(clonedReq).pipe(
     catchError((error: HttpErrorResponse) => {
       if (shouldSkip) {
         return throwError(() => error);
       }
 
-      // Gestion des 401 → tentative de refresh
+      // Gestion automatique du refresh token
       if (error.status === 401 && !isRefreshing) {
         isRefreshing = true;
 
-        return auth.refresh().pipe( // ✅ ici on appelle refresh()
+        return auth.refresh().pipe(
           switchMap((newToken) => {
             isRefreshing = false;
 
             if (newToken) {
-              // ✅ Rejoue la requête initiale avec le nouveau token
-              const retryReq = req.clone({ setHeaders: { Authorization: `Bearer ${auth.getToken()}` } });
+              const retryReq = clonedReq.clone({
+                setHeaders: { Authorization: `Bearer ${auth.getToken()}` }
+              });
               return next(retryReq);
             } else {
-              // ❌ Refresh échoué → déconnexion
-              auth.logout(); // ✅ ici on appelle logout()
+              auth.logout();
               window.location.href = '/login';
               return throwError(() => error);
             }
           }),
           catchError(err => {
             isRefreshing = false;
-            auth.logout(); // ✅ idem
+            auth.logout();
             window.location.href = '/login';
             return throwError(() => err);
           })

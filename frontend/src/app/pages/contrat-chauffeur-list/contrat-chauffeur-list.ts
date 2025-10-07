@@ -73,20 +73,38 @@ export class ContratChauffeurList implements OnInit {
   }
 
 
+
   openContratChauffeurDialog() {
-    const dialogRef = this.dialog.open(AddContratChauffeur, {
+    this.dialog.open(AddContratChauffeur, {
       width: '90vw',
       maxWidth: '800px',
       maxHeight: 'none',
       panelClass: 'contrat_chauffeur',
       disableClose: true,
-    });
-
-    dialogRef.afterClosed().subscribe((result) => {
+      data: { mode: 'create' }  // 🟢 mode création
+    }).afterClosed().subscribe((result) => {
       if (result) this.refresh();
     });
   }
 
+
+
+  openContratChauffeurEditDialog(c: ContratChauffeur) {
+    this.dialog.open(AddContratChauffeur, {
+      width: '90vw',
+      maxWidth: '800px',
+      maxHeight: 'none',
+      panelClass: 'contrat_chauffeur',
+      disableClose: true,
+      data: {
+        mode: 'edit',     // 🟠 mode édition
+        id: c.id,         // identifiant du contrat à modifier
+        contrat: c        // objet complet pour préremplir le formulaire
+      }
+    }).afterClosed().subscribe((result) => {
+      if (result) this.refresh();
+    });
+  }
 
 
   // helpers normalisation + dates

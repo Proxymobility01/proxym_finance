@@ -217,9 +217,11 @@ export class LeaseList implements OnInit {
   readonly optionsPayePar = computed<string[]>(() =>
     this.uniqueSorted(this.allPayePar())
   );
-  readonly optionsAgencePaiement = computed<string[]>(() =>
-    this.uniqueSorted(this.allAgences())
-  );
+  readonly optionsAgencePaiement = computed<string[]>(() => {
+    const names = this.uniqueSorted(this.allAgences());
+    if (!names.includes('Direction')) names.unshift('Direction'); // 👈 ajoute l’option
+    return names;
+  });
 
 
   // Cycle de vie : l’effet déclenche le fetch initial (statut=PAYE + created=today)

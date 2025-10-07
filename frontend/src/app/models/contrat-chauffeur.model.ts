@@ -3,7 +3,11 @@ export interface ContratChauffeur{
   id: number;
   reference_contrat: string;
   chauffeur: string
+  association_user_moto_id:number;
+  date_debut:string;
   garant: string;
+  garant_id?: number;
+  contrat_batt:number;
   reference_contrat_batt:string;
   montant_engage: string;
   montant_par_paiement: string;
@@ -19,24 +23,11 @@ export interface ContratChauffeur{
   jour_conge_total: number;
   jour_conge_utilise:number;
   jour_conge_restant:number;
+  contrat_physique_chauffeur:string;
+  contrat_physique_moto_garant:string;
+  contrat_physique_batt_garant:string;
 }
 
-export interface ContratChauffeurPayload{
-  id: number;
-  association_user_moto_id:number;
-  garant_id: number;
-  contrat_batt_id: number;
-  montant_total: string;
-  montant_engage:string;
-  montant_par_paiement:string;
-  date_signature: string;
-  date_debut:string;
-  duree_jour: number;
-  jour_conge_total:number;
-  contrat_physique_chauffeur: string;
-  contrat_physique_moto_garant: string;
-  contrat_physique_batt_garant: string;
-}
 
 export interface AssociationUserMoto{
   association_id: number;
@@ -47,6 +38,18 @@ export interface AssociationUserMoto{
   vin:string;
 }
 
+export type Mode = 'create' | 'edit';
+
+export interface ContratChauffeurDialogData {
+  mode: Mode;
+  id?: number;
+  contrat?: Partial<ContratChauffeur>;
+}
+
+export type FileKind =
+  | 'contrat_physique_chauffeur'
+  | 'contrat_physique_moto_garant'
+  | 'contrat_physique_batt_garant';
 
 export const CONTRACT_VALIDATION = {
   POSITIVE_INT_PATTERN: /^\d+$/,

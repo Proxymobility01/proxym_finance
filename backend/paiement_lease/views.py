@@ -233,11 +233,16 @@ def build_combined_queryset(request):
 
         paid_qs = paid_qs.filter(q_paye_par)
     if agence := (request.GET.get("agence") or "").strip():
-        terms = [t.strip() for t in agence.split() if t.strip()]
-        q_agence = Q()
-        for term in terms:
-            q_agence |= Q(agences__nom_agence__icontains=term)
-        paid_qs = paid_qs.filter(q_agence)
+        # 👉 si l'UI envoie "direction" (ou "dir"), on filtre sur agences IS NULL
+        if agence.lower() in {"direction", "dir"}:
+            paid_qs = paid_qs.filter(agences__isnull=True)
+        else:
+            # filtre texte normal sur le nom d'agence
+            terms = [t.strip() for t in agence.split() if t.strip()]
+            q_agence = Q()
+            for term in terms:
+                q_agence |= Q(agences__nom_agence__icontains=term)
+            paid_qs = paid_qs.filter(q_agence)
 
     paid_ser = LeasePaymentLiteSerializer(paid_qs, many=True)
     paid_rows = [dict(x) for x in paid_ser.data]
@@ -401,11 +406,16 @@ class LeaseCombinedListAPIView(APIView):
 
             paid_qs = paid_qs.filter(q_paye_par)
         if agence := (request.GET.get("agence") or "").strip():
-            terms = [t.strip() for t in agence.split() if t.strip()]
-            q_agence = Q()
-            for term in terms:
-                q_agence |= Q(agences__nom_agence__icontains=term)
-            paid_qs = paid_qs.filter(q_agence)
+            # 👉 si l'UI envoie "direction" (ou "dir"), on filtre sur agences IS NULL
+            if agence.lower() in {"direction", "dir"}:
+                paid_qs = paid_qs.filter(agences__isnull=True)
+            else:
+                # filtre texte normal sur le nom d'agence
+                terms = [t.strip() for t in agence.split() if t.strip()]
+                q_agence = Q()
+                for term in terms:
+                    q_agence |= Q(agences__nom_agence__icontains=term)
+                paid_qs = paid_qs.filter(q_agence)
         # -------- NON PAYÉS --------
         np_qs = (Penalite.objects
                  .select_related(
