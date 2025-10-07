@@ -130,6 +130,7 @@ class ModifierStatutContratAPIView(APIView):
         nouveau_statut = request.data.get("nouveau_statut")
         motif = (request.data.get("motif") or "").strip()
 
+        # Validation de base
         if not nouveau_statut or nouveau_statut not in StatutContrat.values:
             return Response(
                 {"detail": "Statut invalide."},
@@ -145,22 +146,21 @@ class ModifierStatutContratAPIView(APIView):
             with transaction.atomic():
                 contrat = ContratChauffeur.objects.select_for_update().get(pk=pk)
 
-                # Si le statut est déjà le même, inutile de changer
+                # Si déjà au même statut → inutile
                 if contrat.statut == nouveau_statut:
                     return Response(
                         {"detail": f"Le contrat est déjà au statut '{contrat.statut}'."},
                         status=status.HTTP_400_BAD_REQUEST
                     )
 
-                # Mise à jour du statut et du suivi
-                contrat.statut = nouveau_statut
-                contrat.date_modification_statut = timezone.now()
-                contrat.motif_modification_statut = motif
-                contrat.statut_modifie_par = request.user
-                contrat.save(update_fields=[
-                    "statut", "date_modification_statut",
-                    "motif_modification_statut", "statut_modifie_par", "updated"
-                ])
+                # ⚡️ Mise à jour directe — évite tout appel à .save() et donc toute validation
+                ContratChauffeur.objects.filter(pk=pk).update(
+                    statut=nouveau_statut,
+                    date_modification_statut=timezone.now(),
+                    motif_modification_statut=motif,
+                    statut_modifie_par=request.user,
+                    updated=timezone.now()
+                )
 
             return Response(
                 {"success": True, "message": f"Statut du contrat modifié en '{nouveau_statut}'."},
@@ -177,6 +177,7 @@ class ModifierStatutContratAPIView(APIView):
                 {"detail": str(e)},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
 
 class ContratChauffeurUpdateAPIView(generics.UpdateAPIView):
     """
