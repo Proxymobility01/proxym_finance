@@ -66,7 +66,8 @@ class LeasePaymentLiteSerializer(serializers.ModelSerializer):
 
     def get_agences(self, obj):
         na = getattr(obj, "agences", None)
-        # adapte au champ réel (name / label / code)
+        if not na:
+            return "Direction"
         return getattr(na, "nom_agence", "")
 
 

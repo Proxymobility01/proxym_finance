@@ -1,4 +1,4 @@
-import {Component, computed, HostListener, inject, OnInit, signal} from '@angular/core';
+import {Component, computed, HostListener, Inject, inject, OnInit, signal} from '@angular/core';
 import {
   FormArray,
   FormControl,
@@ -8,12 +8,16 @@ import {
   AbstractControl,
   ValidationErrors
 } from '@angular/forms';
-import { MatDialogRef } from '@angular/material/dialog';
-import {AssociationUserMoto, CONTRACT_VALIDATION, ContratChauffeurPayload} from '../../models/contrat-chauffeur.model';
+import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
+import {
+  AssociationUserMoto,
+  CONTRACT_VALIDATION,
+  ContratChauffeurDialogData,
+  FileKind
+} from '../../models/contrat-chauffeur.model';
 import {
   dateCoherenceValidator,
   engagedNotAboveTotalValidator,
-  normalizeFileToken,
   normalizeMoneyString
 } from '../../shared/utils';
 import {ContratChauffeurService} from '../../services/contrat-chauffeur';
@@ -21,11 +25,8 @@ import {GarantService} from '../../services/garant';
 import {ContratBatterieService} from '../../services/contrat-batterie';
 import {Garant} from '../../models/garant.model';
 import {ContratBatterie} from '../../models/contrat-batterie.model';
+import {Mode} from '../../models/conge.model';
 
-type FileKind =
-  | 'contrat_physique_chauffeur'
-  | 'contrat_physique_moto_garant'
-  | 'contrat_physique_batt_garant';
 
 @Component({
   selector: 'app-add-contrat-chauffeur',
@@ -40,6 +41,9 @@ export class AddContratChauffeur implements OnInit{
   readonly garantService = inject(GarantService);
   readonly contratBattService = inject(ContratBatterieService);
   readonly contratChauffeurService = inject(ContratChauffeurService);
+
+  private readonly _mode = signal<Mode>('create');
+  readonly mode = this._mode.asReadonly();
 
   // Etats UI issus du service
   readonly isSubmitting = this.contratService.isContratChSubmitting;
@@ -62,11 +66,67 @@ export class AddContratChauffeur implements OnInit{
     const arr = ctrl as FormArray<FormControl<string>>;
     return arr && arr.length > 0 ? null : { required: true };
   }
+  private toNumOrNull(v: unknown): number | null {
+    const n = typeof v === 'string' ? Number(v) : (v as number);
+    return Number.isFinite(n) ? (n as number) : null;
+  }
+
+  private resolveGarantIdFromLabel(label: string | undefined | null): number | null {
+    if (!label) return null;
+    const list = this.garantService.garants(); // ta liste déjà fetchée
+    const match = list.find(g => this.garantLabel(g) === label);
+    return match?.id ?? null;
+  }
+
+  constructor(@Inject(MAT_DIALOG_DATA) public data: ContratChauffeurDialogData) {
+    const mode = data?.mode ?? 'create';
+    this._mode.set(mode);
+
+  }
 
   ngOnInit() {
+    // Initialisation des listes
     this.garantService.fetchGarants();
     this.contratBattService.fetchContratBatterie();
     this.contratService.fetchAssociationUserMoto();
+
+    // 🟢 Si mode édition, préremplir après la création du form
+    if (this.mode() === 'edit' && this.data?.contrat) {
+      const c = this.data.contrat;
+      const garantId =
+        (c as any).garant_id ??
+        this.toNumOrNull((c as any).garant) ??
+        this.resolveGarantIdFromLabel(c.garant);
+
+      // ⚠️ Utilise patchValue ici, car this.form est maintenant initialisée
+      this.form.patchValue({
+        association_user_moto_id: c.association_user_moto_id,
+        garant_id: garantId,
+        contrat_batt_id: c.contrat_batt ?? null,
+        montant_total: c.montant_total?.toString(),
+        montant_engage: c.montant_engage?.toString(),
+        montant_par_paiement: c.montant_par_paiement?.toString(),
+        date_signature: c.date_signature ?? '',
+        date_debut: c.date_debut ?? '',
+        date_concernee: c.date_concernee ?? '',
+        date_limite: c.date_limite ?? '',
+        jour_conge_total: c.jour_conge_total ?? 0,
+      }, { emitEvent: false });
+
+      // Fichiers optionnels en mode édition
+      this.physChauff.clearValidators();
+      this.physMoto.clearValidators();
+      this.physBatt.clearValidators();
+      this.physChauff.updateValueAndValidity();
+      this.physMoto.updateValueAndValidity();
+      this.physBatt.updateValueAndValidity();
+
+      this.total.disable({ emitEvent: false });
+      this.engage.disable({ emitEvent: false });
+      this.mpp.disable({ emitEvent: false });
+      this.djour.disable({ emitEvent: false });
+    }
+
   }
 
 
@@ -87,11 +147,13 @@ export class AddContratChauffeur implements OnInit{
     return owner ? `${ref} — ${owner}` : ref;
   }
 
-  readonly battOptions = computed(() =>
-    (this.contratBattService.contratsBatt() || [])
-      .filter(c => !c.proprietaire || c.proprietaire.trim() === '')
-      .map(c => ({ id: c.id, label: this.battLabel(c) }))
-  );
+  readonly battOptions = computed(() => {
+    const list = this.contratBattService.contratsBatt() || [];
+    const currentId = this.data?.contrat?.contrat_batt;
+    return list
+      .filter(c => !c.proprietaire || c.id === currentId)
+      .map(c => ({ id: c.id, label: this.battLabel(c) }));
+  });
 
 
 
@@ -193,8 +255,7 @@ export class AddContratChauffeur implements OnInit{
     return `uploads/${Date.now()}_${file.name}`;
   }
 
-  // --- Multi fichiers ---
-  aumOptions: any;
+
   onFileChange(kind: FileKind, event: Event) {
     const input = event.target as HTMLInputElement;
     const fileList = input.files;
@@ -248,44 +309,70 @@ export class AddContratChauffeur implements OnInit{
     ctrl.updateValueAndValidity();
   }
 
+
+
   submit() {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
 
-    // Normalisations
-    const montant_total   = normalizeMoneyString(this.total.value ?? '');
-    const montant_engage  = normalizeMoneyString(this.engage.value ?? '');
-    const montant_par_paiement  = normalizeMoneyString(this.mpp.value    ?? '');
+    const isEdit = this.mode() === 'edit';
+
+    const montant_total        = normalizeMoneyString(this.total.value ?? '');
+    const montant_engage       = normalizeMoneyString(this.engage.value ?? '');
+    const montant_par_paiement = normalizeMoneyString(this.mpp.value ?? '');
     const dc = this.conc.value?.trim() || '';
     const dl = this.lim.value?.trim()  || '';
 
-    // Construire le FormData attendu (un fichier par champ)
     const fd = new FormData();
+
+    // Champs FK / numériques / dates (texte)
     fd.append('association_user_moto', String(this.aum.value));
     fd.append('garant',                String(this.garant.value));
     fd.append('contrat_batt',          String(this.batt.value));
 
-    fd.append('montant_total',  montant_total);
-    fd.append('montant_engage', montant_engage);
-    fd.append('montant_par_paiement', montant_par_paiement);
-
-    fd.append('date_signature', this.sig.value!);
-    fd.append('date_debut',     this.deb.value!);
-    fd.append('duree_jour',     String(this.djour.value ?? 0));
-    fd.append('jour_conge_total', String(this.form.get('jour_conge_total')?.value ?? 0));
-
-    fd.append('contrat_physique_chauffeur',   this.physChauff.value as File);
-    fd.append('contrat_physique_moto_garant', this.physMoto.value   as File);
-    fd.append('contrat_physique_batt_garant', this.physBatt.value   as File);
+    fd.append('montant_total',         montant_total);
+    fd.append('montant_engage',        montant_engage);
+    fd.append('montant_par_paiement',  montant_par_paiement);
+    fd.append('date_signature',        this.sig.value!);
+    fd.append('date_debut',            this.deb.value!);
+    fd.append('jour_conge_total',      String(this.conge.value ?? 0));
 
     if (dc) fd.append('date_concernee', dc);
-    if (dl) fd.append('date_limite', dl);
+    if (dl) fd.append('date_limite',    dl);
+    if (isEdit) {
+      // 🔁 Pour l'UPDATE, le serializer attend association_user_moto_id
+      fd.append('association_user_moto_id', String(this.aum.value));
+    } else {
+      // 🆕 Pour le CREATE, le serializer attend association_user_moto
+      fd.append('association_user_moto', String(this.aum.value));
+    }
+    if (!isEdit) {
+      fd.append('montant_total',        montant_total);
+      fd.append('montant_engage',       montant_engage);
+      fd.append('montant_par_paiement', montant_par_paiement);
+      fd.append('duree_jour',           String(this.djour.value ?? 0));
+    }
 
-    // Appel service: HttpClient accepte FormData; si la signature TS est stricte, adapter le type en union FormData | Omit<...>
-    // ou caster localement: (fd as any).
-    this.contratService.registerContratChauffeur(fd as any, (res) => this.dialogRef.close(res));
+    // ⚠️ N’AJOUTE LE FICHIER QUE S’IL EXISTE
+    if (this.physChauff.value instanceof File) {
+      fd.append('contrat_physique_chauffeur', this.physChauff.value, this.physChauff.value.name);
+    }
+    if (this.physMoto.value instanceof File) {
+      fd.append('contrat_physique_moto_garant', this.physMoto.value, this.physMoto.value.name);
+    }
+    if (this.physBatt.value instanceof File) {
+      fd.append('contrat_physique_batt_garant', this.physBatt.value, this.physBatt.value.name);
+    }
+
+    if (this.mode() === 'create') {
+      this.contratService.registerContratChauffeur(fd as any, res => this.dialogRef.close(res));
+    } else {
+      const id = this.data?.id;
+      if (!id) { console.error('ID manquant pour la mise à jour'); return; }
+      this.contratService.updateContratChauffeurWithFiles(id, fd, res => this.dialogRef.close(res));
+    }
   }
 
   cancel() { this.dialogRef.close(); }

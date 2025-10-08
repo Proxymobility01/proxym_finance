@@ -44,6 +44,5 @@ export type Mode = 'create' | 'edit';
 export interface CongeDialogData {
   mode: Mode;
   id?: number;
-  // on rend tout optionnel pour pré-remplir facilement en edit
   conge?: Partial<CongePayload & { reference_contrat?: string }>;
 }

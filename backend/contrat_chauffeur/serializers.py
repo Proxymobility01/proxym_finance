@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timedelta
 from math import ceil
 
@@ -252,6 +253,7 @@ class _DureeJourOutMixin(serializers.ModelSerializer):
 # -------------------------------------------------------------------
 class ContractDriverListSerializer(_DureeJourOutMixin):
     garant = serializers.SerializerMethodField()
+    garant_id = serializers.IntegerField( read_only=True)
     chauffeur = serializers.SerializerMethodField()
     reference_contrat_batt = serializers.SerializerMethodField()
     montant_par_paiement_batt = serializers.SerializerMethodField()
@@ -281,6 +283,7 @@ class ContractDriverListSerializer(_DureeJourOutMixin):
             "date_concernee",
             "date_limite",
             "garant",
+            "garant_id",
             "chauffeur",
             "reference_contrat_batt",
         ]
@@ -454,126 +457,6 @@ class ContractDriverCreateSerializer(serializers.ModelSerializer):
         return contrat
 
 
-# -------------------------------------------------------------------
-# UPDATE / PATCH
-# -------------------------------------------------------------------
-class ContractDriverUpdateSerializer(serializers.ModelSerializer):
-    contrat_physique_chauffeur = serializers.FileField(required=False, allow_null=True)
-    contrat_physique_batt = serializers.FileField(required=False, allow_null=True)
-    contrat_physique_moto_garant = serializers.FileField(required=False, allow_null=True)
-    contrat_physique_batt_garant = serializers.FileField(required=False, allow_null=True)
-
-    date_concernee = serializers.DateField(
-        required=False, allow_null=True,
-        input_formats=['%Y-%m-%d', '%d/%m/%Y']
-    )
-    date_limite = serializers.DateField(
-        required=False, allow_null=True,
-        input_formats=['%Y-%m-%d', '%d/%m/%Y']
-    )
-
-    class Meta:
-        model = ContratChauffeur
-        fields = [
-            "reference_contrat",
-            "montant_total", "montant_paye", "montant_restant",
-             "montant_par_paiement",
-            "date_signature", "date_debut", "date_fin",
-            "duree_jour",
-            "statut", "montant_engage",
-            "contrat_physique_chauffeur",
-            "contrat_physique_batt",
-            "contrat_physique_moto_garant",
-            "contrat_physique_batt_garant",
-            "jour_conge_total",
-            "jour_conge_utilise",
-            "jour_conge_restant",
-            "association_user_moto",
-            "contrat_batt",
-            "garant",
-            "regle_penalite",
-            "date_concernee",
-            "date_limite",
-        ]
-        read_only_fields = ("duree_jour", "date_fin", "montant_restant")
-
-    def validate_statut(self, value):
-        return _map_choice(value, field_name="statut")
-
-    def validate_frequence_paiement(self, value):
-        return _map_choice(value, field_name="frequence_paiement")
-
-    def validate(self, attrs):
-        inst = self.instance
-        today = timezone.now().date()
-
-        dc = attrs.get("date_concernee", getattr(inst, "date_concernee"))
-        dl = attrs.get("date_limite", getattr(inst, "date_limite"))
-        if dc and dl and dl < dc:
-            raise serializers.ValidationError({"date_limite": "La date limite doit être ≥ la date concernée."})
-
-        # ✅ clamp date_signature on update as well
-        sig = attrs.get("date_signature", getattr(inst, "date_signature", None))
-        if not sig or sig > today:
-            attrs["date_signature"] = today
-
-        mt = attrs.get("montant_total", inst.montant_total)
-        mp = attrs.get("montant_paye", inst.montant_paye)
-        mpp = attrs.get("montant_par_paiement", getattr(inst, "montant_par_paiement", 3500) or 3500)
-        d_debut = attrs.get("date_debut", inst.date_debut)
-
-        # montant_restant always recomputed unless explicitly provided
-        if "montant_restant" not in attrs:
-            attrs["montant_restant"] = (mt or 0) - (mp or 0)
-
-        # recompute date_fin & duree_jour from updated values
-        date_fin, days = _compute_fin_and_duration(
-            date_debut=d_debut,
-            montant_total=mt or 0,
-            montant_paye=mp or 0,
-            montant_par_paiement=mpp,
-        )
-        attrs["date_fin"] = date_fin
-
-        field = ContratChauffeur._meta.get_field("duree_jour")
-        attrs["duree_jour"] = _encode_days_as_datetime(days) if isinstance(field, dj_models.DateTimeField) else days
-
-        # congés restant
-        jtot = attrs.get("jour_conge_total", inst.jour_conge_total or 0)
-        juse = attrs.get("jour_conge_utilise", inst.jour_conge_utilise or 0)
-        attrs["jour_conge_restant"] = (jtot or 0) - (juse or 0)
-
-        # safety
-        if mt is not None and mp is not None and mp > mt:
-            raise serializers.ValidationError("Le montant payé ne peut pas dépasser le montant total.")
-        return attrs
-
-    def update(self, instance, validated_data):
-        # File replacements (keep same pattern as battery)
-        for f in [
-            "contrat_physique_chauffeur",
-            "contrat_physique_batt",
-            "contrat_physique_moto_garant",
-            "contrat_physique_batt_garant",
-        ]:
-            new_file = validated_data.get(f)
-            if new_file:
-                old = getattr(instance, f, None)
-                if old:
-                    old.delete(save=False)
-                setattr(instance, f, new_file)
-
-        # other fields
-        for attr, value in validated_data.items():
-            if attr not in {
-                "contrat_physique_chauffeur",
-                "contrat_physique_batt",
-                "contrat_physique_moto_garant",
-                "contrat_physique_batt_garant",
-            }:
-                setattr(instance, attr, value)
-        instance.save()
-        return instance
 
 
 class ContractDriverStateSerializer(serializers.ModelSerializer):
@@ -581,3 +464,101 @@ class ContractDriverStateSerializer(serializers.ModelSerializer):
         model = ContratChauffeur
         fields = ("id", "statut", "montant_restant")
         read_only_fields = fields
+
+
+
+class ContractDriverUpdateSerializer(serializers.ModelSerializer):
+    # fichiers facultatifs
+    contrat_physique_chauffeur = serializers.FileField(required=False, allow_null=True)
+    contrat_physique_moto_garant = serializers.FileField(required=False, allow_null=True)
+    contrat_physique_batt_garant = serializers.FileField(required=False, allow_null=True)
+
+    # dates
+    date_concernee = serializers.DateField(required=False, allow_null=True, input_formats=['%Y-%m-%d', '%d/%m/%Y'])
+    date_limite = serializers.DateField(required=False, allow_null=True, input_formats=['%Y-%m-%d', '%d/%m/%Y'])
+
+    # 👇 mapping pour accepter "association_user_moto_id" venant du front
+    association_user_moto_id = serializers.PrimaryKeyRelatedField(
+        source="association_user_moto",
+        queryset=AssociationUserMoto.objects.all(),
+        required=False,
+        allow_null=True
+    )
+
+    class Meta:
+        model = ContratChauffeur
+        fields = [
+            "montant_total",
+            "montant_par_paiement",
+            "date_signature",
+            "date_debut",
+            "date_fin",
+            "duree_jour",
+            "montant_engage",
+            "contrat_physique_chauffeur",
+            "contrat_physique_moto_garant",
+            "contrat_physique_batt_garant",
+            "jour_conge_total",
+            "jour_conge_utilise",
+            "jour_conge_restant",
+            "association_user_moto_id",
+            "contrat_batt",
+            "garant",
+            "regle_penalite",
+            "date_concernee",
+            "date_limite",
+        ]
+        read_only_fields = ("date_fin", "duree_jour", "montant_restant", "reference_contrat", "statut")
+
+    def validate(self, attrs):
+        instance = self.instance
+        dc = attrs.get("date_concernee", instance.date_concernee)
+        dl = attrs.get("date_limite", instance.date_limite)
+        if dc and dl and dl < dc:
+            raise serializers.ValidationError({"date_limite": "La date limite doit être ≥ la date concernée."})
+        return attrs
+
+    @transaction.atomic
+    def update(self, instance, validated_data):
+
+
+        today = timezone.now().date()
+
+        # Gestion des fichiers remplacés
+        for field in [
+            "contrat_physique_chauffeur",
+            "contrat_physique_moto_garant",
+            "contrat_physique_batt_garant",
+        ]:
+            new_file = validated_data.get(field, None)
+            if new_file and getattr(instance, field):
+                old_file = getattr(instance, field)
+                if hasattr(old_file, "path") and os.path.exists(old_file.path):
+                    try:
+                        os.remove(old_file.path)
+                    except Exception as e:
+                        print(f"⚠️ Impossible de supprimer l'ancien fichier {old_file.path}: {e}")
+
+        # Mise à jour simple
+        for field, value in validated_data.items():
+            if value == "":
+                value = None
+            setattr(instance, field, value)
+
+        # Recalculs automatiques
+        mt = instance.montant_total or 0
+        mp = instance.montant_paye or 0
+        mpp = instance.montant_par_paiement or 3500
+        instance.montant_restant = max(mt - mp, 0)
+
+        instance.date_fin, instance.duree_jour = _compute_fin_and_duration(
+            date_debut=instance.date_debut or today,
+            montant_total=mt,
+            montant_paye=mp,
+            montant_par_paiement=mpp,
+        )
+
+        instance.jour_conge_restant = (instance.jour_conge_total or 0) - (instance.jour_conge_utilise or 0)
+        instance.save()
+
+        return instance

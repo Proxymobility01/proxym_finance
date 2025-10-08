@@ -73,19 +73,39 @@ export class ContratChauffeurList implements OnInit {
   }
 
 
+
   openContratChauffeurDialog() {
-    const dialogRef = this.dialog.open(AddContratChauffeur, {
+    this.dialog.open(AddContratChauffeur, {
       width: '90vw',
       maxWidth: '800px',
       maxHeight: 'none',
       panelClass: 'contrat_chauffeur',
       disableClose: true,
-    });
-
-    dialogRef.afterClosed().subscribe((result) => {
+      data: { mode: 'create' }
+    }).afterClosed().subscribe((result) => {
       if (result) this.refresh();
     });
   }
+
+
+
+  openContratChauffeurEditDialog(c: ContratChauffeur) {
+    this.dialog.open(AddContratChauffeur, {
+      width: '90vw',
+      maxWidth: '800px',
+      maxHeight: 'none',
+      panelClass: 'contrat_chauffeur',
+      disableClose: true,
+      data: {
+        mode: 'edit',
+        id: c.id,
+        contrat: c
+      }
+    }).afterClosed().subscribe((result) => {
+      if (result) this.refresh();
+    });
+  }
+
 
 
 
@@ -171,6 +191,7 @@ export class ContratChauffeurList implements OnInit {
         if (st === 'termine')  okStatus = (valBool === true) || valString === 'termine';
         if (st === 'encours')  okStatus = (valBool === false) || valString === 'en cours' || valString === 'encours';
         if (st === 'suspendu') okStatus = valString === 'suspendu';
+        if (st === 'annule')   okStatus = valString === 'annule';
       }
 
       // Période
