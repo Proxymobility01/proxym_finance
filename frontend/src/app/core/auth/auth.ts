@@ -47,6 +47,7 @@ export class AuthService {
       .pipe(
         tap({
           next: (res) => {
+            this.clearSession();
             this.storeTokens(res);
             this.startRefreshScheduler();
             this._isLoginLoading.set(false);
@@ -76,8 +77,10 @@ export class AuthService {
             return of(null);
           }),
           tap(() => {
-            this.clearSession(); // 👈 supprime les tokens + signaux
-            this.router.navigate(["/login"]); // 👈 redirige vers login
+            this.clearSession();
+            this.router.navigate(["/login"]).then(() => {
+              setTimeout(() => window.location.reload(), 200);
+            });
           })
         )
         .subscribe();
@@ -118,14 +121,21 @@ export class AuthService {
     if (!refreshToken) return of(null);
 
     return this.http
-      .post<{ access: string }>(`${this.config.apiUrl}/auth/token/refresh/`, {
-        refresh: refreshToken,
-      })
+      .post<{ access: string; refresh?: string }>(
+        `${this.config.apiUrl}/auth/token/refresh/`,
+        { refresh: refreshToken }
+      )
       .pipe(
         tap((res) => {
           if (res?.access) {
             localStorage.setItem(STORAGE_KEYS.access, res.access);
             this._accessToken.set(res.access);
+          }
+
+          // 👇 Sauvegarde du nouveau refresh token si Django en renvoie un
+          if (res?.refresh) {
+            localStorage.setItem(STORAGE_KEYS.refresh, res.refresh);
+            this._refreshToken.set(res.refresh);
           }
         }),
         catchError((err) => {

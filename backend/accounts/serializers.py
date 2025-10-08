@@ -1,13 +1,18 @@
 # views.py
-from rest_framework import serializers, permissions, viewsets
+from django.utils import timezone
+
+from rest_framework import serializers, permissions
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from accounts.models import CustomUser, Role
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+
     def validate(self, attrs):
         data = super().validate(attrs)
         user = self.user
+        user.last_login = timezone.now()
+        user.save(update_fields=['last_login'])
         data.update({
             "id": user.id,
             "email": user.email,
