@@ -58,6 +58,8 @@ class AssociationUserMoto(models.Model):
     )
     statut = models.CharField(max_length=50, null=True, blank=True)
 
+    swap_bloque = models.IntegerField(null=True, blank=True, db_column="swap_bloque")
+
 
     class Meta:
         db_table = "association_user_motos"  

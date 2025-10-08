@@ -107,7 +107,7 @@ class PaiementLeaseAPIView(APIView):
 
                 count_today = (
                     PaiementLease.objects
-                    .select_for_update()  # verrouille les lignes correspondantes (si existantes)
+                    .select_for_update()
                     .filter(
                         contrat_chauffeur=contrat,
                         created__range=(today_start, today_end)
@@ -117,12 +117,7 @@ class PaiementLeaseAPIView(APIView):
 
                 if count_today >= 2:
                     return Response(
-                        {
-                            "success": False,
-                            "message": (
-                                "Limite de 2 paiements par jour atteinte pour ce contrat."
-                            )
-                        },
+                        {"success": False, "message": "Limite de 2 paiements par jour atteinte pour ce contrat."},
                         status=status.HTTP_400_BAD_REQUEST
                     )
 
@@ -174,6 +169,29 @@ class PaiementLeaseAPIView(APIView):
                     )
                     batt.save(update_fields=["montant_paye", "montant_restant", "updated"])
 
+                # 🟩 --- Nouvelle logique : débloquer le swap si plus de pénalité échue ---
+                from penalite.models import Penalite, StatutPenalite
+                now = timezone.now()
+                penalite_en_retard = Penalite.objects.filter(
+                    contrat_chauffeur=contrat,
+                    statut_penalite__in=[StatutPenalite.NON_PAYE, StatutPenalite.PARTIELLEMENT_PAYE],
+                    echeance_paiement_penalite__lt=now
+                ).exists()
+
+                assoc = getattr(contrat, "association_user_moto", None)
+
+                if assoc:
+                    if not penalite_en_retard:
+                        assoc.swap_bloque = 1  # ✅ Débloqué
+                        msg = f"✅ Swap débloqué automatiquement pour chauffeur {assoc.validated_user_id}"
+                    else:
+                        assoc.swap_bloque = 0  # 🚫 Toujours bloqué
+                        msg = f"⛔ Swap maintenu bloqué (pénalité échue) pour chauffeur {assoc.validated_user_id}"
+
+                    assoc.save(update_fields=["swap_bloque"])
+                    print(msg)
+                # 🟩 --- Fin ajout ---
+
             return Response({"success": True, "message": "Paiement enregistré avec succès."},
                             status=status.HTTP_201_CREATED)
 
@@ -183,131 +201,6 @@ class PaiementLeaseAPIView(APIView):
         except Exception as e:
             return Response({"success": False, "message": str(e)},
                             status=status.HTTP_400_BAD_REQUEST)
-
-
-def _sort_key(item: dict) -> datetime:
-    return _to_aware_utc(item.get("created") or item.get("date_concernee"))
-
-
-def build_combined_queryset(request):
-    """
-    Applique les mêmes filtres que la vue combinée, fusionne PAYE + NON_PAYE,
-    trie (created desc), et calcule des agrégats globaux.
-    Retourne (rows, aggregates) — sans pagination.
-    """
-    q       = (request.GET.get("q") or "").strip()
-    statut  = (request.GET.get("statut") or "").upper().strip()  # "PAYE" | "NON_PAYE" | ''
-    paye_par = (request.GET.get("paye_par") or "").strip()
-    agence  = (request.GET.get("agence") or "").strip()
-
-    # ---------- PAYÉS ----------
-    paid_qs = (PaiementLease.objects
-               .select_related(
-                   "contrat_chauffeur",
-                   "contrat_chauffeur__association_user_moto",
-                   "contrat_chauffeur__association_user_moto__validated_user",
-                   "contrat_chauffeur__association_user_moto__moto_valide",
-                   "user_agence",
-                   "employe",
-               ))
-    paid_qs = PaiementLeaseFilter(request.GET, queryset=paid_qs).qs
-
-    if q:
-        paid_qs = paid_qs.filter(
-            Q(contrat_chauffeur__association_user_moto__validated_user__user_unique_id__icontains=q) |
-            Q(contrat_chauffeur__association_user_moto__validated_user__nom__icontains=q) |
-            Q(contrat_chauffeur__association_user_moto__validated_user__prenom__icontains=q) |
-            Q(contrat_chauffeur__association_user_moto__moto_valide__moto_unique_id__icontains=q) |
-            Q(contrat_chauffeur__association_user_moto__moto_valide__vin__icontains=q)
-        )
-    if paye_par := (request.GET.get("paye_par") or "").strip():
-        terms = [t.strip() for t in paye_par.split() if t.strip()]
-        q_paye_par = Q()
-        for term in terms:
-            q_paye_par |= (
-                    Q(employe__nom__icontains=term) |
-                    Q(employe__prenom__icontains=term) |
-                    Q(user_agence__nom__icontains=term) |
-                    Q(user_agence__prenom__icontains=term)
-            )
-
-        paid_qs = paid_qs.filter(q_paye_par)
-    if agence := (request.GET.get("agence") or "").strip():
-        terms = [t.strip() for t in agence.split() if t.strip()]
-        q_agence = Q()
-        for term in terms:
-            q_agence |= Q(agences__nom_agence__icontains=term)
-        paid_qs = paid_qs.filter(q_agence)
-
-    paid_ser = LeasePaymentLiteSerializer(paid_qs, many=True)
-    paid_rows = [dict(x) for x in paid_ser.data]
-
-    # ---------- NON PAYÉS ----------
-    np_qs = (Penalite.objects
-             .select_related(
-                 "contrat_chauffeur",
-                 "contrat_chauffeur__association_user_moto",
-                 "contrat_chauffeur__association_user_moto__validated_user",
-                 "contrat_chauffeur__association_user_moto__moto_valide",
-                 "contrat_chauffeur__contrat_batt",
-             )
-             .filter(
-                statut_penalite__in=[StatutPenalite.NON_PAYE, StatutPenalite.PAYE, StatutPenalite.PARTIELLEMENT_PAYE],
-             ))
-    np_qs = NonPaiementLeaseFilter(request.GET, queryset=np_qs).qs
-
-    if q:
-        np_qs = np_qs.filter(
-            Q(contrat_chauffeur__association_user_moto__validated_user__user_unique_id__icontains=q) |
-            Q(contrat_chauffeur__association_user_moto__validated_user__nom__icontains=q) |
-            Q(contrat_chauffeur__association_user_moto__validated_user__prenom__icontains=q) |
-            Q(contrat_chauffeur__association_user_moto__moto_valide__moto_unique_id__icontains=q) |
-            Q(contrat_chauffeur__association_user_moto__moto_valide__vin__icontains=q)
-        )
-
-    np_ser = LeaseNonPayeLiteSerializer(np_qs, many=True)
-    np_rows = [dict(x) for x in np_ser.data]
-
-    # ---------- Fusion par "statut" demandé ----------
-    if statut == "PAYE":
-        all_rows = paid_rows
-    elif statut == "NON_PAYE":
-        all_rows = np_rows
-    else:
-        all_rows = paid_rows + np_rows
-
-    # ---------- Tri commun ----------
-    all_rows.sort(key=_sort_key, reverse=True)
-
-    # ---------- Agrégats globaux ----------
-    from decimal import Decimal
-    paid_amount = Decimal("0")
-    paid_count  = 0
-    np_amount   = Decimal("0")
-    np_count    = 0
-
-    for r in all_rows:
-        st = (r.get("statut_paiement") or "").upper()
-        total = Decimal(str(r.get("montant_total") or 0))
-        if st == "PAYE":
-            paid_amount += total
-            paid_count  += 1
-        elif st == "NON_PAYE":
-            np_amount += total
-            np_count  += 1
-
-    aggregates = {
-        "paid": {
-            "count": int(paid_count),
-            "amount": float(paid_amount),
-        },
-        "non_paid": {
-            "count": int(np_count),
-            "amount": float(np_amount),
-        }
-    }
-
-    return all_rows, aggregates
 
 
 

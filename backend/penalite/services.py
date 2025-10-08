@@ -20,7 +20,7 @@ PENALITE_GRAVE  = 5000
 
 def _deadline_noon_from_jour(jour: date):
     tz = timezone.get_current_timezone()
-    return timezone.make_aware(datetime.combine(jour + timedelta(days=1), time(hour=4)), tz)
+    return timezone.make_aware(datetime.combine(jour + timedelta(days=1), time(hour=11)), tz)
 
 
 def _limit_14h_from_jour(jour: date):
@@ -63,6 +63,11 @@ def _is_paid_for_day(contrat, jour: date) -> bool:
 
 @transaction.atomic
 def apply_penalties_for_now(force_window: str | None = None) -> dict:
+    """
+    Fonction principale : applique les pénalités selon la fenêtre horaire.
+    - Avant 14h -> création des légères (2000 FCFA)
+    - Après 14h -> escalade des légères en graves (5000 FCFA)
+    """
     now = timezone.localtime()
     today = now.date()
     hour = now.hour
@@ -70,12 +75,12 @@ def apply_penalties_for_now(force_window: str | None = None) -> dict:
 
     created = escalated = unchanged = paid_skipped = leave_skipped = 0
 
+    # 🕛 Fenêtre "midi" : création des pénalités légères
     if window == "noon":
-        # Option B : traiter tous les jours manqués, mais uniquement si l’échéance de J est passée (J+1 12:00 ≤ now)
         contrats = ContratChauffeur.objects.select_for_update().filter(statut=StatutContrat.ENCOURS)
 
         for contrat in contrats:
-            current_day = (contrat.date_concernee or today)
+            current_day = contrat.date_concernee or today
 
             while current_day <= today:
                 deadline = _deadline_noon_from_jour(current_day)
@@ -90,7 +95,6 @@ def apply_penalties_for_now(force_window: str | None = None) -> dict:
                 if _is_paid_for_day(contrat, current_day):
                     paid_skipped += 1
                 else:
-
                     date_limite_snapshot = contrat.date_limite or current_day
 
                     pen, was_created = Penalite.objects.get_or_create(
@@ -108,15 +112,27 @@ def apply_penalties_for_now(force_window: str | None = None) -> dict:
                             date_limite_reference=date_limite_snapshot,
                         ),
                     )
+
                     if was_created:
                         created += 1
+
+                        # 🔒 Bloquer le swap
+                        try:
+                            assoc = contrat.association_user_moto
+                            if assoc:
+                                assoc.swap_bloque = 0
+                                assoc.save(update_fields=["swap_bloque"])
+                                logger.info(f"Swap bloqué pour chauffeur {assoc.validated_user_id}")
+                        except Exception as e:
+                            logger.warning(f"Erreur blocage swap (contrat {contrat.id}): {e}")
+
                     else:
                         unchanged += 1
 
                 current_day += timedelta(days=1)
 
+    # 🕑 Fenêtre "14h" : escalade des pénalités légères en graves
     else:
-        # 14h : escalader les LÉGÈRES d’hier
         target_jour = today - timedelta(days=1)
         deadline = _deadline_noon_from_jour(target_jour)
         limit14 = _limit_14h_from_jour(target_jour)
@@ -133,12 +149,11 @@ def apply_penalties_for_now(force_window: str | None = None) -> dict:
                 leave_skipped += 1
                 continue
 
-            # 1) payé à temps (<= 12h) → skip
             if _is_paid_for_day(contrat, target_jour):
                 paid_skipped += 1
                 continue
 
-            # 2) payé en retard mais avant 14h → garder légère
+            # Paiement entre 12h et 14h → pas d’escalade
             lease_paid_late = PaiementLease.objects.filter(
                 contrat_chauffeur=contrat,
                 date_concernee=target_jour,
@@ -146,12 +161,11 @@ def apply_penalties_for_now(force_window: str | None = None) -> dict:
                 created__lte=limit14,
                 statut="PAYE",
             ).exists()
-
             if lease_paid_late:
                 unchanged += 1
                 continue
 
-            # 3) toujours pas payé → escalade
+            # Toujours pas payé → escalade en grave
             restant = max((pen.montant_penalite or 0) - (pen.montant_paye or 0), 0)
             if restant <= 0 or pen.statut_penalite == StatutPenalite.PAYE:
                 unchanged += 1
@@ -169,12 +183,23 @@ def apply_penalties_for_now(force_window: str | None = None) -> dict:
             ])
             escalated += 1
 
+            # 🔒 Bloquer le swap aussi en cas d’escalade
+            try:
+                assoc = contrat.association_user_moto
+                if assoc:
+                    assoc.swap_bloque = 0
+                    assoc.save(update_fields=["swap_bloque"])
+                    logger.info(f"Swap bloqué (escalade grave) pour chauffeur {assoc.validated_user_id}")
+            except Exception as e:
+                logger.warning(f"Erreur blocage swap (contrat {contrat.id}): {e}")
+
     res = {
         "window": window,
         "created": created,
         "escalated": escalated,
         "unchanged": unchanged,
         "paid_skipped": paid_skipped,
+        "leave_skipped": leave_skipped,
     }
     logger.info("[PENALITES] %s -> %s", window, res)
     return res
