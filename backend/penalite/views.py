@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from rest_framework import viewsets, mixins
 from rest_framework.permissions import  IsAuthenticated
 from rest_framework.response import Response
-from django.utils import timezone
+from rest_framework import status
 from .models import  StatutPenalite, TypePenalite
 from .models import Penalite, PaiementPenalite
 from .serializers import (
@@ -71,28 +71,46 @@ class PaiementPenaliteViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
 class AnnulerPenaliteAPIView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
+
     def post(self, request, pk, *args, **kwargs):
         justificatif = (request.data.get("justificatif") or "").strip()
         if not justificatif:
-            return Response({"detail": "Un justificatif d'annulation est obligatoire."}, status=400)
+            return Response(
+                {"detail": "Un justificatif d'annulation est obligatoire."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         try:
-            with transaction.atomic():  # ✅ requis pour select_for_update
-                pen = (Penalite.objects
-                       .select_for_update()         # ✅ OK sur MySQL/InnoDB
-                       .select_related("contrat_chauffeur")
-                       .get(pk=pk))
+            with transaction.atomic():
+                # 🔍 1️⃣ Récupérer la pénalité + contrat + association
+                pen = (
+                    Penalite.objects
+                    .select_for_update()
+                    .select_related(
+                        "contrat_chauffeur",
+                        "contrat_chauffeur__association_user_moto"
+                    )
+                    .get(pk=pk)
+                )
 
-                # Règles métier
-
+                # 🔒 2️⃣ Vérifications métier
                 if pen.statut_penalite == StatutPenalite.PAYE:
-                    return Response({"detail": "Impossible d'annuler une pénalité déjà payée."}, status=400)
+                    return Response(
+                        {"detail": "Impossible d'annuler une pénalité déjà payée."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
                 if pen.statut_penalite == StatutPenalite.PARTIELLEMENT_PAYE:
-                    return Response({"detail": "Impossible d'annuler une pénalité partiellement payée."}, status=400)
+                    return Response(
+                        {"detail": "Impossible d'annuler une pénalité partiellement payée."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
                 if pen.statut_penalite != StatutPenalite.NON_PAYE:
-                    return Response({"detail": "Seules les pénalités non payées peuvent être annulées."}, status=400)
+                    return Response(
+                        {"detail": "Seules les pénalités non payées peuvent être annulées."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
 
-                # Mise à jour
+                # 🧾 3️⃣ Mise à jour de la pénalité
                 pen.statut_penalite = StatutPenalite.ANNULEE
                 pen.justificatif_annulation = justificatif
                 pen.annulee_par = request.user
@@ -100,11 +118,28 @@ class AnnulerPenaliteAPIView(APIView):
                 pen.montant_restant = 0
                 pen.echeance_paiement_penalite = None
                 pen.save(update_fields=[
-                    "statut_penalite","justificatif_annulation","annulee_par",
-                    "date_annulation","montant_restant","echeance_paiement_penalite","updated"
+                    "statut_penalite",
+                    "justificatif_annulation",
+                    "annulee_par",
+                    "date_annulation",
+                    "montant_restant",
+                    "echeance_paiement_penalite",
+                    "updated",
                 ])
 
-            return Response({"success": True, "message": "Pénalité annulée."}, status=200)
+                # 🚀 4️⃣ Débloquer le swap de l'association liée
+                contrat = pen.contrat_chauffeur
+                if contrat and contrat.association_user_moto:
+                    assoc = contrat.association_user_moto
+                    assoc.swap_bloque = 1  # ✅ Débloquer
+                    assoc.save(update_fields=["swap_bloque"])
+
+            return Response(
+                {"success": True, "message": "Pénalité annulée et swap débloqué."},
+                status=status.HTTP_200_OK
+            )
 
         except Penalite.DoesNotExist:
-            return Response({"detail": "Pénalité introuvable."}, status=404)
+            return Response({"detail": "Pénalité introuvable."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)

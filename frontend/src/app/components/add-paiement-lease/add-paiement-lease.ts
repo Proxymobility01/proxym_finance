@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import {Component, OnInit, inject, signal, computed} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormGroup, FormControl, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
@@ -19,6 +19,9 @@ export class AddPaiementLeaseComponent implements OnInit {
   readonly contratService = inject(ContratChauffeurService);
 
   readonly contrats = this.contratService.contratsCh;
+  readonly contratsEncours = computed(() =>
+    this.contrats().filter(c => String(c.statut).toLowerCase() === 'encours')
+  );
   readonly isLoadingLeases = this.leaseService.isLoadingLeases;
   readonly isSubmitting = this.leaseService.isLeaseSubmitting;
   readonly submitError = this.leaseService.isLeaseSubmitError;
@@ -47,6 +50,7 @@ export class AddPaiementLeaseComponent implements OnInit {
 
   ngOnInit(): void {
     this.contratService.fetchContratChauffeur();
+
     this.methodeCtrl.setValue('espece');
     this.contratIdCtrl.valueChanges.subscribe((contratId) => {
       if (!contratId) return;

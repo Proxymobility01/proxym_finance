@@ -30,7 +30,7 @@
                 [disabled]="isLoadingLeases()"
                 [class.input-error-paiement]="contratIdCtrl.touched && contratIdCtrl.invalid">
           <option [ngValue]="null" disabled>— Sélectionner un contrat —</option>
-          @for (c of contrats(); track c.id) {
+          @for (c of contratsEncours(); track c.id) {
             <option [ngValue]="c.id">{{ c.chauffeur || ('Contrat #' + c.id) }}</option>
           }
         </select>
