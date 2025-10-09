@@ -84,8 +84,7 @@ class AnnulerPenaliteAPIView(APIView):
                        .get(pk=pk))
 
                 # Règles métier
-                if pen.type_penalite != TypePenalite.LEGERE:
-                    return Response({"detail": "Seules les pénalités légères peuvent être annulées."}, status=400)
+
                 if pen.statut_penalite == StatutPenalite.PAYE:
                     return Response({"detail": "Impossible d'annuler une pénalité déjà payée."}, status=400)
                 if pen.statut_penalite == StatutPenalite.PARTIELLEMENT_PAYE:
