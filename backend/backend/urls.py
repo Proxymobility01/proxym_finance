@@ -4,7 +4,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
-
+from conge.views import trigger_error
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -15,6 +15,7 @@ urlpatterns = [
     path("api/", include("paiement_lease.urls")),  
     path("api/", include("conge.urls")),
     path("api/", include("penalite.urls")),
+    path('sentry-debug/', trigger_error),
 ]
 
 

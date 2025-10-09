@@ -21,3 +21,10 @@ class CongeViewSet(viewsets.ModelViewSet):
         elif self.action in ["update", "partial_update"]:
             return CongeUpdateSerializer
         return CongeBaseSerializer
+
+from django.http import HttpResponse
+
+def trigger_error(request):
+    # Ce code provoquera une erreur ZeroDivisionError qui sera capturée par Sentry.
+    division_by_zero = 1 / 0
+    return HttpResponse("This line will never be reached.")
