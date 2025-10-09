@@ -55,10 +55,7 @@ class Penalite(TimeStampedModel):
                 fields=["contrat_chauffeur", "date_paiement_manquee", "type_penalite"],
                 name="uniq_penalite_par_contrat_jour_et_type",
             ),
-            models.CheckConstraint(
-                name="penalite_annulee_uniquement_si_legere",
-                check=(~Q(statut_penalite=StatutPenalite.ANNULEE) | Q(type_penalite=TypePenalite.LEGERE)),
-            ),
+
             models.CheckConstraint(
                 name="penalite_annulee_justificatif_obligatoire",
                 check=(~Q(statut_penalite=StatutPenalite.ANNULEE) | ~Q(justificatif_annulation="")),

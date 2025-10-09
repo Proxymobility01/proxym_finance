@@ -78,7 +78,7 @@ karma-*.log
 # Angular environments
 frontend/src/environments/environment*.ts
 /backend/backend/settings/__init__.py
-
+/backend/.env.dev
 
 # ----------------------------
 # IDE / EDITORS
