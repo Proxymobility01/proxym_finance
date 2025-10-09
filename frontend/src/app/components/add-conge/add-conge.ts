@@ -1,5 +1,5 @@
 // src/app/components/add-conge/add-conge.ts
-import {Component, HostListener, Inject, inject, OnInit, signal} from '@angular/core';
+import {Component, computed, HostListener, Inject, inject, OnInit, signal} from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators, ValidatorFn, AbstractControl } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { NgClass } from '@angular/common';
@@ -38,6 +38,9 @@ export class AddConge implements OnInit{
 
   // --- Source pour <select> contrats (réutilise ton service existant)
   readonly contratsCh = this.contratService.contratsCh;
+  readonly contratsEncours = computed(() =>
+    this.contratsCh().filter(c => String(c.statut).toLowerCase() === 'encours')
+  );
 
   // --- Validateurs
   private dateRangeValidator(): ValidatorFn {
@@ -154,10 +157,6 @@ export class AddConge implements OnInit{
     };
   }
 
-
-  // Label affiché pour chaque contrat dans la liste
-  readonly contratLabel = (c: any) =>
-    `${c?.reference ?? 'REF'} — ${c?.chauffeur ?? 'Chauffeur'}${c?.date_signature ? ' (' + new Date(c.date_signature).toLocaleDateString('fr-FR') + ')' : ''}`;
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: CongeDialogData) {
     // Mode + pré-remplissage

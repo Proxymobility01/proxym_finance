@@ -29,7 +29,7 @@ export class AddPaiementLeaseComponent implements OnInit {
   paiementForm = new FormGroup({
     contrat_id: new FormControl<number | null>(null, Validators.required),
     montant_moto: new FormControl('', [Validators.required, Validators.min(1)]),
-    montant_batt: new FormControl('', [Validators.required, Validators.min(1)]),
+    montant_batt: new FormControl('', [Validators.required, Validators.min(0)]),
     methode_paiement: new FormControl('', Validators.required),
     date_concernee: new FormControl('', Validators.required),
     date_limite: new FormControl('', Validators.required),

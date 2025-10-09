@@ -353,7 +353,10 @@ class LeaseCombinedListAPIView(APIView):
         """
         agg = qs_paid.aggregate(
             total=Coalesce(
-                Sum(F("montant_moto") + F("montant_batt")),
+                Sum(
+                    Coalesce(F("montant_moto"), V(0, output_field=DecimalField())) +
+                    Coalesce(F("montant_batt"), V(0, output_field=DecimalField()))
+                ),
                 V(0, output_field=DecimalField(max_digits=18, decimal_places=2)),
             )
         )

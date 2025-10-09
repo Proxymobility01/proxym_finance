@@ -32,8 +32,8 @@
                   [disabled]="mode()==='edit'"
                   [class.input-error-conge]="contrat_id.invalid && contrat_id.touched">
             <option [ngValue]="null" disabled>— Sélectionner —</option>
-            @for (c of contratsCh(); track c.id) {
-              <option [ngValue]="c.id">{{ contratLabel(c) }}</option>
+            @for (c of contratsEncours(); track c.id) {
+              <option [ngValue]="c.id">{{ c.chauffeur }}</option>
             }
           </select>
           @if (contrat_id.touched && contrat_id.invalid) {
