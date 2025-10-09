@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import * as XLSX from 'xlsx';
 
-import { Penalite, StatutPenalite } from '../../models/penalite.model';
+import {Penalite, StatutPenalite, TypePenalite} from '../../models/penalite.model';
 import { HighlightPipe } from '../../shared/highlight-pipe';
 import { PenaliteService } from '../../services/penalite';
 import { NumberPipe } from '../../shared/number-pipe';
@@ -14,6 +14,7 @@ import {AnnulerPenalite} from '../../components/annuler-penaliter/annuler-penali
 import {MatIconButton} from '@angular/material/button';
 
 type StatutFilter = '' | StatutPenalite;
+type TypeFilter = '' | TypePenalite;
 type DateFilterMode = 'today' | 'week' | 'month' | 'year' | 'specific' | 'range' | 'all';
 type PageItem = { type: 'page'; index: number } | { type: 'dots' };
 
@@ -35,8 +36,9 @@ export class PenaliteList implements OnInit {
   private readonly snack  = inject(MatSnackBar);
 
   // ---------- Filtres ----------
-  readonly query        = signal<string>('');             // chauffeur ou référence
-  readonly statut       = signal<StatutFilter>('');       // non_paye | partiellement_paye | paye
+  readonly query        = signal<string>('');
+  readonly statut       = signal<StatutFilter>('');
+  readonly type         = signal<TypeFilter>('');
 
   // Filtres sur created (nouvelle référence de filtre)
   readonly createdMode     = signal<DateFilterMode>('all');
@@ -167,6 +169,7 @@ export class PenaliteList implements OnInit {
 
     const q  = this.normalize(this.query());
     const st = this.normalize(this.statut());
+    const t  = this.normalize(this.type());
 
     // Période sur created (nouvelle référence)
     const { from, to } = this.getPeriod(this.createdMode(), this.createdSpecific(), this.createdStart(), this.createdEnd());
@@ -190,11 +193,17 @@ export class PenaliteList implements OnInit {
         okStatut = val === st;
       }
 
+      let okType = true;
+      if (t) {
+        const val = this.normalize((p as any)?.type_penalite);
+        okType = val === t;
+      }
+
       // Dates (par JOUR)
       const okCreated  = this.isWithinDay((p as any)?.created, from, to);
       const okEcheance = this.isWithinDay((p as any)?.echeance_paiement_penalite, ef, et);
 
-      return okSearch && okStatut && okCreated && okEcheance;
+      return okSearch && okStatut && okCreated && okEcheance && okType;
     });
   });
 

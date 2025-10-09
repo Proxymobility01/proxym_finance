@@ -18,6 +18,7 @@ export interface Penalite {
 }
 
 export type StatutPenalite = 'non_paye' | 'partiellement_paye' | 'paye';
+export type TypePenalite = 'legere' | 'grave';
 export interface PaiementPenalitePayload{
   penalite_id:number;
   "montant":number | string;

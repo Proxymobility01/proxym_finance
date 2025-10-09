@@ -345,6 +345,17 @@
         </div>
 
         <div class="col-md-2">
+          <label class="form-label-compact">Type penalite</label>
+          <select class="form-select form-select-sm"
+                  [ngModel]="type()"
+                  (ngModelChange)="type.set($event)">
+            <option value="">Tous</option>
+            <option value="legere">Légère</option>
+            <option value="grave">Grave</option>
+          </select>
+        </div>
+
+        <div class="col-md-2">
           <label class="form-label-compact">Création</label>
           <select class="form-select form-select-sm"
                   [ngModel]="createdMode()"
