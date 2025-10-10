@@ -79,7 +79,7 @@ class ContractBatteryListSerializer(serializers.ModelSerializer):
             "montant_total", "montant_paye", "montant_restant",
             "date_signature", "date_debut", "date_fin","proprietaire",
             "duree_jour",
-            "statut", "montant_engage",
+            "statut", "montant_engage","montant_par_paiement",
             "contrat_physique_batt",
             "created", "updated",
         ]
