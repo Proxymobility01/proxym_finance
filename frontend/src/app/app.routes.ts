@@ -8,6 +8,7 @@ import { CongeList } from './pages/conge-list/conge-list';
 import { LeaseList } from './pages/lease-list/lease-list';
 import { PenaliteList } from './pages/penalite-list/penalite-list';
 import {authGuard} from './core/auth/auth-guard';
+import {NotFound} from './pages/not-found/not-found';
 
 
 export const routes: Routes = [
@@ -29,5 +30,5 @@ export const routes: Routes = [
   },
 
 
-  { path: '**', redirectTo: 'login' },
+  { path: '**', component: NotFound },
 ];
