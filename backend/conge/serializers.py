@@ -1,4 +1,4 @@
-from datetime import timedelta, datetime, time
+from datetime import  datetime, time
 from django.utils import timezone
 from django.conf import settings
 from django.db import transaction
@@ -35,6 +35,35 @@ def _mk_dt(d):
     return dt
 
 
+# ✅ Fonctions utilitaires pour ignorer les dimanches
+def add_days_skip_sundays(start_date, days_to_add):
+    """Ajoute des jours à une date en ignorant les dimanches."""
+    current_date = start_date
+    added_days = 0
+
+    while added_days < days_to_add:
+        current_date += timedelta(days=1)
+        # weekday() : 0=lundi ... 6=dimanche
+        if current_date.weekday() != 6:
+            added_days += 1
+
+    return current_date
+
+
+def subtract_days_skip_sundays(start_date, days_to_subtract):
+    """Soustrait des jours à une date en ignorant les dimanches."""
+    current_date = start_date
+    removed_days = 0
+
+    while removed_days < days_to_subtract:
+        current_date -= timedelta(days=1)
+        if current_date.weekday() != 6:
+            removed_days += 1
+
+    return current_date
+
+
+
 class CongeBaseSerializer(serializers.ModelSerializer):
     contrat_id_read = serializers.IntegerField(source="contrat.id", read_only=True)
     reference_contrat = serializers.CharField(source="contrat.reference_contrat", read_only=True)
@@ -44,9 +73,9 @@ class CongeBaseSerializer(serializers.ModelSerializer):
         model = Conge
         fields = [
             "id",
-            "contrat_id_read",     # lecture
-            "reference_contrat",   # lecture
-            "chauffeur",           # lecture
+            "contrat_id_read",
+            "reference_contrat",
+            "chauffeur",
             "date_debut",
             "date_fin",
             "date_reprise",
@@ -76,6 +105,7 @@ class CongeBaseSerializer(serializers.ModelSerializer):
             attrs["date_fin"] = fin_dt
             attrs["date_reprise"] = reprise_dt
         return attrs
+
 
 class CongeCreateSerializer(CongeBaseSerializer):
     contrat_id = serializers.PrimaryKeyRelatedField(
@@ -138,24 +168,23 @@ class CongeUpdateSerializer(CongeBaseSerializer):
         contrat: ContratChauffeur = instance.contrat
         nb_jour = instance.nb_jour
 
-        # Cas 1 : approbation → consomme des jours + ajuste le calendrier de paiement
+        # Cas 1 : approbation → consomme des jours + ajuste le calendrier
         if old_statut != StatutConge.APPROUVE and new_statut == StatutConge.APPROUVE:
             if nb_jour > contrat.jour_conge_restant:
                 raise serializers.ValidationError(
                     {"nb_jour": "Pas assez de jours de congés restants."}
                 )
 
-            # -- maj des jours de congé --
             contrat.jour_conge_utilise += nb_jour
             contrat.jour_conge_restant = max(
                 contrat.jour_conge_total - contrat.jour_conge_utilise, 0
             )
 
-            # -- maj du calendrier de paiement --
+            # -- maj du calendrier de paiement (en sautant les dimanches)
             if contrat.date_concernee:
-                contrat.date_concernee += timedelta(days=nb_jour)
+                contrat.date_concernee = add_days_skip_sundays(contrat.date_concernee, nb_jour)
             if contrat.date_limite:
-                contrat.date_limite += timedelta(days=nb_jour)
+                contrat.date_limite = add_days_skip_sundays(contrat.date_limite, nb_jour)
 
             contrat.save(update_fields=[
                 "jour_conge_utilise", "jour_conge_restant",
@@ -169,17 +198,15 @@ class CongeUpdateSerializer(CongeBaseSerializer):
                 contrat.jour_conge_total - contrat.jour_conge_utilise, 0
             )
 
-            # 🕓 rétablir les dates initiales (retirer les jours ajoutés)
+            # 🕓 rétablir les dates initiales (retirer les jours ajoutés, sans compter les dimanches)
             if contrat.date_concernee:
-                contrat.date_concernee -= timedelta(days=nb_jour)
+                contrat.date_concernee = subtract_days_skip_sundays(contrat.date_concernee, nb_jour)
             if contrat.date_limite:
-                contrat.date_limite -= timedelta(days=nb_jour)
+                contrat.date_limite = subtract_days_skip_sundays(contrat.date_limite, nb_jour)
 
             contrat.save(update_fields=[
                 "jour_conge_utilise", "jour_conge_restant",
                 "date_concernee", "date_limite"
             ])
 
-        # Cas 3 : passage à "termine" → pas d’effet sur les jours
         return instance
-

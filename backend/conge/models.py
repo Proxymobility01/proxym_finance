@@ -28,3 +28,4 @@ class Conge(TimeStampedModel):
 
     class Meta:
         db_table = "conge"
+        ordering = ("-created",)
