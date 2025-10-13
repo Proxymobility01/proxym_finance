@@ -43,6 +43,9 @@ class PaiementLease(TimeStampedModel):
     )
 
     class Meta:
+        indexes = [
+            models.Index(fields=["contrat_chauffeur", "date_concernee"]),
+        ]
         db_table = "paiement_lease"
         ordering = ('-created',)
 

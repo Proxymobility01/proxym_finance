@@ -1,7 +1,7 @@
 import csv
 import uuid
 from django.db.models.aggregates import Sum
-from django.db.models.expressions import F
+from django.db.models.expressions import F, Exists, OuterRef
 from django.db.models.fields import DecimalField
 from django.db.models.functions.comparison import Coalesce
 from django.http.response import HttpResponse
@@ -267,7 +267,7 @@ def build_combined_queryset(request):
     paid_rows = [dict(x) for x in paid_ser.data]
 
     # ---------- NON PAYÉS ----------
-    np_qs = (Penalite.objects
+    np_qs_base = (Penalite.objects
              .select_related(
                  "contrat_chauffeur",
                  "contrat_chauffeur__association_user_moto",
@@ -278,7 +278,16 @@ def build_combined_queryset(request):
              .filter(
                 statut_penalite__in=[StatutPenalite.NON_PAYE, StatutPenalite.PAYE, StatutPenalite.PARTIELLEMENT_PAYE],
              ))
-    np_qs = NonPaiementLeaseFilter(request.GET, queryset=np_qs).qs
+    np_qs_base = NonPaiementLeaseFilter(request.GET, queryset=np_qs_base).qs
+    # ✅ Anti-join : exclure les pénalités pour lesquelles un paiement de LEASE existe
+    np_qs = np_qs_base.annotate(
+        lease_paid=Exists(
+            PaiementLease.objects.filter(
+                contrat_chauffeur=OuterRef("contrat_chauffeur_id"),
+                date_concernee=OuterRef("date_paiement_manquee"),
+            )
+        )
+    ).filter(lease_paid=False)
 
     if q:
         np_qs = np_qs.filter(
@@ -432,7 +441,7 @@ class LeaseCombinedListAPIView(APIView):
                 q_agence |= Q(agences__nom_agence__icontains=term)
             paid_qs = paid_qs.filter(q_agence)
         # -------- NON PAYÉS --------
-        np_qs = (Penalite.objects
+        np_qs_base = (Penalite.objects
                  .select_related(
                      "contrat_chauffeur",
                      "contrat_chauffeur__association_user_moto",
@@ -443,6 +452,20 @@ class LeaseCombinedListAPIView(APIView):
                  .filter(
                     statut_penalite__in=[StatutPenalite.NON_PAYE,StatutPenalite.PAYE,StatutPenalite.PARTIELLEMENT_PAYE],
                  ))
+
+        # optionnel : appliquer tes filtres “NonPaiementLeaseFilter” avant l’anti-join
+        np_qs_base = NonPaiementLeaseFilter(request.GET, queryset=np_qs_base).qs
+
+        # ✅ Anti-join : exclure les pénalités pour lesquelles un paiement de LEASE existe
+        np_qs = np_qs_base.annotate(
+            lease_paid=Exists(
+                PaiementLease.objects.filter(
+                    contrat_chauffeur=OuterRef("contrat_chauffeur_id"),
+                    date_concernee=OuterRef("date_paiement_manquee"),
+                )
+            )
+        ).filter(lease_paid=False)
+
         # NB: NonPaiementLeaseFilter ne définit PAS 'created' → il ne s’applique pas ici
         np_qs = NonPaiementLeaseFilter(request.GET, queryset=np_qs).qs
 

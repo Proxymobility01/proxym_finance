@@ -46,6 +46,9 @@ class Penalite(TimeStampedModel):
     )
 
     class Meta:
+        indexes = [
+            models.Index(fields=["contrat_chauffeur", "date_paiement_manquee"]),
+        ]
         ordering = ('-created',)
         db_table = "penalite"
 
