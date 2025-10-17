@@ -27,12 +27,14 @@ from django.utils.dateparse import parse_datetime, parse_date
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 # --- Calendrier Paiements ---
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
-from django.utils import timezone
-from datetime import timedelta
-from contrat_chauffeur.models import ContratChauffeur, StatutContrat
-from paiement_lease.models import PaiementLease
+from datetime import date, timedelta
+from django.db.models import Q
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
+
+
+
 
 def _to_aware_utc(value):
     """
@@ -466,102 +468,156 @@ class LeaseCombinedExportXLSX(APIView):
 
 
 
-# ============================================================
-#     CALENDRIER DES PAIEMENTS PAR CHAUFFEUR
 
-
-    """
-    Vue API qui retourne le calendrier des paiements d’un chauffeur
-    ---------------------------------------------------------------
-    Chaque jour de la période du contrat est coloré selon la situation :
-      - 🟩 Vert : Paiement effectué (même si dimanche)
-      - 🟦 Bleu : Jour ouvré sans paiement → considéré comme congé
-      - ⚪ Gris clair : Avant contrat, après aujourd’hui, ou dimanche sans paiement
-
-    Paramètres :
-        - chauffeur_id : identifiant du chauffeur concerné
-        (exemple : GET http://127.0.0.1:8000/api/lease/paiements/calendrier/43/
-)
-    """
 
 # ============================================================
+#     CALENDRIER DES PAIEMENTS PAR CHAUFFEUR (PAGINÉ + FILTRE)
+# ============================================================
 
-@api_view(["GET"])
-@permission_classes([IsAuthenticated])
-def calendrier_paiements_contrat(request, contrat_id):
-    """
-    🔹 API calendrier des paiements d’un contrat chauffeur
-       - "paiements" = toutes les dates de paiement (basé sur created), même dimanche
-       - "conges" = toutes les dates sans paiement depuis le début du contrat jusqu’à aujourd’hui, sauf dimanches
-       - "resume" = synthèse du nombre total de jours, jours payés et jours manqués
-    """
+"""
+### 📘 Documentation de l'API : /api/lease/paiements/calendrier/
+#### Description :
+Cette API retourne, pour chaque chauffeur (contrat actif ou terminé),
+un résumé de ses paiements et jours d'absence calculés à partir du champ `created`
+dans la table `PaiementLease`.
 
-    try:
-        contrat = (
+#### Fonctionnalités :
+- Liste paginée des contrats chauffeurs (5 par page par défaut)
+- Filtrage dynamique avec le paramètre `?search=` (par nom, prénom ou ID unique)
+- Chaque chauffeur contient :
+  - Les dates payées (`paiements`)
+  - Les dates manquées (`conges`, hors dimanches)
+  - Un résumé (`resume`) avec total de jours, jours payés, jours de congé
+
+#### Exemple d'appel :
+GET /api/lease/paiements/calendrier/?search=lionel&page=2
+
+#### Exemple de réponse :
+{
+  "count": 12,
+  "next": "http://127.0.0.1:8000/api/lease/paiements/calendrier/?page=3",
+  "previous": "http://127.0.0.1:8000/api/lease/paiements/calendrier/?page=1",
+  "results": [
+    {
+      "contrat": {
+        "id": 8,
+        "nom_chauffeur": "MOUAKA",
+        "prenom_chauffeur": "John",
+        "user_unique_id": "UserPro202412181"
+      },
+      "paiements": ["2025-09-01", "2025-09-03"],
+      "conges": ["2025-09-02", "2025-09-04", ...],
+      "resume": {
+        "total_jours": 35,
+        "jours_payes": 20,
+        "jours_conges": 15
+      }
+    }
+  ]
+}
+"""
+
+
+# Pagination DRF standard personnalisée
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 5  # ✅ 5 calendriers par page
+    page_size_query_param = "page_size"
+    max_page_size = 50
+
+
+class CalendrierPaiementsAPIView(APIView):
+    """
+    🔹 API calendrier global des paiements (par chauffeur)
+    - Liste paginée de tous les chauffeurs avec résumé de leurs paiements et congés.
+    - Supporte le filtrage par nom/prénom/id chauffeur via ?search=
+    - Résumé inclus pour chaque chauffeur : total_jours, jours_payes, jours_conges.
+    """
+    # permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        # --- Récupération optionnelle du filtre
+        search = (request.GET.get("search") or "").strip()
+
+        # --- Préparer la liste de contrats à traiter
+        contrats = (
             ContratChauffeur.objects
             .select_related("association_user_moto__validated_user")
-            .get(pk=contrat_id)
+            .filter(statut__in=["encours", "termine"])  # seulement actifs ou terminés
         )
-    except ContratChauffeur.DoesNotExist:
-        return Response({"error": "Contrat introuvable."}, status=status.HTTP_404_NOT_FOUND)
 
-    chauffeur = getattr(contrat.association_user_moto, "validated_user", None)
+        if search:
+            contrats = contrats.filter(
+                Q(association_user_moto__validated_user__nom__icontains=search)
+                | Q(association_user_moto__validated_user__prenom__icontains=search)
+                | Q(association_user_moto__validated_user__user_unique_id__icontains=search)
+            )
 
-    # Vérification
-    if not contrat.date_debut:
-        return Response({"error": "Le contrat n’a pas de date de début définie."}, status=400)
+        # --- Pagination DRF standard
+        paginator = StandardResultsSetPagination()
+        contrats_page = paginator.paginate_queryset(contrats, request, view=self)
 
-    date_debut = contrat.date_debut
-    date_fin = date.today()
+        results = []
+        today = date.today()
 
-    # 🟢 Récupération des paiements (même dimanche)
-    paiements_qs = (
-        PaiementLease.objects
-        .filter(contrat_chauffeur=contrat)
-        .exclude(created__isnull=True)
-        .values_list("created", flat=True)
-    )
+        for contrat in contrats_page:
+            chauffeur = getattr(contrat.association_user_moto, "validated_user", None)
 
-    # Extraction uniquement de la date
-    jours_payes = sorted({p.date() for p in paiements_qs if p})
-    jours_payes_set = set(jours_payes)
+            if not contrat.date_debut:
+                continue
 
-    # 🔵 Générer toutes les dates entre le début du contrat et aujourd’hui
-    jours_total = []
-    current = date_debut
-    while current <= date_fin:
-        jours_total.append(current)
-        current += timedelta(days=1)
+            date_debut = contrat.date_debut
+            date_fin = today  # jusqu'à aujourd'hui
 
-    # 🔴 Jours manqués = pas dans paiements, et pas dimanche
-    jours_manques = [
-        j.strftime("%Y-%m-%d")
-        for j in jours_total
-        if j not in jours_payes_set and j.weekday() != 6
-    ]
+            # 🟢 Récupération des paiements (basé sur created)
+            paiements_qs = (
+                PaiementLease.objects
+                .filter(contrat_chauffeur=contrat)
+                .exclude(created__isnull=True)
+                .values_list("created", flat=True)
+            )
 
-    # 🟩 Conversion ISO des paiements
-    jours_payes_iso = [j.strftime("%Y-%m-%d") for j in jours_payes]
+            # Extraction de la date (y compris dimanche)
+            jours_payes = sorted({p.date() for p in paiements_qs if p})
+            jours_payes_set = set(jours_payes)
 
-    # 📊 Calcul du résumé
-    total_jours = len([j for j in jours_total if j.weekday() != 6])
-    total_payes = len(jours_payes_iso)
-    total_conges = len(jours_manques)
+            # 🔵 Génération de toutes les dates du contrat
+            jours_total = []
+            current = date_debut
+            while current <= date_fin:
+                jours_total.append(current)
+                current += timedelta(days=1)
 
-    # 🧩 Construction du JSON final
-    data = {
-        "contrat": {
-            "id": contrat.id,
-            "nom_chauffeur": getattr(chauffeur, "nom", ""),
-            "prenom_chauffeur": getattr(chauffeur, "prenom", ""),
-        },
-        "paiements": jours_payes_iso,  # toutes les dates payées (y compris dimanche)
-        "conges": jours_manques,       # jours sans paiement (hors dimanche)
-        "resume": {
-            "total_jours": total_jours,  # Nombre total de jours depuis le début du contrat jusqu'à aujourd'hui (hors dimanches)
-            "jours_payes": total_payes,     #Nombre total de jours où un paiement a été enregistré (y compris dimanche)
-            "jours_conges": total_conges    #Nombre total de jours ouvrables sans paiement (hors dimanche)
-        }
-    }
+            # 🔴 Congés = jours sans paiement, hors dimanche
+            jours_manques = [
+                j.strftime("%Y-%m-%d")
+                for j in jours_total
+                if j not in jours_payes_set and j.weekday() != 6
+            ]
 
-    return Response(data, status=status.HTTP_200_OK)
+            # Conversion ISO
+            jours_payes_iso = [j.strftime("%Y-%m-%d") for j in jours_payes]
+
+            # 📊 Résumé
+            total_jours = len([j for j in jours_total if j.weekday() != 6])
+            total_payes = len(jours_payes_iso)
+            total_conges = len(jours_manques)
+
+            # 🧩 Construction du bloc chauffeur
+            results.append({
+                "contrat": {
+                    "id": contrat.id,
+                    "nom_chauffeur": getattr(chauffeur, "nom", ""),
+                    "prenom_chauffeur": getattr(chauffeur, "prenom", ""),
+                    "user_unique_id": getattr(chauffeur, "user_unique_id", ""),
+                },
+                "paiements": jours_payes_iso,
+                "conges": jours_manques,
+                "resume": {
+                    "total_jours": total_jours,
+                    "jours_payes": total_payes,
+                    "jours_conges": total_conges,
+                }
+            })
+
+        # --- Retour paginé
+        return paginator.get_paginated_response(results)
