@@ -30,6 +30,15 @@ from paiement_lease.models import PaiementLease
 from datetime import datetime, date, time, timezone as py_timezone
 from django.utils.dateparse import parse_datetime, parse_date
 from rest_framework_simplejwt.authentication import JWTAuthentication
+
+# --- Calendrier Paiements ---
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from django.utils import timezone
+from datetime import timedelta
+from contrat_chauffeur.models import ContratChauffeur, StatutContrat
+from paiement_lease.models import PaiementLease
+
 def _to_aware_utc(value):
     """
     Convertit 'value' (str|date|datetime|None) en datetime aware en UTC.
@@ -910,3 +919,104 @@ class LeaseCombinedExportDOCX(APIView):
         )
         resp["Content-Disposition"] = f'attachment; filename="{filename}"'
         return resp
+
+
+# ============================================================
+#     CALENDRIER DES PAIEMENTS PAR CHAUFFEUR
+
+
+    """
+    Vue API qui retourne le calendrier des paiements d’un chauffeur
+    ---------------------------------------------------------------
+    Chaque jour de la période du contrat est coloré selon la situation :
+      - 🟩 Vert : Paiement effectué (même si dimanche)
+      - 🟦 Bleu : Jour ouvré sans paiement → considéré comme congé
+      - ⚪ Gris clair : Avant contrat, après aujourd’hui, ou dimanche sans paiement
+
+    Paramètres :
+        - chauffeur_id : identifiant du chauffeur concerné
+        (exemple : GET http://127.0.0.1:8000/api/lease/paiements/calendrier/43/
+)
+    """
+
+# ============================================================
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def calendrier_paiements_contrat(request, contrat_id):
+    """
+    🔹 API calendrier des paiements d’un contrat chauffeur
+       - "paiements" = toutes les dates de paiement (basé sur created), même dimanche
+       - "conges" = toutes les dates sans paiement depuis le début du contrat jusqu’à aujourd’hui, sauf dimanches
+       - "resume" = synthèse du nombre total de jours, jours payés et jours manqués
+    """
+
+    try:
+        contrat = (
+            ContratChauffeur.objects
+            .select_related("association_user_moto__validated_user")
+            .get(pk=contrat_id)
+        )
+    except ContratChauffeur.DoesNotExist:
+        return Response({"error": "Contrat introuvable."}, status=status.HTTP_404_NOT_FOUND)
+
+    chauffeur = getattr(contrat.association_user_moto, "validated_user", None)
+
+    # Vérification
+    if not contrat.date_debut:
+        return Response({"error": "Le contrat n’a pas de date de début définie."}, status=400)
+
+    date_debut = contrat.date_debut
+    date_fin = date.today()
+
+    # 🟢 Récupération des paiements (même dimanche)
+    paiements_qs = (
+        PaiementLease.objects
+        .filter(contrat_chauffeur=contrat)
+        .exclude(created__isnull=True)
+        .values_list("created", flat=True)
+    )
+
+    # Extraction uniquement de la date
+    jours_payes = sorted({p.date() for p in paiements_qs if p})
+    jours_payes_set = set(jours_payes)
+
+    # 🔵 Générer toutes les dates entre le début du contrat et aujourd’hui
+    jours_total = []
+    current = date_debut
+    while current <= date_fin:
+        jours_total.append(current)
+        current += timedelta(days=1)
+
+    # 🔴 Jours manqués = pas dans paiements, et pas dimanche
+    jours_manques = [
+        j.strftime("%Y-%m-%d")
+        for j in jours_total
+        if j not in jours_payes_set and j.weekday() != 6
+    ]
+
+    # 🟩 Conversion ISO des paiements
+    jours_payes_iso = [j.strftime("%Y-%m-%d") for j in jours_payes]
+
+    # 📊 Calcul du résumé
+    total_jours = len([j for j in jours_total if j.weekday() != 6])
+    total_payes = len(jours_payes_iso)
+    total_conges = len(jours_manques)
+
+    # 🧩 Construction du JSON final
+    data = {
+        "contrat": {
+            "id": contrat.id,
+            "nom_chauffeur": getattr(chauffeur, "nom", ""),
+            "prenom_chauffeur": getattr(chauffeur, "prenom", ""),
+        },
+        "paiements": jours_payes_iso,  # toutes les dates payées (y compris dimanche)
+        "conges": jours_manques,       # jours sans paiement (hors dimanche)
+        "resume": {
+            "total_jours": total_jours,  # Nombre total de jours depuis le début du contrat jusqu'à aujourd'hui (hors dimanches)
+            "jours_payes": total_payes,     #Nombre total de jours où un paiement a été enregistré (y compris dimanche)
+            "jours_conges": total_conges    #Nombre total de jours ouvrables sans paiement (hors dimanche)
+        }
+    }
+
+    return Response(data, status=status.HTTP_200_OK)
