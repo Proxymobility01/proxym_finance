@@ -128,6 +128,7 @@ export class Navbar implements OnInit {
     const currentUrl = this.router.url;
     const paiementRoutes = [
       '/paiements/contrats',
+      '/calendrier',
       '/paiements/historique',
       '/paiements/penalites',
       '/swap',

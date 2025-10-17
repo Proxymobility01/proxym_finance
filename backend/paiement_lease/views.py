@@ -19,7 +19,7 @@ from rest_framework.permissions import  IsAuthenticated
 from django.db.models import Q, Value as V
 from openpyxl import Workbook
 from docxtpl import DocxTemplate
-from conge.models import Conge
+from conge.models import Conge, StatutConge
 from penalite.models import Penalite, StatutPenalite
 from shared.models import StandardResultsSetPagination
 from .filters import PaiementLeaseFilter, NonPaiementLeaseFilter
@@ -397,7 +397,7 @@ class LeaseCombinedListAPIView(APIView):
                 "contrat__association_user_moto",
                 "contrat__association_user_moto__validated_user",
                 "contrat__association_user_moto__moto_valide",
-            )
+            ).exclude(statut=StatutConge.ANNULE)
         )
 
         # recherche (q)
@@ -410,25 +410,19 @@ class LeaseCombinedListAPIView(APIView):
                 Q(contrat__association_user_moto__moto_valide__vin__icontains=q)
             )
 
-        # ---- filtre "date concernée" (inclusion/chevauchement) ----
-        # règle : un congé est compté si son intervalle [date_debut..date_fin]
-        #        chevauche la fenêtre demandée.
+        # ---- filtre "date concernée" (chevauchement) ----
+        # règle DateField : un congé compte si [date_debut..date_fin] chevauche la fenêtre
         if dc_eq:
-            win_start, win_end = _day_bounds(dc_eq)
-            conge_qs = conge_qs.filter(date_fin__gte=win_start, date_debut__lte=win_end)
+            conge_qs = conge_qs.filter(date_debut__lte=dc_eq, date_fin__gte=dc_eq)
         else:
             if dc_after and dc_before:
-                start_dt, _ = _day_bounds(dc_after)
-                _, end_dt = _day_bounds(dc_before)
-                conge_qs = conge_qs.filter(date_fin__gte=start_dt, date_debut__lte=end_dt)
+                conge_qs = conge_qs.filter(date_fin__gte=dc_after, date_debut__lte=dc_before)
             elif dc_after:
-                start_dt, _ = _day_bounds(dc_after)
-                conge_qs = conge_qs.filter(date_fin__gte=start_dt)
+                conge_qs = conge_qs.filter(date_fin__gte=dc_after)
             elif dc_before:
-                _, end_dt = _day_bounds(dc_before)
-                conge_qs = conge_qs.filter(date_debut__lte=end_dt)
+                conge_qs = conge_qs.filter(date_debut__lte=dc_before)
 
-        # ⚠️ pas de filtre "created" ici
+        # ⚠️ on ne filtre PAS par created pour les congés
         conge_count = conge_qs.count()
 
         # =======================
@@ -744,15 +738,17 @@ def _fmt_fcfa(n):
 def _fmt_date(d):
     if not d:
         return ""
-    if isinstance(d, str):
-        try:
-            d = datetime.fromisoformat(d)
-        except Exception:
-            return d
-    # si c'est un datetime -> date
-    if hasattr(d, "date"):
+    # accepte déjà date ou datetime
+    from datetime import date, datetime
+    if isinstance(d, datetime):
         d = d.date()
-    return d.strftime("%d/%m/%Y")
+    if isinstance(d, date):
+        return d.strftime("%d/%m/%Y")
+    # tolère une chaîne ISO YYYY-MM-DD
+    try:
+        return datetime.fromisoformat(str(d)).date().strftime("%d/%m/%Y")
+    except Exception:
+        return str(d)
 
 # --- nouveaux helpers filtres "date concernée" ---
 def _parse_iso_date(s: str | None) -> date | None:
@@ -841,12 +837,14 @@ class LeaseCombinedExportDOCX(APIView):
         # -----------------------
         #          CONGÉS
         # -----------------------
-        conges_qs = (Conge.objects
-                     .select_related(
-                         "contrat",
-                         "contrat__association_user_moto",
-                         "contrat__association_user_moto__validated_user",
-                     ))
+        conges_qs = (
+            Conge.objects
+            .select_related(
+                "contrat",
+                "contrat__association_user_moto",
+                "contrat__association_user_moto__validated_user",
+            )
+        )
 
         if q:
             conges_qs = conges_qs.filter(
@@ -855,33 +853,32 @@ class LeaseCombinedExportDOCX(APIView):
                 Q(contrat__association_user_moto__validated_user__prenom__icontains=q)
             )
 
-        # Filtre "date concernée" = chevauchement de la fenêtre demandée
-        # [date_debut .. date_fin] chevauche [win_start .. win_end]
+        # Filtre "date concernée" = chevauchement sur [date_debut .. date_fin] (DateField)
         if dc_eq:
-            win_start, win_end = _day_bounds(dc_eq)
-            conges_qs = conges_qs.filter(date_fin__gte=win_start, date_debut__lte=win_end)
+            conges_qs = conges_qs.filter(date_debut__lte=dc_eq, date_fin__gte=dc_eq)
         else:
             if dc_after and dc_before:
-                start_dt, _ = _day_bounds(dc_after)
-                _, end_dt   = _day_bounds(dc_before)
-                conges_qs = conges_qs.filter(date_fin__gte=start_dt, date_debut__lte=end_dt)
+                conges_qs = conges_qs.filter(date_fin__gte=dc_after, date_debut__lte=dc_before)
             elif dc_after:
-                start_dt, _ = _day_bounds(dc_after)
-                conges_qs = conges_qs.filter(date_fin__gte=start_dt)
+                conges_qs = conges_qs.filter(date_fin__gte=dc_after)
             elif dc_before:
-                _, end_dt = _day_bounds(dc_before)
-                conges_qs = conges_qs.filter(date_debut__lte=end_dt)
+                conges_qs = conges_qs.filter(date_debut__lte=dc_before)
 
+        # Construction des lignes
         conges = []
         for c in conges_qs:
             vu = getattr(getattr(c.contrat, "association_user_moto", None), "validated_user", None)
             nom = " ".join(filter(None, [getattr(vu, "nom", ""), getattr(vu, "prenom", "")])).strip() if vu else ""
+            # nb_jour si inexistant → calcule (fin - debut + 1)
+            nb_jour = getattr(c, "nb_jour", None)
+            if nb_jour is None and c.date_debut and c.date_fin:
+                nb_jour = (c.date_fin - c.date_debut).days + 1
             conges.append({
                 "chauffeur": nom,
-                "debut":     _fmt_date(c.date_debut),
-                "fin":       _fmt_date(c.date_fin),
-                "reprise":   _fmt_date(getattr(c, "date_reprise", None)),
-                "jours":     int(getattr(c, "nb_jour", 0) or 0),
+                "debut": _fmt_date(c.date_debut),  # accepte maintenant des dates
+                "fin": _fmt_date(c.date_fin),
+                "reprise": _fmt_date(getattr(c, "date_reprise", None)),  # si tu l’as
+                "jours": int(nb_jour or 0),
             })
 
         # 3) Titre

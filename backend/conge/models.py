@@ -15,9 +15,9 @@ class Conge(TimeStampedModel):
     contrat = models.ForeignKey(
         ContratChauffeur, on_delete=models.CASCADE, related_name="conges"
     )
-    date_debut = models.DateTimeField(null=True)
-    date_fin = models.DateTimeField(null=True)
-    date_reprise = models.DateTimeField(null=True)
+    date_debut = models.DateField(null=True)
+    date_fin = models.DateField(null=True)
+    date_reprise = models.DateField(null=True)
     nb_jour = models.IntegerField(default=0)
     statut = models.CharField(max_length=50,choices=StatutConge.choices,
         default=StatutConge.EN_ATTENTE )

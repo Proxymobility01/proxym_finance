@@ -1,9 +1,7 @@
-from datetime import  datetime, time
-from django.utils import timezone
-from django.conf import settings
+from datetime import date, timedelta
 from django.db import transaction
 from rest_framework import serializers
-from datetime import timedelta
+
 from contrat_chauffeur.models import ContratChauffeur
 from .models import Conge
 
@@ -24,44 +22,35 @@ class StatutConge:
     ]
 
 
-def _mk_dt(d):
-    """Combine une date (YYYY-MM-DD) en DateTime à minuit, aware si USE_TZ."""
+# ✅ Nouveau: produit toujours une date (YYYY-MM-DD -> date)
+def _mk_date(d):
+    if isinstance(d, date):
+        return d
     if isinstance(d, str):
+        # tolère "YYYY-MM-DD"
         y, m, day = map(int, d.split("-"))
-        d = datetime(y, m, day).date()
-    dt = datetime.combine(d, time.min)
-    if getattr(settings, "USE_TZ", False) and timezone.is_naive(dt):
-        dt = timezone.make_aware(dt, timezone.get_current_timezone())
-    return dt
+        return date(y, m, day)
+    raise serializers.ValidationError({"date_debut": "Format de date invalide."})
 
 
-# ✅ Fonctions utilitaires pour ignorer les dimanches
-def add_days_skip_sundays(start_date, days_to_add):
-    """Ajoute des jours à une date en ignorant les dimanches."""
+# ✅ Fonctions utilitaires pour ignorer les dimanches (fonctionnent avec des 'date')
+def add_days_skip_sundays(start_date: date, days_to_add: int) -> date:
     current_date = start_date
     added_days = 0
-
     while added_days < days_to_add:
         current_date += timedelta(days=1)
-        # weekday() : 0=lundi ... 6=dimanche
-        if current_date.weekday() != 6:
+        if current_date.weekday() != 6:  # 6 = dimanche
             added_days += 1
-
     return current_date
 
-
-def subtract_days_skip_sundays(start_date, days_to_subtract):
-    """Soustrait des jours à une date en ignorant les dimanches."""
+def subtract_days_skip_sundays(start_date: date, days_to_subtract: int) -> date:
     current_date = start_date
     removed_days = 0
-
     while removed_days < days_to_subtract:
         current_date -= timedelta(days=1)
         if current_date.weekday() != 6:
             removed_days += 1
-
     return current_date
-
 
 
 class CongeBaseSerializer(serializers.ModelSerializer):
@@ -76,9 +65,9 @@ class CongeBaseSerializer(serializers.ModelSerializer):
             "contrat_id_read",
             "reference_contrat",
             "chauffeur",
-            "date_debut",
-            "date_fin",
-            "date_reprise",
+            "date_debut",    # <-- Model: DateField
+            "date_fin",      # <-- Model: DateField
+            "date_reprise",  # <-- Model: DateField (si tu l’as), sinon enlève cette ligne
             "nb_jour",
             "motif_conge",
             "statut",
@@ -92,18 +81,27 @@ class CongeBaseSerializer(serializers.ModelSerializer):
         return None
 
     def validate(self, attrs):
-        # Normalise date_debut
+        # On calcule fin/reprise à partir d'une DATE (plus de datetime)
         date_debut = attrs.get("date_debut") or getattr(self.instance, "date_debut", None)
         nb_jour = attrs.get("nb_jour") or getattr(self.instance, "nb_jour", None)
 
         if date_debut and nb_jour:
-            debut_dt = _mk_dt(date_debut)
-            fin_dt = debut_dt + timedelta(days=int(nb_jour) - 1)
-            reprise_dt = fin_dt + timedelta(days=1)
+            debut_d = _mk_date(date_debut)
+            try:
+                nb = int(nb_jour)
+            except Exception:
+                raise serializers.ValidationError({"nb_jour": "Valeur invalide."})
+            if nb < 1:
+                raise serializers.ValidationError({"nb_jour": "Doit être ≥ 1."})
 
-            attrs["date_debut"] = debut_dt
-            attrs["date_fin"] = fin_dt
-            attrs["date_reprise"] = reprise_dt
+            fin_d = debut_d + timedelta(days=nb - 1)
+            reprise_d = fin_d + timedelta(days=1)
+
+            attrs["date_debut"] = debut_d
+            attrs["date_fin"] = fin_d
+            # si ton modèle a date_reprise:
+            attrs["date_reprise"] = reprise_d
+
         return attrs
 
 
@@ -130,7 +128,6 @@ class CongeCreateSerializer(CongeBaseSerializer):
 
         validated_data["statut"] = StatutConge.EN_ATTENTE
         return super().create(validated_data)
-
 
 
 class CongeUpdateSerializer(CongeBaseSerializer):
@@ -166,7 +163,7 @@ class CongeUpdateSerializer(CongeBaseSerializer):
         instance = super().update(instance, validated_data)
 
         contrat: ContratChauffeur = instance.contrat
-        nb_jour = instance.nb_jour
+        nb_jour = int(instance.nb_jour or 0)
 
         # Cas 1 : approbation → consomme des jours + ajuste le calendrier
         if old_statut != StatutConge.APPROUVE and new_statut == StatutConge.APPROUVE:
@@ -198,7 +195,7 @@ class CongeUpdateSerializer(CongeBaseSerializer):
                 contrat.jour_conge_total - contrat.jour_conge_utilise, 0
             )
 
-            # 🕓 rétablir les dates initiales (retirer les jours ajoutés, sans compter les dimanches)
+            # -- rétablir les dates initiales (retirer les jours ajoutés, sans compter les dimanches)
             if contrat.date_concernee:
                 contrat.date_concernee = subtract_days_skip_sundays(contrat.date_concernee, nb_jour)
             if contrat.date_limite:

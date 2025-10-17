@@ -116,6 +116,15 @@
                             </a>
                         </li>
 
+                      <li>
+                        <a class="dropdown-item"
+                           [class.dropdown-item-active]="isCurrentRoute('/calendrier')"
+                           [routerLink]="['/calendrier']"
+                           (click)="closeAllDropdowns()">
+                          Calendrier Paiements Leases
+                        </a>
+                      </li>
+
                         <li>
                             <a class="dropdown-item"
                                [class.dropdown-item-active]="isCurrentRoute('/paiements/penalites')"
