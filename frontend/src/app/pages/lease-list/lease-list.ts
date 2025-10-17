@@ -33,6 +33,8 @@ export class LeaseList implements OnInit {
   // ---------- Totaux (hors pagination, renvoyés par l’API) ----------
   readonly totalPaidAmount    = this.leaseService.totalPaidAmount;    // number
   readonly totalPaidCount     = this.leaseService.totalPaidCount;     // number
+  readonly totalPenalite = this.leaseService.totalPenaliteCount
+  readonly totalConge = this.leaseService.totalCongeCount;
   readonly totalNonPaidAmount = this.leaseService.totalNonPaidAmount; // number
   readonly totalNonPaidCount  = this.leaseService.totalNonPaidCount;  // number
 
@@ -351,6 +353,23 @@ export class LeaseList implements OnInit {
       error: (err) => console.error('[EXPORT XLSX ERROR]:', err),
     });
   }
+
+  exportWord() {
+    const filters = this.buildExportFilters();
+    this.leaseService.downloadDOCX(filters).subscribe({
+      next: (blob) => {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `leases_${new Date().toISOString().slice(0,10)}.docx`;
+        document.body.appendChild(a);
+        a.click();
+        URL.revokeObjectURL(a.href);
+        a.remove();
+      },
+      error: (err) => console.error('[EXPORT DOCX ERROR]:', err),
+    });
+  }
+
 
 
 }

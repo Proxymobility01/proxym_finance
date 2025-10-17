@@ -202,6 +202,10 @@
   }
 }
 
+.text-warning { color: #f0ad4e; }
+.text-info    { color: #17a2b8; }
+
+
 .btn-nouveau:hover {
   background-color: var(--primary-dark);
   border-color: var(--primary-dark);

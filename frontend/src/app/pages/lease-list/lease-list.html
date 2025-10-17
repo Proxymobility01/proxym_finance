@@ -40,6 +40,35 @@
             </div>
           </div>
         </div>
+
+        <!-- 🆕 PÉNALITÉS (nombre) -->
+        <div class="stat-item">
+          <i class="fas fa-exclamation-triangle stat-icon text-warning"></i>
+          <div class="stat-content">
+            <small class="stat-label">Pénalités</small>
+            <div class="d-flex flex-column">
+              <div class="stat-value text-warning">
+                {{ totalPenalite() }}
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- 🆕 CONGÉS (nombre) -->
+        <div class="stat-item">
+          <i class="fas fa-umbrella-beach stat-icon text-info"></i>
+          <div class="stat-content">
+            <small class="stat-label">Congés</small>
+            <div class="d-flex flex-column">
+              <div class="stat-value text-info">
+                {{ totalConge() }}
+              </div>
+
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -49,6 +78,7 @@
       Payer un lease
     </button>
   </div>
+
 
   <!-- =======================
        Filtres (compactés)
@@ -114,6 +144,9 @@
             </button>
             <button class="btn btn-export" (click)="exportExcel()">
               <i class="fas fa-file-excel me-1"></i> Excel
+            </button>
+            <button class="btn btn-export" (click)="exportWord()">
+              <i class="fas fa-file-word me-1"></i> Word
             </button>
           </div>
         </div>

@@ -33,7 +33,8 @@ export class LeaseService {
   private readonly _totalNonPaidCount  = signal<number>(0);
   private readonly _totalOverallAmount = signal<number>(0);
   private readonly _totalOverallCount  = signal<number>(0);
-
+  private readonly _totalCongeCount     = signal<number>(0);
+  private readonly _totalPenaliteCount  = signal<number>(0);
   // Pagination backend (renvoyée par DRF)
   private readonly _backendCount    = signal<number>(0);
   private readonly _backendNext     = signal<string | null>(null);
@@ -50,8 +51,8 @@ export class LeaseService {
   readonly totalPaidCount     = this._totalPaidCount.asReadonly();
   readonly totalNonPaidAmount = this._totalNonPaidAmount.asReadonly();
   readonly totalNonPaidCount  = this._totalNonPaidCount.asReadonly();
-  readonly totalOverallAmount = this._totalOverallAmount.asReadonly();
-  readonly totalOverallCount  = this._totalOverallCount.asReadonly();
+  readonly totalCongeCount     = this._totalCongeCount.asReadonly();
+  readonly totalPenaliteCount  = this._totalPenaliteCount.asReadonly();
   private readonly _lastQueryKey = signal<string>('');
   readonly backendCount    = this._backendCount.asReadonly();
   readonly backendNext     = this._backendNext.asReadonly();
@@ -74,8 +75,6 @@ export class LeaseService {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   }
 
-
-
   fetchLeases(filters: LeaseFilters = {}, options: FetchOptions & { force?: boolean } = {}) {
     // mémorise les derniers filtres/options (avec défauts de pagination)
     const page     = options.page ?? this._currentPage();
@@ -95,28 +94,24 @@ export class LeaseService {
     if (filters.q)        qp.append('q', String(filters.q));
     if (filters.statut)   qp.append('statut', String(filters.statut));
     if (filters.paye_par) qp.append('paye_par', String(filters.paye_par));
-    if (filters.agence)  qp.append('agence', String(filters.agence));
+    if (filters.agence)   qp.append('agence', String(filters.agence));
 
     // --- date_concernee ---
     if (filters.date_concernee)        qp.append('date_concernee', filters.date_concernee);
     if (filters.date_concernee_after)  qp.append('date_concernee_after', filters.date_concernee_after);
     if (filters.date_concernee_before) qp.append('date_concernee_before', filters.date_concernee_before);
 
-    // --- created (par défaut = today si all !== true) ---
-    const shouldApplyCreated = !(options.all === true);
-    const created = filters.created ?? (shouldApplyCreated ? this.todayISO() : undefined);
-    if (created) qp.append('created', created);
-    if (shouldApplyCreated) {
-      if (filters.created_after)  qp.append('created_after',  filters.created_after);
-      if (filters.created_before) qp.append('created_before', filters.created_before);
-    }
+    // --- created (aucune valeur par défaut) ---
+    if (filters.created)         qp.append('created', filters.created);
+    if (filters.created_after)   qp.append('created_after', filters.created_after);
+    if (filters.created_before)  qp.append('created_before', filters.created_before);
 
     // --- pagination backend ---
     qp.append('page', String(page));
     qp.append('page_size', String(pageSize));
 
     const url = `${this.config.apiUrl}/lease/combined?${qp.toString()}`;
-    const key = `${url}|all=${!!options.all}`;
+    const key = `${url}|force=${!!options.force}`;
     if (!options.force && this._lastQueryKey() === key) {
       this._isLoadingLeases.set(false);
       return;
@@ -130,6 +125,8 @@ export class LeaseService {
         const paid     = totals?.paid ?? {};
         const nonPaid  = totals?.non_paid ?? {};
         const overall  = totals?.overall ?? {};
+        const conges    = totals?.conges ?? {};
+        const penalites = totals?.penalites ?? {};
 
         this._totalPaidAmount.set(Number(paid.amount ?? 0));
         this._totalPaidCount.set(Number(paid.count ?? 0));
@@ -137,6 +134,8 @@ export class LeaseService {
         this._totalNonPaidCount.set(Number(nonPaid.count ?? 0));
         this._totalOverallAmount.set(Number(overall.amount ?? 0));
         this._totalOverallCount.set(Number(overall.count ?? 0));
+        this._totalCongeCount.set(Number(conges.count ?? 0));
+        this._totalPenaliteCount.set(Number(penalites.count ?? 0));
 
         // --- META pagination ---
         this._backendCount.set(Number(res?.count ?? 0));
@@ -176,7 +175,6 @@ export class LeaseService {
       finalize(() => this._isLoadingLeases.set(false))
     ).subscribe();
   }
-
 
 // === HELPERS DE PAGINATION SERVEUR ===
   goToPageBackend(page: number) {
@@ -245,6 +243,27 @@ export class LeaseService {
     if (filters.created_before) qp.append('created_before', filters.created_before);
 
     const url = `${this.config.apiUrl}/lease/combined/export/xlsx?${qp.toString()}`;
+    return this.http.get(url, { responseType: 'blob' as const });
+  }
+
+  downloadDOCX(filters: CombinedExportFilters = {}) {
+    const qp = new URLSearchParams();
+
+    if (filters.q) qp.append('q', filters.q);
+    if (filters.statut) qp.append('statut', filters.statut);
+    if (filters.paye_par) qp.append('paye_par', filters.paye_par);
+    if (filters.station) qp.append('station', filters.station);
+
+    if (filters.date_concernee)        qp.append('date_concernee', filters.date_concernee);
+    if (filters.date_concernee_after)  qp.append('date_concernee_after', filters.date_concernee_after);
+    if (filters.date_concernee_before) qp.append('date_concernee_before', filters.date_concernee_before);
+
+    // created (mêmes règles que la liste/export CSV/XLSX)
+    if (filters.created)         qp.append('created', filters.created);
+    if (filters.created_after)   qp.append('created_after', filters.created_after);
+    if (filters.created_before)  qp.append('created_before', filters.created_before);
+
+    const url = `${this.config.apiUrl}/lease/combined/export/docx?${qp.toString()}`;
     return this.http.get(url, { responseType: 'blob' as const });
   }
 

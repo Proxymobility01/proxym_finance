@@ -1,20 +1,26 @@
 import csv
 import uuid
+from io import BytesIO
+from pathlib import Path
+
 from django.db.models.aggregates import Sum
 from django.db.models.expressions import F, Exists, OuterRef
 from django.db.models.fields import DecimalField
 from django.db.models.functions.comparison import Coalesce
-from django.http.response import HttpResponse
 from decimal import Decimal, ROUND_HALF_UP
-from datetime import datetime, timedelta, time 
+from datetime import  timedelta
 from django.conf import settings
 from django.db import transaction
+from django.db.models.functions.datetime import TruncDate
 from django.utils import timezone
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import  IsAuthenticated
 from django.db.models import Q, Value as V
+from openpyxl import Workbook
+from docxtpl import DocxTemplate
+from conge.models import Conge
 from penalite.models import Penalite, StatutPenalite
 from shared.models import StandardResultsSetPagination
 from .filters import PaiementLeaseFilter, NonPaiementLeaseFilter
@@ -208,6 +214,291 @@ def _sort_key(item: dict) -> datetime:
     return _to_aware_utc(item.get("created") or item.get("date_concernee"))
 
 
+
+
+class LeaseCombinedListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    # --- util arrondi 2 décimales ---
+    def _q2(self, val) -> Decimal:
+        try:
+            d = Decimal(val or 0)
+        except Exception:
+            d = Decimal(0)
+        return d.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+    def _parse_iso_date(self, s: str | None) -> date | None:
+        s = (s or "").strip()
+        if not s:
+            return None
+        try:
+            return datetime.fromisoformat(s).date()
+        except Exception:
+            return None
+
+    def _aggregate_paid(self, qs_paid):
+        """
+        Agrégat PAYE:
+          amount = SUM(montant_moto + montant_batt)
+          count  = nb de lignes
+        """
+        agg = qs_paid.aggregate(
+            total=Coalesce(
+                Sum(
+                    Coalesce(F("montant_moto"), V(0, output_field=DecimalField())) +
+                    Coalesce(F("montant_batt"), V(0, output_field=DecimalField()))
+                ),
+                V(0, output_field=DecimalField(max_digits=18, decimal_places=2)),
+            )
+        )
+        total = self._q2(agg["total"] or 0)
+        count = qs_paid.count()
+        return float(total), count
+
+    def _aggregate_non_paid(self, qs_np):
+        """
+        Agrégat NON_PAYE:
+          amount = somme des montants dus négatifs
+                   (-contrat.montant_par_paiement) + (-contrat_batt.montant_par_paiement)
+          count  = nb de lignes
+        Calcul en Python (dépend de champs liés + signe).
+        """
+        qs_np = qs_np.select_related("contrat_chauffeur", "contrat_chauffeur__contrat_batt")
+
+        total = Decimal("0.00")
+        count = 0
+        for pen in qs_np:
+            count += 1
+            contrat = pen.contrat_chauffeur
+            batt = getattr(contrat, "contrat_batt", None)
+            moto_due = -self._q2(getattr(contrat, "montant_par_paiement", 0))
+            batt_due = -self._q2(getattr(batt, "montant_par_paiement", 0) if batt else 0)
+            total += (moto_due + batt_due)
+
+        return float(self._q2(total)), count
+
+    def get(self, request, *args, **kwargs):
+
+        q = (request.GET.get("q") or "").strip()
+        statut = (request.GET.get("statut") or "").upper().strip()
+        paye_par = (request.GET.get("paye_par") or "").strip()
+        agence = (request.GET.get("station") or "").strip()
+
+        dc_eq = self._parse_iso_date(request.GET.get("date_concernee"))
+        dc_after = self._parse_iso_date(request.GET.get("date_concernee_after"))
+        dc_before = self._parse_iso_date(request.GET.get("date_concernee_before"))
+
+        cr_eq = self._parse_iso_date(request.GET.get("created"))
+        cr_after = self._parse_iso_date(request.GET.get("created_after"))
+        cr_before = self._parse_iso_date(request.GET.get("created_before"))
+
+        # -------- PAYÉS --------
+        paid_qs = (PaiementLease.objects
+                   .select_related(
+                       "contrat_chauffeur",
+                       "contrat_chauffeur__association_user_moto",
+                       "contrat_chauffeur__association_user_moto__validated_user",
+                       "contrat_chauffeur__association_user_moto__moto_valide",
+                       "user_agence",
+                       "employe",
+                   ))
+        paid_qs = PaiementLeaseFilter(request.GET, queryset=paid_qs).qs
+
+        if q:
+            paid_qs = paid_qs.filter(
+                Q(contrat_chauffeur__association_user_moto__validated_user__user_unique_id__icontains=q) |
+                Q(contrat_chauffeur__association_user_moto__validated_user__nom__icontains=q) |
+                Q(contrat_chauffeur__association_user_moto__validated_user__prenom__icontains=q) |
+                Q(contrat_chauffeur__association_user_moto__moto_valide__moto_unique_id__icontains=q) |
+                Q(contrat_chauffeur__association_user_moto__moto_valide__vin__icontains=q)
+            )
+        if paye_par := (request.GET.get("paye_par") or "").strip():
+            terms = [t.strip() for t in paye_par.split() if t.strip()]
+            q_paye_par = Q()
+            for term in terms:
+                q_paye_par |= (
+                        Q(employe__nom__icontains=term) |
+                        Q(employe__prenom__icontains=term) |
+                        Q(user_agence__nom__icontains=term) |
+                        Q(user_agence__prenom__icontains=term)
+                )
+
+            paid_qs = paid_qs.filter(q_paye_par)
+        if agence := (request.GET.get("agence") or "").strip():
+            terms = [t.strip() for t in agence.split() if t.strip()]
+            q_agence = Q()
+            for term in terms:
+                q_agence |= Q(agences__nom_agence__icontains=term)
+            paid_qs = paid_qs.filter(q_agence)
+        # -------- NON PAYÉS --------
+        np_qs_base = (Penalite.objects
+                 .select_related(
+                     "contrat_chauffeur",
+                     "contrat_chauffeur__association_user_moto",
+                     "contrat_chauffeur__association_user_moto__validated_user",
+                     "contrat_chauffeur__association_user_moto__moto_valide",
+                     "contrat_chauffeur__contrat_batt",
+                 )
+                 .filter(
+                    statut_penalite__in=[StatutPenalite.NON_PAYE,StatutPenalite.PAYE,StatutPenalite.PARTIELLEMENT_PAYE],
+                 ))
+
+        # optionnel : appliquer tes filtres “NonPaiementLeaseFilter” avant l’anti-join
+        np_qs_base = NonPaiementLeaseFilter(request.GET, queryset=np_qs_base).qs
+
+        # ✅ Anti-join : exclure les pénalités pour lesquelles un paiement de LEASE existe
+        np_qs = np_qs_base.annotate(
+            lease_paid=Exists(
+                PaiementLease.objects.filter(
+                    contrat_chauffeur=OuterRef("contrat_chauffeur_id"),
+                    date_concernee=OuterRef("date_paiement_manquee"),
+                )
+            )
+        ).filter(lease_paid=False)
+
+        # NB: NonPaiementLeaseFilter ne définit PAS 'created' → il ne s’applique pas ici
+        np_qs = NonPaiementLeaseFilter(request.GET, queryset=np_qs).qs
+
+        if q:
+            np_qs = np_qs.filter(
+                Q(contrat_chauffeur__association_user_moto__validated_user__user_unique_id__icontains=q) |
+                Q(contrat_chauffeur__association_user_moto__validated_user__nom__icontains=q) |
+                Q(contrat_chauffeur__association_user_moto__validated_user__prenom__icontains=q) |
+                Q(contrat_chauffeur__association_user_moto__moto_valide__moto_unique_id__icontains=q) |
+                Q(contrat_chauffeur__association_user_moto__moto_valide__vin__icontains=q)
+            )
+
+        # -------- AGRÉGATS (HORS PAGINATION) --------
+        total_paid, count_paid = self._aggregate_paid(paid_qs)
+        total_np, count_np = self._aggregate_non_paid(np_qs)
+        # =======================
+        #        CONGÉS
+        # =======================
+        def _day_bounds(d):
+            """Retourne (start_dt, end_dt) aware pour la date locale d."""
+            tz = timezone.get_current_timezone()
+            start = timezone.make_aware(datetime.combine(d, time.min), tz)
+            end = timezone.make_aware(datetime.combine(d, time.max), tz)
+            return start, end
+
+        conge_qs = (
+            Conge.objects
+            .select_related(
+                "contrat",
+                "contrat__association_user_moto",
+                "contrat__association_user_moto__validated_user",
+                "contrat__association_user_moto__moto_valide",
+            )
+        )
+
+        # recherche (q)
+        if q:
+            conge_qs = conge_qs.filter(
+                Q(contrat__association_user_moto__validated_user__user_unique_id__icontains=q) |
+                Q(contrat__association_user_moto__validated_user__nom__icontains=q) |
+                Q(contrat__association_user_moto__validated_user__prenom__icontains=q) |
+                Q(contrat__association_user_moto__moto_valide__moto_unique_id__icontains=q) |
+                Q(contrat__association_user_moto__moto_valide__vin__icontains=q)
+            )
+
+        # ---- filtre "date concernée" (inclusion/chevauchement) ----
+        # règle : un congé est compté si son intervalle [date_debut..date_fin]
+        #        chevauche la fenêtre demandée.
+        if dc_eq:
+            win_start, win_end = _day_bounds(dc_eq)
+            conge_qs = conge_qs.filter(date_fin__gte=win_start, date_debut__lte=win_end)
+        else:
+            if dc_after and dc_before:
+                start_dt, _ = _day_bounds(dc_after)
+                _, end_dt = _day_bounds(dc_before)
+                conge_qs = conge_qs.filter(date_fin__gte=start_dt, date_debut__lte=end_dt)
+            elif dc_after:
+                start_dt, _ = _day_bounds(dc_after)
+                conge_qs = conge_qs.filter(date_fin__gte=start_dt)
+            elif dc_before:
+                _, end_dt = _day_bounds(dc_before)
+                conge_qs = conge_qs.filter(date_debut__lte=end_dt)
+
+        # ⚠️ pas de filtre "created" ici
+        conge_count = conge_qs.count()
+
+        # =======================
+        #      PÉNALITÉS
+        # =======================
+        pen_count_qs = (Penalite.objects
+                        .select_related(
+            "contrat_chauffeur",
+            "contrat_chauffeur__association_user_moto",
+            "contrat_chauffeur__association_user_moto__validated_user",
+            "contrat_chauffeur__association_user_moto__moto_valide",
+        )
+                        .exclude(statut_penalite=StatutPenalite.ANNULEE)  # on ignore les annulées
+                        )
+
+        # recherche (q)
+        if q:
+            pen_count_qs = pen_count_qs.filter(
+                Q(contrat_chauffeur__association_user_moto__validated_user__user_unique_id__icontains=q) |
+                Q(contrat_chauffeur__association_user_moto__validated_user__nom__icontains=q) |
+                Q(contrat_chauffeur__association_user_moto__validated_user__prenom__icontains=q) |
+                Q(contrat_chauffeur__association_user_moto__moto_valide__moto_unique_id__icontains=q) |
+                Q(contrat_chauffeur__association_user_moto__moto_valide__vin__icontains=q)
+            )
+
+        # filtre "date concernée" = date du paiement manqué
+        if dc_eq:
+            pen_count_qs = pen_count_qs.filter(date_paiement_manquee=dc_eq)
+        else:
+            if dc_after and dc_before:
+                pen_count_qs = pen_count_qs.filter(date_paiement_manquee__range=(dc_after, dc_before))
+            elif dc_after:
+                pen_count_qs = pen_count_qs.filter(date_paiement_manquee__gte=dc_after)
+            elif dc_before:
+                pen_count_qs = pen_count_qs.filter(date_paiement_manquee__lte=dc_before)
+
+        # ⚠️ NE PAS filtrer par created ici
+        penalite_count = pen_count_qs.count()
+
+        # -------- META --------
+        meta = {
+            "totals": {
+                "paid": {"amount": total_paid, "count": count_paid},
+                "non_paid": {"amount": total_np, "count": count_np},
+                "conges": {"count": int(conge_count)},
+                "penalites": {"count": int(penalite_count)},
+            }
+        }
+
+        # -------- Sérialisation des listes --------
+        paid_data = LeasePaymentLiteSerializer(paid_qs, many=True).data
+        np_data = LeaseNonPayeLiteSerializer(np_qs, many=True).data
+
+        # -------- Filtre global 'statut' (sur les lignes) --------
+        if statut == "PAYE":
+            all_rows = list(paid_data)
+        elif statut == "NON_PAYE":
+            all_rows = list(np_data)
+        else:
+            all_rows = list(paid_data) + list(np_data)
+
+        # -------- Tri commun --------
+        def ts(item):
+            return _to_aware_utc(item.get("created") or item.get("date_concernee"))
+
+        all_rows.sort(key=ts, reverse=True)
+
+        # -------- Pagination --------
+        paginator = StandardResultsSetPagination()
+        page = paginator.paginate_queryset(all_rows, request, view=self)
+
+        response = paginator.get_paginated_response(page)
+        response.data["meta"] = meta
+        return response
+
+
+
+
 def build_combined_queryset(request):
     """
     Applique les mêmes filtres que la vue combinée, fusionne PAYE + NON_PAYE,
@@ -342,185 +633,10 @@ def build_combined_queryset(request):
 
     return all_rows, aggregates
 
-class LeaseCombinedListAPIView(APIView):
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
-
-    # --- util arrondi 2 décimales ---
-    def _q2(self, val) -> Decimal:
-        try:
-            d = Decimal(val or 0)
-        except Exception:
-            d = Decimal(0)
-        return d.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-
-    def _aggregate_paid(self, qs_paid):
-        """
-        Agrégat PAYE:
-          amount = SUM(montant_moto + montant_batt)
-          count  = nb de lignes
-        """
-        agg = qs_paid.aggregate(
-            total=Coalesce(
-                Sum(
-                    Coalesce(F("montant_moto"), V(0, output_field=DecimalField())) +
-                    Coalesce(F("montant_batt"), V(0, output_field=DecimalField()))
-                ),
-                V(0, output_field=DecimalField(max_digits=18, decimal_places=2)),
-            )
-        )
-        total = self._q2(agg["total"] or 0)
-        count = qs_paid.count()
-        return float(total), count
-
-    def _aggregate_non_paid(self, qs_np):
-        """
-        Agrégat NON_PAYE:
-          amount = somme des montants dus négatifs
-                   (-contrat.montant_par_paiement) + (-contrat_batt.montant_par_paiement)
-          count  = nb de lignes
-        Calcul en Python (dépend de champs liés + signe).
-        """
-        qs_np = qs_np.select_related("contrat_chauffeur", "contrat_chauffeur__contrat_batt")
-
-        total = Decimal("0.00")
-        count = 0
-        for pen in qs_np:
-            count += 1
-            contrat = pen.contrat_chauffeur
-            batt = getattr(contrat, "contrat_batt", None)
-            moto_due = -self._q2(getattr(contrat, "montant_par_paiement", 0))
-            batt_due = -self._q2(getattr(batt, "montant_par_paiement", 0) if batt else 0)
-            total += (moto_due + batt_due)
-
-        return float(self._q2(total)), count
-
-    def get(self, request, *args, **kwargs):
-
-        q = (request.GET.get("q") or "").strip()
-        statut = (request.GET.get("statut") or "").upper().strip()
-        paye_par = (request.GET.get("paye_par") or "").strip()
-        agence = (request.GET.get("station") or "").strip()
-
-        # -------- PAYÉS --------
-        paid_qs = (PaiementLease.objects
-                   .select_related(
-                       "contrat_chauffeur",
-                       "contrat_chauffeur__association_user_moto",
-                       "contrat_chauffeur__association_user_moto__validated_user",
-                       "contrat_chauffeur__association_user_moto__moto_valide",
-                       "user_agence",
-                       "employe",
-                   ))
-        paid_qs = PaiementLeaseFilter(request.GET, queryset=paid_qs).qs
-
-        if q:
-            paid_qs = paid_qs.filter(
-                Q(contrat_chauffeur__association_user_moto__validated_user__user_unique_id__icontains=q) |
-                Q(contrat_chauffeur__association_user_moto__validated_user__nom__icontains=q) |
-                Q(contrat_chauffeur__association_user_moto__validated_user__prenom__icontains=q) |
-                Q(contrat_chauffeur__association_user_moto__moto_valide__moto_unique_id__icontains=q) |
-                Q(contrat_chauffeur__association_user_moto__moto_valide__vin__icontains=q)
-            )
-        if paye_par := (request.GET.get("paye_par") or "").strip():
-            terms = [t.strip() for t in paye_par.split() if t.strip()]
-            q_paye_par = Q()
-            for term in terms:
-                q_paye_par |= (
-                        Q(employe__nom__icontains=term) |
-                        Q(employe__prenom__icontains=term) |
-                        Q(user_agence__nom__icontains=term) |
-                        Q(user_agence__prenom__icontains=term)
-                )
-
-            paid_qs = paid_qs.filter(q_paye_par)
-        if agence := (request.GET.get("agence") or "").strip():
-            terms = [t.strip() for t in agence.split() if t.strip()]
-            q_agence = Q()
-            for term in terms:
-                q_agence |= Q(agences__nom_agence__icontains=term)
-            paid_qs = paid_qs.filter(q_agence)
-        # -------- NON PAYÉS --------
-        np_qs_base = (Penalite.objects
-                 .select_related(
-                     "contrat_chauffeur",
-                     "contrat_chauffeur__association_user_moto",
-                     "contrat_chauffeur__association_user_moto__validated_user",
-                     "contrat_chauffeur__association_user_moto__moto_valide",
-                     "contrat_chauffeur__contrat_batt",
-                 )
-                 .filter(
-                    statut_penalite__in=[StatutPenalite.NON_PAYE,StatutPenalite.PAYE,StatutPenalite.PARTIELLEMENT_PAYE],
-                 ))
-
-        # optionnel : appliquer tes filtres “NonPaiementLeaseFilter” avant l’anti-join
-        np_qs_base = NonPaiementLeaseFilter(request.GET, queryset=np_qs_base).qs
-
-        # ✅ Anti-join : exclure les pénalités pour lesquelles un paiement de LEASE existe
-        np_qs = np_qs_base.annotate(
-            lease_paid=Exists(
-                PaiementLease.objects.filter(
-                    contrat_chauffeur=OuterRef("contrat_chauffeur_id"),
-                    date_concernee=OuterRef("date_paiement_manquee"),
-                )
-            )
-        ).filter(lease_paid=False)
-
-        # NB: NonPaiementLeaseFilter ne définit PAS 'created' → il ne s’applique pas ici
-        np_qs = NonPaiementLeaseFilter(request.GET, queryset=np_qs).qs
-
-        if q:
-            np_qs = np_qs.filter(
-                Q(contrat_chauffeur__association_user_moto__validated_user__user_unique_id__icontains=q) |
-                Q(contrat_chauffeur__association_user_moto__validated_user__nom__icontains=q) |
-                Q(contrat_chauffeur__association_user_moto__validated_user__prenom__icontains=q) |
-                Q(contrat_chauffeur__association_user_moto__moto_valide__moto_unique_id__icontains=q) |
-                Q(contrat_chauffeur__association_user_moto__moto_valide__vin__icontains=q)
-            )
-
-        # -------- AGRÉGATS (HORS PAGINATION) --------
-        total_paid, count_paid = self._aggregate_paid(paid_qs)
-        total_np, count_np = self._aggregate_non_paid(np_qs)
-        meta = {
-            "totals": {
-                "paid":     {"amount": total_paid, "count": count_paid},
-                "non_paid": {"amount": total_np,   "count": count_np},
-            }
-        }
-
-        # -------- Sérialisation des listes --------
-        paid_data = LeasePaymentLiteSerializer(paid_qs, many=True).data
-        np_data   = LeaseNonPayeLiteSerializer(np_qs, many=True).data
-
-
-
-            # -------- Filtre global 'statut' (appliqué AUX LIGNES, pas aux agrégats) --------
-        if statut == "PAYE":
-            all_rows = list(paid_data)
-        elif statut == "NON_PAYE":
-            all_rows = list(np_data)
-        else:
-            all_rows = list(paid_data) + list(np_data)
-
-        # -------- Tri commun (created desc, fallback date_concernee) --------
-        def ts(item):
-            return _to_aware_utc(item.get("created") or item.get("date_concernee"))
-
-        all_rows.sort(key=ts, reverse=True)
-
-        # -------- Pagination --------
-        paginator = StandardResultsSetPagination()
-        page = paginator.paginate_queryset(all_rows, request, view=self)
-
-        # injecter meta AU NIVEAU TOP (hors pagination)
-        response = paginator.get_paginated_response(page)
-        response.data["meta"] = meta
-        return response
-
-
-
+from django.http.response import HttpResponse
 # --- CSV ---
 class LeaseCombinedExportCSV(APIView):
+
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
 
@@ -556,7 +672,7 @@ class LeaseCombinedExportCSV(APIView):
 
 
 # --- XLSX ---
-from openpyxl import Workbook
+
 
 class LeaseCombinedExportXLSX(APIView):
     permission_classes = [IsAuthenticated]
@@ -606,4 +722,192 @@ class LeaseCombinedExportXLSX(APIView):
         )
         resp['Content-Disposition'] = f'attachment; filename="{filename}"'
         wb.save(resp)
+        return resp
+
+
+def _fmt_fcfa(n):
+    try:
+        d = Decimal(str(n or 0))
+    except Exception:
+        d = Decimal("0")
+    s = f"{d:,.2f}".replace(",", " ").replace(".00", "")
+    return f"{s} FCFA"
+
+def _fmt_date(d):
+    if not d:
+        return ""
+    if isinstance(d, str):
+        try:
+            d = datetime.fromisoformat(d)
+        except Exception:
+            return d
+    # si c'est un datetime -> date
+    if hasattr(d, "date"):
+        d = d.date()
+    return d.strftime("%d/%m/%Y")
+
+# --- nouveaux helpers filtres "date concernée" ---
+def _parse_iso_date(s: str | None) -> date | None:
+    s = (s or "").strip()
+    if not s:
+        return None
+    try:
+        return datetime.fromisoformat(s).date()
+    except Exception:
+        return None
+
+def _day_bounds(d: date):
+    """Bornes timezone-aware [d 00:00:00 .. d 23:59:59.999999] dans le TZ courant."""
+    tz = timezone.get_current_timezone()
+    start = timezone.make_aware(datetime.combine(d, time.min), tz)
+    end   = timezone.make_aware(datetime.combine(d, time.max), tz)
+    return start, end
+
+
+class LeaseCombinedExportDOCX(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def get(self, request, *args, **kwargs):
+        # 1) Même fusion payés/non-payés que la liste (avec ses filtres backend)
+        rows, _aggs = build_combined_queryset(request)
+
+        paid_rows, non_paid_rows = [], []
+        for r in rows or []:
+            row = {
+                "chauffeur":      r.get("chauffeur") or "",
+                "montant_moto":   _fmt_fcfa(r.get("montant_moto")),
+                "montant_batt":   _fmt_fcfa(r.get("montant_batt")),
+                "montant_total":  _fmt_fcfa(r.get("montant_total")),
+            }
+            if (r.get("source") or "").upper() == "PAYE":
+                paid_rows.append(row)
+            else:
+                non_paid_rows.append(row)
+
+        # 2) Filtres communs à conges/penalites : recherche + date_concernee (uniquement)
+        q = (request.GET.get("q") or "").strip()
+        dc_eq     = _parse_iso_date(request.GET.get("date_concernee"))
+        dc_after  = _parse_iso_date(request.GET.get("date_concernee_after"))
+        dc_before = _parse_iso_date(request.GET.get("date_concernee_before"))
+
+        # -----------------------
+        #        PÉNALITÉS
+        # -----------------------
+        pens = (Penalite.objects
+                .select_related(
+                    "contrat_chauffeur",
+                    "contrat_chauffeur__association_user_moto",
+                    "contrat_chauffeur__association_user_moto__validated_user",
+                )
+                .exclude(statut_penalite=StatutPenalite.ANNULEE)
+                )
+        if q:
+            pens = pens.filter(
+                Q(contrat_chauffeur__association_user_moto__validated_user__user_unique_id__icontains=q) |
+                Q(contrat_chauffeur__association_user_moto__validated_user__nom__icontains=q) |
+                Q(contrat_chauffeur__association_user_moto__validated_user__prenom__icontains=q)
+            )
+
+        # date_concernee pour pénalités = date_paiement_manquee (DateField)
+        if dc_eq:
+            pens = pens.filter(date_paiement_manquee=dc_eq)
+        else:
+            if dc_after and dc_before:
+                pens = pens.filter(date_paiement_manquee__range=(dc_after, dc_before))
+            elif dc_after:
+                pens = pens.filter(date_paiement_manquee__gte=dc_after)
+            elif dc_before:
+                pens = pens.filter(date_paiement_manquee__lte=dc_before)
+
+        penalites = []
+        for p in pens:
+            vu = getattr(getattr(p.contrat_chauffeur, "association_user_moto", None), "validated_user", None)
+            nom = " ".join(filter(None, [getattr(vu, "nom", ""), getattr(vu, "prenom", "")])).strip() if vu else ""
+            penalites.append({
+                "chauffeur": nom,
+                "montant":   _fmt_fcfa(p.montant_penalite),
+                "statut":    p.get_statut_penalite_display() if hasattr(p, "get_statut_penalite_display") else p.statut_penalite,
+            })
+
+        # -----------------------
+        #          CONGÉS
+        # -----------------------
+        conges_qs = (Conge.objects
+                     .select_related(
+                         "contrat",
+                         "contrat__association_user_moto",
+                         "contrat__association_user_moto__validated_user",
+                     ))
+
+        if q:
+            conges_qs = conges_qs.filter(
+                Q(contrat__association_user_moto__validated_user__user_unique_id__icontains=q) |
+                Q(contrat__association_user_moto__validated_user__nom__icontains=q) |
+                Q(contrat__association_user_moto__validated_user__prenom__icontains=q)
+            )
+
+        # Filtre "date concernée" = chevauchement de la fenêtre demandée
+        # [date_debut .. date_fin] chevauche [win_start .. win_end]
+        if dc_eq:
+            win_start, win_end = _day_bounds(dc_eq)
+            conges_qs = conges_qs.filter(date_fin__gte=win_start, date_debut__lte=win_end)
+        else:
+            if dc_after and dc_before:
+                start_dt, _ = _day_bounds(dc_after)
+                _, end_dt   = _day_bounds(dc_before)
+                conges_qs = conges_qs.filter(date_fin__gte=start_dt, date_debut__lte=end_dt)
+            elif dc_after:
+                start_dt, _ = _day_bounds(dc_after)
+                conges_qs = conges_qs.filter(date_fin__gte=start_dt)
+            elif dc_before:
+                _, end_dt = _day_bounds(dc_before)
+                conges_qs = conges_qs.filter(date_debut__lte=end_dt)
+
+        conges = []
+        for c in conges_qs:
+            vu = getattr(getattr(c.contrat, "association_user_moto", None), "validated_user", None)
+            nom = " ".join(filter(None, [getattr(vu, "nom", ""), getattr(vu, "prenom", "")])).strip() if vu else ""
+            conges.append({
+                "chauffeur": nom,
+                "debut":     _fmt_date(c.date_debut),
+                "fin":       _fmt_date(c.date_fin),
+                "reprise":   _fmt_date(getattr(c, "date_reprise", None)),
+                "jours":     int(getattr(c, "nb_jour", 0) or 0),
+            })
+
+        # 3) Titre
+        if dc_eq:
+            report_title = f"RECAPITULATIF DU {dc_eq.strftime('%d/%m/%Y')}"
+        elif dc_after and dc_before:
+            report_title = f"RECAPITULATIF DU {dc_after.strftime('%d/%m/%Y')} AU {dc_before.strftime('%d/%m/%Y')}"
+        elif dc_after:
+            report_title = f"RECAPITULATIF À PARTIR DU {dc_after.strftime('%d/%m/%Y')}"
+        elif dc_before:
+            report_title = f"RECAPITULATIF JUSQU'AU {dc_before.strftime('%d/%m/%Y')}"
+        else:
+            report_title = f"RECAPITULATIF DU {timezone.localdate().strftime('%d/%m/%Y')}"
+
+        # 4) Rendu du .docx (assure-toi que 'rapport-leases.docx' existe bien)
+        tpl_path = settings.BASE_DIR / "templates" / "rapport-leases.docx"
+        doc = DocxTemplate(str(tpl_path))
+        context = {
+            "report_title":  report_title,
+            "paid_rows":     paid_rows,
+            "non_paid_rows": non_paid_rows,
+            "penalites":     penalites,
+            "conges":        conges,
+        }
+        doc.render(context)
+
+        buf = BytesIO()
+        doc.save(buf)
+        buf.seek(0)
+
+        filename = f"leases_{timezone.localtime().strftime('%Y%m%d_%H%M%S')}.docx"
+        resp = HttpResponse(
+            buf.getvalue(),
+            content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        )
+        resp["Content-Disposition"] = f'attachment; filename="{filename}"'
         return resp

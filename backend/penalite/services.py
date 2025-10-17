@@ -18,9 +18,15 @@ PENALITE_LEGERE = 2000
 PENALITE_GRAVE  = 5000
 
 
+def is_sunday(d) -> bool:
+    """True si la date (date ou datetime) est un dimanche."""
+    # d peut être date ou datetime
+    wk = d.weekday() if isinstance(d, datetime) else d.weekday()
+    return wk == 6
+
 def _deadline_noon_from_jour(jour: date):
     tz = timezone.get_current_timezone()
-    return timezone.make_aware(datetime.combine(jour + timedelta(days=1), time(hour=18)), tz)
+    return timezone.make_aware(datetime.combine(jour + timedelta(days=1), time(hour=12)), tz)
 
 
 def _limit_14h_from_jour(jour: date):
@@ -83,6 +89,7 @@ def apply_penalties_for_now(force_window: str | None = None) -> dict:
             current_day = contrat.date_concernee or today
 
             while current_day <= today:
+
                 deadline = _deadline_noon_from_jour(current_day)
                 if now < deadline:
                     break
@@ -203,3 +210,5 @@ def apply_penalties_for_now(force_window: str | None = None) -> dict:
     }
     logger.info("[PENALITES] %s -> %s", window, res)
     return res
+
+
