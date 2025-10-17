@@ -1,7 +1,7 @@
 import csv
 import uuid
 from io import BytesIO
-from pathlib import Path
+
 
 from django.db.models.aggregates import Sum
 from django.db.models.expressions import F, Exists, OuterRef
@@ -11,7 +11,6 @@ from decimal import Decimal, ROUND_HALF_UP
 from datetime import  timedelta
 from django.conf import settings
 from django.db import transaction
-from django.db.models.functions.datetime import TruncDate
 from django.utils import timezone
 from rest_framework.views import APIView
 from rest_framework.response import Response
