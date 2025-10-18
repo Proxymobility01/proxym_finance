@@ -1,12 +1,8 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { catchError, finalize, map, of, tap } from 'rxjs';
-import { EventInput } from '@fullcalendar/core';
-
 import { API_CONFIG, ApiConfig } from '../core/api-config.token';
 import {ChauffeurCalendrierItem, PaginatedResponse} from '../models/calendrier.model';
-import {toCalendarEvents} from '../shared/utils';
-
 export type FetchOptions = {
   page?: number;
   pageSize?: number;
@@ -146,31 +142,6 @@ export class CalendrierPaiementService {
     this.fetchCalendrier({ page: 1, search: term });
   }
 
-  // =============================
-  //   HELPERS FullCalendar
-  // =============================
-  /** Tous les événements (paiements/congés) pour tous les contrats. */
-  readonly eventsAll = computed<EventInput[]>(() => {
-    const items = this._items();
-    if (!items?.length) return [];
-    return items.flatMap((it) => toCalendarEvents(it));
-  });
 
-  /** Événements filtrés par contrat. */
-  eventsByContrat(contratId: number | null | undefined): EventInput[] {
-    const all = this.eventsAll();
-    if (!contratId) return all;
-    return all.filter((e) => (e.extendedProps as any)?.contratId === contratId);
-  }
 
-  /** Événements dans une plage [fromISO, toISO]. */
-  eventsInRange(fromISO: string, toISO: string, contratId?: number): EventInput[] {
-    const from = new Date(fromISO);
-    const to = new Date(toISO);
-    return this.eventsByContrat(contratId).filter((ev) => {
-      if (!ev.start) return false;
-      const d = new Date(ev.start as string);
-      return d >= from && d <= to;
-    });
-  }
 }
