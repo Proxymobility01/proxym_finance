@@ -1,0 +1,281 @@
+/* Barre d'actions - Simple */
+.toolbar {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.search-input {
+  padding: 0.5rem 0.75rem;
+  flex: 1 1 280px;
+  max-width: 400px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family: var(--font-family-body), sans-serif;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--text-secondary);
+}
+
+.spacer {
+  flex: 1;
+}
+
+.summary {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.error {
+  color: #dc3545;
+}
+
+.loading {
+  color: var(--primary-color);
+}
+
+/* Carte contrat - Simple */
+.contract-card {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  background-color: var(--card-bg);
+}
+
+/* Header du contrat */
+.contract-header {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.person .name {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text-color);
+}
+
+.person .uid {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 0.2rem;
+}
+
+/* Switch année - Simple */
+.year-switch {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.year-switch .year {
+  font-weight: 700;
+  font-size: 1rem;
+  min-width: 3.5rem;
+  text-align: center;
+  color: var(--text-color);
+}
+
+.year-switch button {
+  background: none;
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.year-switch button:hover {
+  background-color: var(--bg-secondary);
+}
+
+/* Légende - Simple */
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.dot {
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  margin-right: 0.3rem;
+}
+
+.dot-pay {
+  background-color: #16a34a;
+}
+
+.dot-off {
+  background-color: #dc2626;
+}
+
+.totals {
+  color: var(--text-color);
+}
+
+.totals b {
+  font-weight: 600;
+}
+
+/* Grille année */
+.year-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 1100px) {
+  .year-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 720px) {
+  .year-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Carte mois - Simple */
+.month {
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 0.6rem;
+  background-color: var(--bg-color);
+}
+
+.month-title {
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-color);
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Calendrier */
+.week-header,
+.week-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.15rem;
+  align-items: center;
+}
+
+.cell {
+  text-align: center;
+  font-size: 0.75rem;
+  padding: 0.25rem 0;
+}
+
+.cell.head {
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  padding: 0.3rem 0;
+}
+
+.cell.day {
+  border: 1px solid var(--border-color);
+  min-height: 1.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-color);
+}
+
+.cell.day.empty {
+  background-color: var(--bg-secondary);
+  border-color: var(--bg-secondary);
+  opacity: 0.4;
+}
+
+.cell.day.sun {
+  color: #dc2626;
+}
+
+.cell.day.today {
+  outline: 2px solid var(--primary-color);
+  outline-offset: -2px;
+  font-weight: 600;
+}
+
+/* États */
+.cell.day.paid {
+  background-color: #16a34a;
+  color: #fff;
+  border-color: #16a34a;
+}
+
+.cell.day.off {
+  background-color: #dc2626;
+  color: #fff;
+  border-color: #dc2626;
+}
+
+/* Ancre */
+.infinite-anchor {
+  height: 1px;
+  margin-top: 1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .contract-header {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .person {
+    text-align: center;
+  }
+
+  .year-switch,
+  .legend {
+    justify-content: center;
+  }
+
+  .search-input {
+    max-width: 100%;
+  }
+
+  .summary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .contract-card {
+    padding: 0.75rem;
+  }
+
+  .month {
+    padding: 0.5rem;
+  }
+
+  .cell.day {
+    min-height: 1.6rem;
+    font-size: 0.7rem;
+  }
+}

@@ -9,6 +9,7 @@ import { LeaseList } from './pages/lease-list/lease-list';
 import { PenaliteList } from './pages/penalite-list/penalite-list';
 import {authGuard} from './core/auth/auth-guard';
 import {NotFound} from './pages/not-found/not-found';
+import {Calendrier} from './pages/calendrier/calendrier';
 
 
 export const routes: Routes = [
@@ -26,6 +27,7 @@ export const routes: Routes = [
       { path: 'conges', component: CongeList },
       { path: 'paiements/contrats', component: LeaseList },
       { path: 'paiements/penalites', component: PenaliteList },
+      {path: 'calendrier', component: Calendrier}
     ],
   },
 

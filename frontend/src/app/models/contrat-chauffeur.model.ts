@@ -58,5 +58,3 @@ export const CONTRACT_VALIDATION = {
   MAX_MONEY_LEN: 15,
   MAX_FILE_TOKEN: 150
 } as const;
-
-

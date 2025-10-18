@@ -1,0 +1,74 @@
+<div class="toolbar">
+  <input
+    type="text"
+    class="search-input"
+    placeholder="Rechercher chauffeur (nom / prénom / ID) — recherche automatique"
+    [ngModel]="search()"
+    (ngModelChange)="onSearchChange($event)"
+  />
+
+  <div class="spacer"></div>
+
+  <div class="summary">
+    @if (error()) { <span class="error">{{ error() }}</span> }
+    @if (isLoading()) { <span class="loading">Chargement…</span> }
+    <span>Total contrats : {{ count() | number }}</span>
+  </div>
+</div>
+
+<!-- Stack des calendriers : un par contrat -->
+@for (vm of viewModels(); track vm.contratId) {
+  <section class="contract-card">
+    <header class="contract-header">
+      <div class="person">
+        <div class="name">{{ vm.prenom }} {{ vm.nom }}</div>
+        <div class="uid">#{{ vm.userId }}</div>
+      </div>
+      <div class="year-switch">
+        <button (click)="yearMinus(vm.contratId)">← {{ vm.year - 1 }}</button>
+        <div class="year">{{ vm.year }}</div>
+        <button (click)="yearPlus(vm.contratId)">{{ vm.year + 1 }} →</button>
+      </div>
+      <div class="legend">
+        <span class="dot dot-pay"></span> Payé
+        <span class="dot dot-off"></span> Congé
+        <span class="totals">Payés: <b>{{ vm.totals.payes }}</b> &nbsp;|&nbsp; Congés: <b>{{ vm.totals.conges }}</b></span>
+      </div>
+    </header>
+
+    <!-- Grille 12 mois -->
+    <div class="year-grid">
+      @for (month of vm.months; track month.monthIndex) {
+        <div class="month">
+          <div class="month-title">{{ month.monthLabel }}</div>
+          <div class="week-header">
+            @for (lbl of weekLabels; track lbl) {
+              <div class="cell head">{{ lbl }}</div>
+            }
+          </div>
+
+          @for (week of month.weeks; track $index) {
+            <div class="week-row">
+              @for (cell of week; track $index) {
+                <div
+                  class="cell day"
+                  [class.empty]="!cell.d"
+                  [class.paid]="cell.isPaid"
+                  [class.off]="cell.isOff"
+                  [class.sun]="cell.isSunday"
+                  [class.today]="cell.isToday"
+                  title="{{ cell.iso || '' }}"
+                >
+                  {{ cell.d || '' }}
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </section>
+}
+
+<div #infiniteAnchor class="infinite-anchor"></div>
+

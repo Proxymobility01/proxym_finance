@@ -12,6 +12,6 @@ urlpatterns = [
     path("lease/combined/export/xlsx", LeaseCombinedExportXLSX.as_view(), name="lease-combined-export-excel"),
     path("lease/combined/export/csv", LeaseCombinedExportCSV.as_view(), name="lease-combined-export-csv"),
     path("lease/combined/export/docx", LeaseCombinedExportDOCX.as_view(), name="lease-combined-export-docx"),
-    path("lease/paiements/calendrier/", CalendrierPaiementsAPIView.as_view(), name="calendrier-paiements"),
+    path("lease/paiements/calendrier", CalendrierPaiementsAPIView.as_view(), name="calendrier-paiements"),
 
 ]

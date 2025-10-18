@@ -11,11 +11,10 @@ from decimal import Decimal, ROUND_HALF_UP
 from datetime import  timedelta
 from django.conf import settings
 from django.db import transaction
+from django.db.models.functions.datetime import TruncDate
 from django.utils import timezone
-from rest_framework.views import APIView
-from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import  IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.db.models import Q, Value as V
 from openpyxl import Workbook
 from docxtpl import DocxTemplate
@@ -36,7 +35,7 @@ from datetime import date, timedelta
 from django.db.models import Q
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.pagination import PageNumberPagination
+
 
 
 
@@ -920,63 +919,6 @@ class LeaseCombinedExportDOCX(APIView):
         return resp
 
 
-
-
-# ============================================================
-#     CALENDRIER DES PAIEMENTS PAR CHAUFFEUR (PAGINÉ + FILTRE)
-# ============================================================
-
-"""
-### 📘 Documentation de l'API : /api/lease/paiements/calendrier/
-#### Description :
-Cette API retourne, pour chaque chauffeur (contrat actif ou terminé),
-un résumé de ses paiements et jours d'absence calculés à partir du champ `created`
-dans la table `PaiementLease`.
-
-#### Fonctionnalités :
-- Liste paginée des contrats chauffeurs (5 par page par défaut)
-- Filtrage dynamique avec le paramètre `?search=` (par nom, prénom ou ID unique)
-- Chaque chauffeur contient :
-  - Les dates payées (`paiements`)
-  - Les dates manquées (`conges`, hors dimanches)
-  - Un résumé (`resume`) avec total de jours, jours payés, jours de congé
-
-#### Exemple d'appel :
-GET /api/lease/paiements/calendrier/?search=lionel&page=2
-
-#### Exemple de réponse :
-{
-  "count": 12,
-  "next": "http://127.0.0.1:8000/api/lease/paiements/calendrier/?page=3",
-  "previous": "http://127.0.0.1:8000/api/lease/paiements/calendrier/?page=1",
-  "results": [
-    {
-      "contrat": {
-        "id": 8,
-        "nom_chauffeur": "MOUAKA",
-        "prenom_chauffeur": "John",
-        "user_unique_id": "UserPro202412181"
-      },
-      "paiements": ["2025-09-01", "2025-09-03"],
-      "conges": ["2025-09-02", "2025-09-04", ...],
-      "resume": {
-        "total_jours": 35,
-        "jours_payes": 20,
-        "jours_conges": 15
-      }
-    }
-  ]
-}
-"""
-
-
-# Pagination DRF standard personnalisée
-class StandardResultsSetPagination(PageNumberPagination):
-    page_size = 5  # ✅ 5 calendriers par page
-    page_size_query_param = "page_size"
-    max_page_size = 50
-
-
 class CalendrierPaiementsAPIView(APIView):
     """
     🔹 API calendrier global des paiements (par chauffeur)
@@ -1073,3 +1015,6 @@ class CalendrierPaiementsAPIView(APIView):
 
         # --- Retour paginé
         return paginator.get_paginated_response(results)
+
+
+
