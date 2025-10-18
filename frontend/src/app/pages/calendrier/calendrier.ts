@@ -24,7 +24,8 @@ type DayCell = {
   isOff: boolean;
   isSunday: boolean;
   isToday: boolean;
-  paiementCount?: number; // ➕ nombre de paiements ce jour
+  paiementCount?: number;
+  isMultiple?: boolean;
 };
 
 type MonthView = {
@@ -225,7 +226,8 @@ export class Calendrier implements OnInit, AfterViewInit, OnDestroy {
         isOff,
         isSunday: sunday,
         isToday,
-        paiementCount: count > 1 ? count : undefined, // ➕ affiche seulement si >1
+        paiementCount: count > 1 ? count : undefined,
+        isMultiple: count >= 2,
       };
 
       dayNum++;

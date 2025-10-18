@@ -139,6 +139,24 @@
   margin-top: 0.25rem;
 }
 
+.cell.day.multi {
+  background-color: #f59e0b;
+  color: #fff;
+  border-color: #f59e0b;
+  position: relative;
+}
+
+.multi-count {
+  font-size: 0.7em;
+  font-weight: 600;
+  color: #fff;
+  margin-left: 3px;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 0 4px;
+  border-radius: 3px;
+}
+
+
 /* Switch année */
 .year-switch {
   display: flex;
