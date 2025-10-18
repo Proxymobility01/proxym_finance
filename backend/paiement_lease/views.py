@@ -925,6 +925,7 @@ class CalendrierPaiementsAPIView(APIView):
     🔹 API calendrier global des paiements (par chauffeur)
     - Liste paginée de tous les chauffeurs avec résumé de leurs paiements et congés.
     - Inclut `paiements_par_jour` pour les jours où il y a eu >= 2 paiements.
+    - Les congés sont calculés entre la première et la dernière date de paiement.
     """
 
     def get(self, request, *args, **kwargs):
@@ -947,15 +948,11 @@ class CalendrierPaiementsAPIView(APIView):
         contrats_page = paginator.paginate_queryset(contrats, request, view=self)
 
         results = []
-        today = date.today()
 
         for contrat in contrats_page:
             chauffeur = getattr(contrat.association_user_moto, "validated_user", None)
-            if not contrat.date_debut:
+            if not chauffeur:
                 continue
-
-            date_debut = contrat.date_debut
-            date_fin = today
 
             # =============================
             # 🟢 Paiements
@@ -967,25 +964,29 @@ class CalendrierPaiementsAPIView(APIView):
                 .values_list("created", flat=True)
             )
 
-            # Convertir les timestamps en dates
             paiement_dates = [p.date() for p in paiements_qs if p]
+            if not paiement_dates:
+                # Aucun paiement → rien à calculer
+                continue
 
-            # Compter les occurrences
+            # Compte les paiements par jour
             count_by_date = Counter(paiement_dates)
-
-            # Extraire les jours uniques (pour jours_payes)
             jours_payes = sorted(count_by_date.keys())
-
-            # 🔸 Extraire uniquement ceux avec 2+ paiements
-            paiements_par_jour = {
-                d.strftime("%Y-%m-%d"): c for d, c in count_by_date.items() if c >= 2
-            }
-
             jours_payes_set = set(jours_payes)
+
+            # 🔸 Jours avec >= 2 paiements
+            paiements_par_jour = {
+                d.strftime("%Y-%m-%d"): c
+                for d, c in count_by_date.items()
+                if c >= 2
+            }
 
             # =============================
             # 🔵 Calcul des congés
             # =============================
+            date_debut = min(jours_payes)
+            date_fin = max(jours_payes)
+
             jours_total = []
             current = date_debut
             while current <= date_fin:
@@ -1006,7 +1007,7 @@ class CalendrierPaiementsAPIView(APIView):
             total_jours = len([j for j in jours_total if j.weekday() != 6])
             total_payes = len(jours_payes_iso)
             total_conges = len(jours_manques)
-            total_paiements = sum(count_by_date.values())  # total brut de paiements
+            total_paiements = sum(count_by_date.values())
 
             # =============================
             # 🧩 Bloc final
@@ -1020,7 +1021,7 @@ class CalendrierPaiementsAPIView(APIView):
                 },
                 "paiements": jours_payes_iso,
                 "conges": jours_manques,
-                "paiements_par_jour": paiements_par_jour,  # ✅ inclut uniquement les doublons
+                "paiements_par_jour": paiements_par_jour,  # ✅ doublons uniquement
                 "resume": {
                     "total_jours": total_jours,
                     "jours_payes": total_payes,
