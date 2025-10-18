@@ -58,7 +58,7 @@
           <div class="legend">
             <span class="dot dot-pay"></span> Payé
             <span class="dot dot-off"></span> Congé
-            <span class="dot dot-today"></span> Aujourd’hui
+            <span class="dot dot-multi"></span> Paiement multiple
             <span class="totals">
                 Jours payés: <b>{{ vm.totals.payes }}</b> |
                 Congés: <b>{{ vm.totals.conges }}</b> |
@@ -87,7 +87,7 @@
                     <div
                       class="cell day"
                       [class.empty]="!cell.d"
-                      [class.paid]="cell.isPaid"
+                      [class.paid]="cell.isPaid && !cell.isMultiple"
                       [class.off]="cell.isOff"
                       [class.sun]="cell.isSunday"
                       [class.today]="cell.isToday"

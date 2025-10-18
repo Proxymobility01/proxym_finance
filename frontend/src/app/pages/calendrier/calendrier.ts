@@ -218,6 +218,7 @@ export class Calendrier implements OnInit, AfterViewInit, OnDestroy {
       const isOff = !isPaid && off.has(iso);
       const isToday = this.isTodayUTC(d);
       const count = paiementsCount[iso] || 0;
+      const isMultiple = count >= 2;
 
       week[col] = {
         iso,
@@ -227,7 +228,7 @@ export class Calendrier implements OnInit, AfterViewInit, OnDestroy {
         isSunday: sunday,
         isToday,
         paiementCount: count > 1 ? count : undefined,
-        isMultiple: count >= 2,
+        isMultiple,
       };
 
       dayNum++;

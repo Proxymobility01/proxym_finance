@@ -1,4 +1,7 @@
+.container-fluid {
+  padding: 2rem 1.5rem;
 
+}
 
 /* Barre d'actions */
 .toolbar {
@@ -144,6 +147,9 @@
   color: #fff;
   border-color: #f59e0b;
   position: relative;
+}
+.dot-multi {
+  background-color: #f59e0b; /* orange */
 }
 
 .multi-count {
