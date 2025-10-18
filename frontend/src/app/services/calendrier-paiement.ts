@@ -85,19 +85,24 @@ export class CalendrierPaiementService {
             ...it,
             paiements: Array.isArray(it.paiements) ? it.paiements : [],
             conges: Array.isArray(it.conges) ? it.conges : [],
+            paiements_par_jour: it.paiements_par_jour ?? {}, // 👈 nouveau champ
+            resume: {
+              total_jours: it.resume?.total_jours ?? 0,
+              jours_payes: it.resume?.jours_payes ?? 0,
+              jours_conges: it.resume?.jours_conges ?? 0,
+              total_paiements: it.resume?.total_paiements ?? Object.values(it.paiements_par_jour ?? {}).reduce((a, b) => a + b, 0),
+            },
           }));
+
           if (append && page > 1) {
-            // ➕ concaténation
             this._items.set([...this._items(), ...normalized]);
           } else {
-            // ➡️ remplacement (page 1 ou recherche)
             this._items.set(normalized);
           }
 
           this._currentPage.set(page);
           this._pageSize.set(pageSize);
           this._searchTerm.set(search);
-
         }),
         catchError((err) => {
           const msg =

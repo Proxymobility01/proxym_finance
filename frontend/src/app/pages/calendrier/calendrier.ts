@@ -1,3 +1,5 @@
+
+
 import {
   Component,
   OnInit,
@@ -12,9 +14,8 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import {CalendrierPaiementService} from '../../services/calendrier-paiement';
-import {ChauffeurCalendrierItem} from '../../models/calendrier.model';
-
+import { CalendrierPaiementService } from '../../services/calendrier-paiement';
+import { ChauffeurCalendrierItem } from '../../models/calendrier.model';
 
 type DayCell = {
   iso: string | null;
@@ -23,6 +24,7 @@ type DayCell = {
   isOff: boolean;
   isSunday: boolean;
   isToday: boolean;
+  paiementCount?: number; // ➕ nombre de paiements ce jour
 };
 
 type MonthView = {
@@ -55,7 +57,7 @@ export class Calendrier implements OnInit, AfterViewInit, OnDestroy {
   infiniteAnchor!: ElementRef<HTMLDivElement>;
   private io?: IntersectionObserver;
 
-  // Recherche (debounce)
+  // Recherche dynamique avec debounce
   search = signal<string>('');
   private searchTimer: any = null;
   onSearchChange(value: string) {
@@ -66,34 +68,37 @@ export class Calendrier implements OnInit, AfterViewInit, OnDestroy {
     }, 300);
   }
 
-  // Année par contrat
+  // Année par contrat (signal)
   private yearByContrat = signal<Map<number, number>>(new Map());
 
   private readonly monthLabels = [
-    'Janvier','Février','Mars','Avril','Mai','Juin',
-    'Juillet','Août','Septembre','Octobre','Novembre','Décembre',
+    'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+    'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
   ];
-  readonly weekLabels = ['L','M','M','J','V','S','D'];
+  readonly weekLabels = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
-  // Exposition service
+  // Expositions du service
   readonly items = this.service.items;
   readonly isLoading = this.service.isLoading;
   readonly error = this.service.error;
   readonly count = this.service.backendCount;
   readonly currentPage = this.service.currentPage;
-  readonly hasMore = this.service.hasMore; // <-- utile si tu l’utilises dans le template
+  readonly hasMore = this.service.hasMore;
 
-  // VM annuelle par contrat
+  // Vue annuelle calculée pour chaque contrat
   readonly viewModels = computed<ContratYearVM[]>(() => {
     const items = this.items();
     if (!items?.length) return [];
     return items.map((it) => this.buildYearVM(it, this.getYearForContrat(it.contrat.id)));
   });
 
+  // =============================
+  //          CYCLES DE VIE
+  // =============================
   ngOnInit(): void {
     this.service.fetchCalendrier();
 
-    // Initialise l’année courante pour les nouveaux contrats
+    // Initialiser l’année courante pour les nouveaux contrats
     effect(() => {
       const items = this.items();
       if (!items?.length) return;
@@ -101,7 +106,6 @@ export class Calendrier implements OnInit, AfterViewInit, OnDestroy {
       const map = new Map(this.yearByContrat());
       let changed = false;
 
-      // (Optionnel) réinitialiser la map aux ids courants pour éviter qu’elle grossisse
       const currentIds = new Set(items.map(i => i.contrat.id));
       for (const key of map.keys()) {
         if (!currentIds.has(key)) { map.delete(key); changed = true; }
@@ -115,12 +119,13 @@ export class Calendrier implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
+    // Infinite scroll
     this.io = new IntersectionObserver(
       (entries) => {
         const entry = entries[0];
         if (!entry?.isIntersecting) return;
         if (this.service.isLoading() || !this.service.hasMore()) return;
-        this.service.nextPage(); // append next page
+        this.service.fetchCalendrier({ page: this.service.currentPage() + 1, append: true });
       },
       { root: null, rootMargin: '600px 0px', threshold: 0.01 }
     );
@@ -134,28 +139,41 @@ export class Calendrier implements OnInit, AfterViewInit, OnDestroy {
     if (this.searchTimer) clearTimeout(this.searchTimer);
   }
 
-  // Helpers année
+  // =============================
+  //        YEAR HANDLERS
+  // =============================
   getYearForContrat(contratId: number): number {
     return this.yearByContrat().get(contratId) ?? new Date().getFullYear();
   }
+
   prevYear(contratId: number) {
     const map = new Map(this.yearByContrat());
     map.set(contratId, this.getYearForContrat(contratId) - 1);
     this.yearByContrat.set(map);
   }
+
   nextYear(contratId: number) {
     const map = new Map(this.yearByContrat());
     map.set(contratId, this.getYearForContrat(contratId) + 1);
     this.yearByContrat.set(map);
   }
 
-  // VM builders
+  // =============================
+  //     CONSTRUCTION DU MODÈLE
+  // =============================
   private buildYearVM(item: ChauffeurCalendrierItem, year: number): ContratYearVM {
     const paidSet = new Set(item.paiements?.filter(Boolean) ?? []);
-    const offSet  = new Set(item.conges?.filter(Boolean) ?? []);
+    const offSet = new Set(item.conges?.filter(Boolean) ?? []);
+    const paiementsCount = item.paiements_par_jour ?? {}; // ✅ nouveau
+
+
     const months: MonthView[] = [];
-    for (let m = 0; m < 12; m++) months.push(this.buildMonthView(year, m, paidSet, offSet));
+    for (let m = 0; m < 12; m++) {
+      months.push(this.buildMonthView(year, m, paidSet, offSet, paiementsCount));
+    }
+
     const totals = this.computeYearTotals(year, paidSet, offSet);
+
     return {
       contratId: item.contrat.id,
       userId: item.contrat.user_unique_id,
@@ -172,6 +190,7 @@ export class Calendrier implements OnInit, AfterViewInit, OnDestroy {
     monthIndex: number,
     paid: Set<string>,
     off: Set<string>,
+    paiementsCount: Record<string, number> = {}, // ✅ nouveau paramètre
   ): MonthView {
     const monthLabel = this.monthLabels[monthIndex];
     const first = new Date(Date.UTC(year, monthIndex, 1));
@@ -191,18 +210,29 @@ export class Calendrier implements OnInit, AfterViewInit, OnDestroy {
       const iso = this.toISO(d);
       const sunday = d.getUTCDay() === 0;
       const isPaid = paid.has(iso);
-      const isOff  = !isPaid && off.has(iso);
+      const isOff = !isPaid && off.has(iso);
       const isToday = this.isTodayUTC(d);
+      const count = paiementsCount[iso] || 0;
 
-      week[col] = { iso, d: dayNum, isPaid, isOff, isSunday: sunday, isToday };
+      week[col] = {
+        iso,
+        d: dayNum,
+        isPaid,
+        isOff,
+        isSunday: sunday,
+        isToday,
+        paiementCount: count > 1 ? count : undefined, // ➕ affiche seulement si >1
+      };
 
-      dayNum++; col++;
+      dayNum++;
+      col++;
       if (col > 6) {
         weeks.push(week);
         week = Array.from({ length: 7 }, () => this.emptyCell());
         col = 0;
       }
     }
+
     if (col !== 0) {
       for (let c = col; c < 7; c++) week[c] = this.emptyCell();
       weeks.push(week);
@@ -214,7 +244,7 @@ export class Calendrier implements OnInit, AfterViewInit, OnDestroy {
 
   private computeYearTotals(year: number, paid: Set<string>, off: Set<string>) {
     const start = Date.UTC(year, 0, 1);
-    const end   = Date.UTC(year, 11, 31);
+    const end = Date.UTC(year, 11, 31);
     let payes = 0, conges = 0;
     for (let t = start; t <= end; t += 24 * 3600 * 1000) {
       const iso = this.toISO(new Date(t));
@@ -224,6 +254,9 @@ export class Calendrier implements OnInit, AfterViewInit, OnDestroy {
     return { payes, conges };
   }
 
+  // =============================
+  //            UTILS
+  // =============================
   private toISO(d: Date): string {
     const y = d.getUTCFullYear();
     const m = (d.getUTCMonth() + 1).toString().padStart(2, '0');
@@ -241,10 +274,17 @@ export class Calendrier implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private emptyCell(): DayCell {
-    return { iso: null, d: null, isPaid: false, isOff: false, isSunday: false, isToday: false };
+    return {
+      iso: null,
+      d: null,
+      isPaid: false,
+      isOff: false,
+      isSunday: false,
+      isToday: false,
+    };
   }
 
-  // Helpers pour template
+  // Helpers pour le template
   yearFor(contratId: number) { return this.getYearForContrat(contratId); }
   yearMinus(contratId: number) { this.prevYear(contratId); }
   yearPlus(contratId: number) { this.nextYear(contratId); }

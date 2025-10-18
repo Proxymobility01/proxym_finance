@@ -1,5 +1,6 @@
 import csv
 import uuid
+from collections import Counter
 from io import BytesIO
 
 
@@ -923,20 +924,16 @@ class CalendrierPaiementsAPIView(APIView):
     """
     🔹 API calendrier global des paiements (par chauffeur)
     - Liste paginée de tous les chauffeurs avec résumé de leurs paiements et congés.
-    - Supporte le filtrage par nom/prénom/id chauffeur via ?search=
-    - Résumé inclus pour chaque chauffeur : total_jours, jours_payes, jours_conges.
+    - Inclut `paiements_par_jour` pour les jours où il y a eu >= 2 paiements.
     """
-    # permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        # --- Récupération optionnelle du filtre
         search = (request.GET.get("search") or "").strip()
 
-        # --- Préparer la liste de contrats à traiter
         contrats = (
             ContratChauffeur.objects
             .select_related("association_user_moto__validated_user")
-            .filter(statut__in=["encours", "termine"])  # seulement actifs ou terminés
+            .filter(statut__in=["encours", "termine"])
         )
 
         if search:
@@ -946,7 +943,6 @@ class CalendrierPaiementsAPIView(APIView):
                 | Q(association_user_moto__validated_user__user_unique_id__icontains=search)
             )
 
-        # --- Pagination DRF standard
         paginator = StandardResultsSetPagination()
         contrats_page = paginator.paginate_queryset(contrats, request, view=self)
 
@@ -955,14 +951,15 @@ class CalendrierPaiementsAPIView(APIView):
 
         for contrat in contrats_page:
             chauffeur = getattr(contrat.association_user_moto, "validated_user", None)
-
             if not contrat.date_debut:
                 continue
 
             date_debut = contrat.date_debut
-            date_fin = today  # jusqu'à aujourd'hui
+            date_fin = today
 
-            # 🟢 Récupération des paiements (basé sur created)
+            # =============================
+            # 🟢 Paiements
+            # =============================
             paiements_qs = (
                 PaiementLease.objects
                 .filter(contrat_chauffeur=contrat)
@@ -970,33 +967,50 @@ class CalendrierPaiementsAPIView(APIView):
                 .values_list("created", flat=True)
             )
 
-            # Extraction de la date (y compris dimanche)
-            jours_payes = sorted({p.date() for p in paiements_qs if p})
+            # Convertir les timestamps en dates
+            paiement_dates = [p.date() for p in paiements_qs if p]
+
+            # Compter les occurrences
+            count_by_date = Counter(paiement_dates)
+
+            # Extraire les jours uniques (pour jours_payes)
+            jours_payes = sorted(count_by_date.keys())
+
+            # 🔸 Extraire uniquement ceux avec 2+ paiements
+            paiements_par_jour = {
+                d.strftime("%Y-%m-%d"): c for d, c in count_by_date.items() if c >= 2
+            }
+
             jours_payes_set = set(jours_payes)
 
-            # 🔵 Génération de toutes les dates du contrat
+            # =============================
+            # 🔵 Calcul des congés
+            # =============================
             jours_total = []
             current = date_debut
             while current <= date_fin:
                 jours_total.append(current)
                 current += timedelta(days=1)
 
-            # 🔴 Congés = jours sans paiement, hors dimanche
             jours_manques = [
                 j.strftime("%Y-%m-%d")
                 for j in jours_total
                 if j not in jours_payes_set and j.weekday() != 6
             ]
 
-            # Conversion ISO
             jours_payes_iso = [j.strftime("%Y-%m-%d") for j in jours_payes]
 
+            # =============================
             # 📊 Résumé
+            # =============================
             total_jours = len([j for j in jours_total if j.weekday() != 6])
             total_payes = len(jours_payes_iso)
             total_conges = len(jours_manques)
+            total_paiements = sum(count_by_date.values())  # total brut de paiements
 
-            # 🧩 Construction du bloc chauffeur
+            # =============================
+            # 🧩 Bloc final
+            # =============================
             results.append({
                 "contrat": {
                     "id": contrat.id,
@@ -1006,14 +1020,15 @@ class CalendrierPaiementsAPIView(APIView):
                 },
                 "paiements": jours_payes_iso,
                 "conges": jours_manques,
+                "paiements_par_jour": paiements_par_jour,  # ✅ inclut uniquement les doublons
                 "resume": {
                     "total_jours": total_jours,
                     "jours_payes": total_payes,
                     "jours_conges": total_conges,
+                    "total_paiements": total_paiements,
                 }
             })
 
-        # --- Retour paginé
         return paginator.get_paginated_response(results)
 
 

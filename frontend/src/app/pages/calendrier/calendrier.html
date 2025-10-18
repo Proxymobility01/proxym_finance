@@ -1,74 +1,115 @@
-<div class="toolbar">
-  <input
-    type="text"
-    class="search-input"
-    placeholder="Rechercher chauffeur (nom / prénom / ID) — recherche automatique"
-    [ngModel]="search()"
-    (ngModelChange)="onSearchChange($event)"
-  />
 
-  <div class="spacer"></div>
+<div class="container-fluid">
 
-  <div class="summary">
-    @if (error()) { <span class="error">{{ error() }}</span> }
-    @if (isLoading()) { <span class="loading">Chargement…</span> }
-    <span>Total contrats : {{ count() | number }}</span>
+  <!-- 🟡 Barre de recherche -->
+  <div class="toolbar">
+    <input
+      type="text"
+      class="search-input"
+      placeholder="Rechercher chauffeur (nom / prénom / ID)…"
+      [ngModel]="search()"
+      (ngModelChange)="onSearchChange($event)"
+    />
+
+    <div class="spacer"></div>
+
+    <div class="summary">
+      @if (!isLoading() && !error()) {
+        <span>Total contrats : {{ count() | number }}</span>
+      }
+    </div>
   </div>
-</div>
 
-<!-- Stack des calendriers : un par contrat -->
-@for (vm of viewModels(); track vm.contratId) {
-  <section class="contract-card">
-    <header class="contract-header">
-      <div class="person">
-        <div class="name">{{ vm.prenom }} {{ vm.nom }}</div>
-        <div class="uid">#{{ vm.userId }}</div>
-      </div>
-      <div class="year-switch">
-        <button (click)="yearMinus(vm.contratId)">← {{ vm.year - 1 }}</button>
-        <div class="year">{{ vm.year }}</div>
-        <button (click)="yearPlus(vm.contratId)">{{ vm.year + 1 }} →</button>
-      </div>
-      <div class="legend">
-        <span class="dot dot-pay"></span> Payé
-        <span class="dot dot-off"></span> Congé
-        <span class="totals">Payés: <b>{{ vm.totals.payes }}</b> &nbsp;|&nbsp; Congés: <b>{{ vm.totals.conges }}</b></span>
-      </div>
-    </header>
+  <!-- 🟢 États exclusifs -->
+  @if (isLoading()) {
+    <div class="center-state">
+      <div class="spinner-border"></div>
+      <p class="state-message">Chargement des calendriers…</p>
+    </div>
+  } @else if (error()) {
+    <div class="center-state">
+      <i class="fas fa-exclamation-triangle error-icon"></i>
+      <p class="state-message error-text">Erreur lors du chargement</p>
+      <p class="state-submessage">{{ error() }}</p>
+    </div>
+  } @else if (viewModels().length === 0) {
+    <div class="center-state">
+      <i class="fas fa-calendar-times empty-icon"></i>
+      <p class="state-message">Aucun calendrier trouvé</p>
+      <p class="state-submessage">Aucun contrat ne correspond à votre recherche.</p>
+    </div>
+  } @else {
 
-    <!-- Grille 12 mois -->
-    <div class="year-grid">
-      @for (month of vm.months; track month.monthIndex) {
-        <div class="month">
-          <div class="month-title">{{ month.monthLabel }}</div>
-          <div class="week-header">
-            @for (lbl of weekLabels; track lbl) {
-              <div class="cell head">{{ lbl }}</div>
-            }
+    <!-- 🔵 Liste des calendriers -->
+    @for (vm of viewModels(); track vm.contratId) {
+      <section class="contract-card">
+        <header class="contract-header">
+          <div class="person">
+            <div class="name">{{ vm.prenom }} {{ vm.nom }}</div>
+            <div class="uid">#{{ vm.userId }}</div>
           </div>
 
-          @for (week of month.weeks; track $index) {
-            <div class="week-row">
-              @for (cell of week; track $index) {
-                <div
-                  class="cell day"
-                  [class.empty]="!cell.d"
-                  [class.paid]="cell.isPaid"
-                  [class.off]="cell.isOff"
-                  [class.sun]="cell.isSunday"
-                  [class.today]="cell.isToday"
-                  title="{{ cell.iso || '' }}"
-                >
-                  {{ cell.d || '' }}
+          <div class="year-switch">
+            <button (click)="yearMinus(vm.contratId)">← {{ vm.year - 1 }}</button>
+            <div class="year">{{ vm.year }}</div>
+            <button (click)="yearPlus(vm.contratId)">{{ vm.year + 1 }} →</button>
+          </div>
+
+          <div class="legend">
+            <span class="dot dot-pay"></span> Payé
+            <span class="dot dot-off"></span> Congé
+            <span class="dot dot-today"></span> Aujourd’hui
+            <span class="totals">
+              Payés: <b>{{ vm.totals.payes }}</b> |
+              Congés: <b>{{ vm.totals.conges }}</b>
+            </span>
+          </div>
+        </header>
+
+        <!-- 🔶 Grille annuelle -->
+        <div class="year-grid">
+          @for (month of vm.months; track month.monthIndex) {
+            <div class="month">
+              <div class="month-title">{{ month.monthLabel }}</div>
+
+              <!-- En-têtes semaine -->
+              <div class="week-header">
+                @for (lbl of weekLabels; track lbl) {
+                  <div class="cell head">{{ lbl }}</div>
+                }
+              </div>
+
+              <!-- Semaines -->
+              @for (week of month.weeks; track $index) {
+                <div class="week-row">
+                  @for (cell of week; track $index) {
+                    <div
+                      class="cell day"
+                      [class.empty]="!cell.d"
+                      [class.paid]="cell.isPaid"
+                      [class.off]="cell.isOff"
+                      [class.sun]="cell.isSunday"
+                      [class.today]="cell.isToday"
+                      title="{{ cell.iso || '' }}"
+                    >
+                        <span class="day-num">
+                          {{ cell.d || '' }}
+                          @if (cell.isPaid && cell.paiementCount) {
+                            <span class="multi">x{{ cell.paiementCount }}</span>
+                          }
+                        </span>
+                    </div>
+
+                  }
                 </div>
               }
             </div>
           }
         </div>
-      }
-    </div>
-  </section>
-}
+      </section>
+    }
 
-<div #infiniteAnchor class="infinite-anchor"></div>
-
+    <!-- Infinite scroll anchor -->
+    <div #infiniteAnchor class="infinite-anchor"></div>
+  }
+</div>

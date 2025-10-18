@@ -15,7 +15,7 @@ import { MatSnackBarModule} from '@angular/material/snack-bar';
 import { registerLocaleData } from '@angular/common';
 import localeFr from '@angular/common/locales/fr';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
-import {FullCalendarModule} from '@fullcalendar/angular';
+
 registerLocaleData(localeFr);
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -23,7 +23,7 @@ export const appConfig: ApplicationConfig = {
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
     provideHttpClient(withInterceptors([authInterceptor])),
-    importProvidersFrom(MatSnackBarModule, FullCalendarModule),
+    importProvidersFrom(MatSnackBarModule),
     { provide: LOCALE_ID, useValue: 'fr-FR' },
     { provide: MAT_DATE_LOCALE, useValue: 'fr-FR' },
     { provide: API_CONFIG, useValue: { apiUrl: environment.API_URL } },

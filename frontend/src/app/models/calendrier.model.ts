@@ -9,11 +9,13 @@ export interface ContratInfo {
 export interface ChauffeurCalendrierItem {
   contrat: ContratInfo;
   paiements: string[]; // ["YYYY-MM-DD", ...]
+  paiements_par_jour: Record<string, number>;
   conges: string[]; // ["YYYY-MM-DD", ...]
   resume: {
     total_jours: number;
     jours_payes: number;
     jours_conges: number;
+    total_paiements?: number;
   };
 }
 
