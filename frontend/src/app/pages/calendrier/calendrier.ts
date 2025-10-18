@@ -40,7 +40,7 @@ type ContratYearVM = {
   prenom: string;
   year: number;
   months: MonthView[];
-  totals: { payes: number; conges: number };
+  totals: { payes: number; conges: number;total_paiements: number };
 };
 
 @Component({
@@ -163,16 +163,19 @@ export class Calendrier implements OnInit, AfterViewInit, OnDestroy {
   // =============================
   private buildYearVM(item: ChauffeurCalendrierItem, year: number): ContratYearVM {
     const paidSet = new Set(item.paiements?.filter(Boolean) ?? []);
-    const offSet = new Set(item.conges?.filter(Boolean) ?? []);
-    const paiementsCount = item.paiements_par_jour ?? {}; // ✅ nouveau
-
+    const offSet  = new Set(item.conges?.filter(Boolean) ?? []);
+    const paiementsCount = item.paiements_par_jour ?? {};
 
     const months: MonthView[] = [];
     for (let m = 0; m < 12; m++) {
       months.push(this.buildMonthView(year, m, paidSet, offSet, paiementsCount));
     }
 
-    const totals = this.computeYearTotals(year, paidSet, offSet);
+    const totals = {
+      payes: item.resume.total_jours ? item.resume.jours_payes : 0,
+      conges: item.resume.total_jours ? item.resume.jours_conges : 0,
+      total_paiements: item.resume.total_paiements ?? 0, // ✅ ajouté
+    };
 
     return {
       contratId: item.contrat.id,
@@ -184,6 +187,7 @@ export class Calendrier implements OnInit, AfterViewInit, OnDestroy {
       totals,
     };
   }
+
 
   private buildMonthView(
     year: number,
