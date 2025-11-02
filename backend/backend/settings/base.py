@@ -57,6 +57,8 @@ INSTALLED_APPS = [
     'conge',
     'app_legacy',
     'django_filters',
+    'wallet',
+    'django_extensions'
 ]
 
 

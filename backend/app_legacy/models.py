@@ -25,6 +25,15 @@ class ValidatedUser(models.Model):
     prenom = models.CharField(max_length=255, blank=True, null=True)
     phone = models.CharField(max_length=255, blank=True, null=True)
     email = models.CharField(max_length=255, blank=True, null=True)
+    
+    wallet = models.OneToOneField(
+        "wallet.Wallet",  
+        on_delete=models.CASCADE,
+        related_name="validated_user",
+        null=True,
+        blank=True
+    )
+
 
     class Meta:
         db_table = "validated_users"
