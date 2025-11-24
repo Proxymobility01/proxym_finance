@@ -1,11 +1,16 @@
-// src/app/auth/auth.interceptor.ts
-import { HttpInterceptorFn, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
+
+
+import { HttpInterceptorFn, HttpErrorResponse, HttpRequest } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { catchError, switchMap, throwError } from 'rxjs';
-import { AuthService } from './auth';
+import { catchError, filter, switchMap, take, throwError, BehaviorSubject } from 'rxjs';
+import {AuthService} from './auth';
 
+
+// --- Variables d'état (en dehors de la fonction pour persister entre les appels) ---
 let isRefreshing = false;
+const refreshTokenSubject = new BehaviorSubject<string | null>(null);
 
+// URLs à ignorer (Auth + Refresh)
 const AUTH_URLS_SKIP = [
   '/auth/token/',
   '/auth/token/refresh/',
@@ -15,66 +20,68 @@ const AUTH_URLS_SKIP = [
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
   const shouldSkip = AUTH_URLS_SKIP.some(u => req.url.includes(u));
-  const token = auth.getToken();
 
-  let clonedReq = req;
-
-  // ✅ Ajoute Authorization sauf pour les routes d’auth
-  if (token && !shouldSkip) {
-    const isFormData = req.body instanceof FormData;
-
-    // ✅ Si c’est un FormData → ne pas forcer Content-Type
-    if (isFormData) {
-      clonedReq = req.clone({
-        setHeaders: {
-          Authorization: `Bearer ${token}`
-        },
-        headers: req.headers.delete('Content-Type') // 🔥 important
-      });
-    } else {
-      clonedReq = req.clone({
-        setHeaders: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+  // Fonction helper pour ajouter le header
+  const addToken = (request: HttpRequest<any>, token: string | null) => {
+    if (token) {
+      return request.clone({
+        setHeaders: { Authorization: `Bearer ${token}` }
       });
     }
+    return request;
+  };
+
+  // 1. Ajouter le token actuel s'il existe
+  let clonedReq = req;
+  const token = auth.getToken();
+  if (token && !shouldSkip) {
+    clonedReq = addToken(req, token);
   }
 
   return next(clonedReq).pipe(
     catchError((error: HttpErrorResponse) => {
+      // Si c'est une requête d'auth qui échoue, on laisse passer l'erreur (évite boucle infinie)
       if (shouldSkip) {
         return throwError(() => error);
       }
 
-      // Gestion automatique du refresh token
-      if (error.status === 401 && !isRefreshing) {
-        isRefreshing = true;
+      // Gestion de l'erreur 401 (Token expiré)
+      if (error.status === 401) {
 
-        return auth.refresh().pipe(
-          switchMap((newToken) => {
-            isRefreshing = false;
+        // CAS A : Nous sommes le PREMIER à détecter l'expiration -> On lance le refresh
+        if (!isRefreshing) {
+          isRefreshing = true;
+          refreshTokenSubject.next(null); // On bloque les autres requêtes
 
-            if (newToken) {
-              const retryReq = clonedReq.clone({
-                setHeaders: { Authorization: `Bearer ${auth.getToken()}` }
-              });
-              return next(retryReq);
-            } else {
-              auth.logout();
-              window.location.href = '/login';
-              return throwError(() => error);
-            }
-          }),
-          catchError(err => {
-            isRefreshing = false;
-            auth.logout();
-            window.location.href = '/login';
-            return throwError(() => err);
-          })
-        );
+          return auth.refresh().pipe(
+            switchMap((res) => {
+              isRefreshing = false;
+              // On notifie les autres requêtes en attente avec le nouveau token
+              refreshTokenSubject.next(res.access);
+              return next(addToken(req, res.access));
+            }),
+            catchError((err) => {
+              isRefreshing = false;
+              auth.logout(); // Si le refresh échoue, on déconnecte tout le monde
+              return throwError(() => err);
+            })
+          );
+        }
+
+        // CAS B : Un refresh est DÉJÀ en cours -> On attend
+        else {
+          return refreshTokenSubject.pipe(
+            filter(token => token !== null), // On attend que la valeur ne soit plus null
+            take(1), // On ne prend que la première valeur valide et on se désabonne
+            switchMap(token => {
+              // Le token est arrivé ! On rejoue la requête initiale
+              return next(addToken(req, token));
+            })
+          );
+        }
       }
 
+      // Autres erreurs (403, 500...) -> On laisse passer
       return throwError(() => error);
     })
   );

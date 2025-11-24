@@ -1,205 +1,160 @@
 import { HttpClient } from "@angular/common/http";
-import { inject, Injectable, signal } from "@angular/core";
-import { API_CONFIG, ApiConfig } from "../api-config.token";
-import { STORAGE_KEYS, LoginResponse } from "./auth.model";
-import { catchError, map, of, tap } from "rxjs";
-import {Router} from '@angular/router';
+import { computed, inject, Injectable, signal, effect } from "@angular/core";
+import { AUTH_API_CONFIG, API_CONFIG, ApiConfig } from "../api-config.token";
+import { AuthResponse, RefreshResponse, LocalProfile } from "./auth.model";
+import { catchError, concatMap, of, switchMap, tap, Observable, timer, Subscription } from "rxjs";
+import { Router } from "@angular/router";
 
 @Injectable({
   providedIn: "root",
 })
 export class AuthService {
   private readonly http = inject(HttpClient);
-  private readonly config: ApiConfig = inject(API_CONFIG);
+  private readonly authApiConfig: ApiConfig = inject(AUTH_API_CONFIG);
+  private readonly ApiConfig: ApiConfig = inject(API_CONFIG);
   private readonly router = inject(Router);
 
-  private refreshScheduler: any = null; // 👈 intervalle pour auto-refresh
+  // --- Signaux internes ---
+  private readonly _accessToken = signal<string | null>(null);
+  private readonly _currentUser = signal<LocalProfile | null>(null);
+  private readonly _authReady = signal<boolean>(false);
+  private refreshSub?: Subscription; // timer de rafraîchissement
 
-  // --- signals internes ---
-  private readonly _accessToken = signal<string | null>(localStorage.getItem(STORAGE_KEYS.access));
-  private readonly _refreshToken = signal<string | null>(localStorage.getItem(STORAGE_KEYS.refresh));
-  private readonly _userId = signal<number | null>(localStorage.getItem(STORAGE_KEYS.userId) ? +localStorage.getItem(STORAGE_KEYS.userId)! : null);
-  private readonly _nom = signal<string | null>(localStorage.getItem(STORAGE_KEYS.nom));
-  private readonly _prenom = signal<string | null>(localStorage.getItem(STORAGE_KEYS.prenom));
-  private readonly _role = signal<string | null>(localStorage.getItem(STORAGE_KEYS.role));
-
-  // --- signaux readonly pour le reste de l’app ---
-  readonly accessToken = this._accessToken.asReadonly();
-  readonly refreshToken = this._refreshToken.asReadonly();
-  readonly userId = this._userId.asReadonly();
-  readonly nom = this._nom.asReadonly();
-  readonly prenom = this._prenom.asReadonly();
-  readonly role = this._role.asReadonly();
-
-  private readonly _isLoginLoading = signal(false);
+  private readonly _isLoginLoading = signal<boolean>(false);
   private readonly _loginError = signal<string | null>(null);
-
   readonly isLoginLoading = this._isLoginLoading.asReadonly();
   readonly loginError = this._loginError.asReadonly();
 
-  // 🔑 login
-  login(email: string, password: string) {
-    this._isLoginLoading.set(true);
-    this._loginError.set(null);
+  // --- Signaux publics ---
+  readonly accessToken = this._accessToken.asReadonly();
+  readonly currentUser = this._currentUser.asReadonly();
+  readonly authReady = this._authReady.asReadonly();
+
+  readonly isLoggedIn = computed(() => !!this._accessToken() && !!this._currentUser());
+
+  readonly fullname = computed(() => {
+    const profile = this._currentUser();
+    return profile ? `${profile.prenom || ''} ${profile.nom || ''}`.trim() : 'Utilisateur';
+  });
+
+  readonly role = computed(() => this._currentUser()?.role?.nomRole || null);
+
+
+
+  // ✅ Initialisation du flux auth
+  initAuth(): Observable<any> {
+    return this.refreshAndGetProfile().pipe(
+      tap(() => console.log("✅ Restauration de session réussie")),
+      catchError((err) => {
+        // C'est ici que tu verras pourquoi ça échoue (CORS, Cookie manquant, 401...)
+        console.error("❌ Échec de la restauration de session :", err);
+        this.clearAuth();
+        // On retourne of(null) pour ne pas faire planter le démarrage de l'app,
+        // l'utilisateur sera juste considéré comme déconnecté.
+        return of(null);
+      }),
+      tap(() => this._authReady.set(true)) // On signale que l'auth est finie (succès ou échec)
+    );
+  }
+
+  // ✅ Login complet
+  login(email: string, password: string): Observable<LocalProfile> {
+    const body = { login: email, password: password };
 
     return this.http
-      .post<LoginResponse>(`${this.config.apiUrl}/auth/token/`, { email, password })
+      .post<AuthResponse>(`${this.authApiConfig.apiUrl}/auth/token/`, body, {
+        withCredentials: true
+      })
       .pipe(
+        switchMap((authRes) => {
+          this._accessToken.set(authRes.access);
+          this.scheduleTokenRefresh(authRes.access); // 🕒 planifie le refresh
+          return this.getLocalProfile();
+        }),
         tap({
-          next: (res) => {
-            this.clearSession();
-            this.storeTokens(res);
-            this.startRefreshScheduler();
-            this._isLoginLoading.set(false);
-          },
-          error: (err) => {
-            let msg = "Erreur lors de la connexion.";
-            if (err?.error?.detail) msg = err.error.detail;
-            this._loginError.set(msg);
-            this._isLoginLoading.set(false);
-          },
-        }),
-      );
-  }
-
-  // 🔓 logout
-  logout() {
-    const refreshToken = this._refreshToken();
-
-    // --- Étape 1 : appelle le backend pour blacklister le token
-    if (refreshToken) {
-      this.http
-        .post(`${this.config.apiUrl}/auth/logout/`, { refresh: refreshToken })
-        .pipe(
-          catchError((err) => {
-            console.warn("[LOGOUT WARNING]", err);
-            // même si le backend échoue, on nettoie quand même côté frontend
-            return of(null);
-          }),
-          tap(() => {
-            this.clearSession();
-            this.router.navigate(["/login"]).then(() => {
-              setTimeout(() => window.location.reload(), 200);
-            });
-          })
-        )
-        .subscribe();
-    } else {
-      // Pas de refresh token => nettoyage direct
-      this.clearSession();
-      this.router.navigate(["/login"]);
-    }
-  }
-
-  // 🔒 Nettoyage complet localStorage + signaux
-  private clearSession() {
-    localStorage.removeItem(STORAGE_KEYS.access);
-    localStorage.removeItem(STORAGE_KEYS.refresh);
-    localStorage.removeItem(STORAGE_KEYS.userId);
-    localStorage.removeItem(STORAGE_KEYS.nom);
-    localStorage.removeItem(STORAGE_KEYS.prenom);
-    localStorage.removeItem(STORAGE_KEYS.role);
-
-    this._accessToken.set(null);
-    this._refreshToken.set(null);
-    this._userId.set(null);
-    this._nom.set(null);
-    this._prenom.set(null);
-    this._role.set(null);
-
-    this.stopRefreshScheduler();
-  }
-
-  // 👤 fullname
-  fullname(): string {
-    return [this._nom(), this._prenom()].filter(Boolean).join(" ");
-  }
-
-  // 🔄 refresh token manuel
-  refresh() {
-    const refreshToken = this._refreshToken();
-    if (!refreshToken) return of(null);
-
-    return this.http
-      .post<{ access: string; refresh?: string }>(
-        `${this.config.apiUrl}/auth/token/refresh/`,
-        { refresh: refreshToken }
-      )
-      .pipe(
-        tap((res) => {
-          if (res?.access) {
-            localStorage.setItem(STORAGE_KEYS.access, res.access);
-            this._accessToken.set(res.access);
-          }
-
-          // 👇 Sauvegarde du nouveau refresh token si Django en renvoie un
-          if (res?.refresh) {
-            localStorage.setItem(STORAGE_KEYS.refresh, res.refresh);
-            this._refreshToken.set(res.refresh);
-          }
-        }),
-        catchError((err) => {
-          console.error("[REFRESH ERROR]", err);
-          this.logout();
-          return of(null);
+          next: (profile) => this._currentUser.set(profile),
+          error: () => this.clearAuth()
         })
       );
   }
 
-  // --- Helpers ---
-  isLoggedIn(): boolean {
-    return !!this._accessToken();
+  // ✅ Logout
+  logout(): Observable<any> {
+    // Retourne l'observable — ne pas faire .subscribe() ici
+    return this.http
+      .post(`${this.authApiConfig.apiUrl}/auth/logout/`, {}, {
+        withCredentials: true // Nécessaire pour envoyer le cookie refresh_token
+      })
+      .pipe(
+        // en cas d'erreur on continue quand même (ex: backend unreachable)
+        catchError(() => of(null)),
+        tap(() => {
+          this.clearAuth();
+        })
+      );
   }
 
-  getRole(): string | null {
-    return this._role();
+  // ✅ Refresh automatique du token
+  refresh(): Observable<RefreshResponse> {
+    return this.http
+      .post<RefreshResponse>(`${this.authApiConfig.apiUrl}/auth/token/refresh/`, {}, {
+        withCredentials: true
+      })
+      .pipe(
+        tap(res => {
+          this._accessToken.set(res.access);
+          this.scheduleTokenRefresh(res.access); // replanifie le timer à chaque refresh
+        })
+      );
+  }
+
+  getLocalProfile(): Observable<LocalProfile> {
+    return this.http.get<LocalProfile>(`${this.ApiConfig.apiUrl}/auth/me/`).pipe(
+      tap(profile => this._currentUser.set(profile))
+    );
+  }
+
+  refreshAndGetProfile(): Observable<LocalProfile> {
+    return this.refresh().pipe(concatMap(() => this.getLocalProfile()));
+  }
+
+  private clearAuth() {
+    this._accessToken.set(null);
+    this._currentUser.set(null);
+    this._isLoginLoading.set(false);
+    this._loginError.set(null);
+    this.cancelScheduledRefresh();
   }
 
   getToken(): string | null {
     return this._accessToken();
   }
 
-  // --- Private methods ---
-  private storeTokens(res: LoginResponse) {
-    localStorage.setItem(STORAGE_KEYS.access, res.access);
-    localStorage.setItem(STORAGE_KEYS.refresh, res.refresh);
-    localStorage.setItem(STORAGE_KEYS.userId, res.id.toString());
-    localStorage.setItem(STORAGE_KEYS.nom, res.nom);
-    localStorage.setItem(STORAGE_KEYS.prenom, res.prenom);
-    localStorage.setItem(STORAGE_KEYS.role, res.role);
+  /**
+   * 🕒 Planifie un rafraîchissement 2 minutes avant expiration
+   * (access_token = 7min → refresh à 5min)
+   */
+  private scheduleTokenRefresh(token: string) {
+    this.cancelScheduledRefresh(); // évite les doublons
+    const refreshBeforeMs = 5 * 60 * 1000; // on rafraîchit à 5 minutes
 
-    this._accessToken.set(res.access);
-    this._refreshToken.set(res.refresh);
-    this._userId.set(res.id);
-    this._nom.set(res.nom);
-    this._prenom.set(res.prenom);
-    this._role.set(res.role);
-  }
-
-  // --- Auto-refresh scheduler ---
-  private startRefreshScheduler() {
-    this.stopRefreshScheduler(); // 🔁 stoppe un ancien intervalle avant d'en créer un nouveau
-
-    // 🕒 ACCESS_TOKEN_LIFETIME = 5 min → on rafraîchit à 4 min (240 000 ms)
-    const interval = 4 * 60 * 1000; // 4 minutes en ms
-
-    this.refreshScheduler = setInterval(() => {
-      if (this.isLoggedIn()) {
-        console.log('[AUTO REFRESH] Rafraîchissement du token...');
-        this.refresh().subscribe({
-          next: () => console.log('[AUTO REFRESH] ✅ Token rafraîchi'),
-          error: (err) => console.error('[AUTO REFRESH] ❌ Erreur de rafraîchissement', err),
-        });
+    this.refreshSub = timer(refreshBeforeMs).pipe(
+      switchMap(() => this.refresh())
+    ).subscribe({
+      next: () => console.log('🔄 Access token rafraîchi automatiquement'),
+      error: (err) => {
+        console.error('Erreur lors du refresh automatique', err);
+        this.clearAuth();
       }
-    }, interval);
+    });
   }
 
-  private stopRefreshScheduler() {
-    if (this.refreshScheduler) {
-      clearInterval(this.refreshScheduler);
-      this.refreshScheduler = null;
-      console.log('[AUTO REFRESH] ⏹️ Scheduler arrêté');
+  private cancelScheduledRefresh() {
+    if (this.refreshSub) {
+      this.refreshSub.unsubscribe();
+      this.refreshSub = undefined;
     }
   }
+
 
 }

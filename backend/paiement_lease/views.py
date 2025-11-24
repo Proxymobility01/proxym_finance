@@ -103,7 +103,7 @@ def add_days_skip_sunday(d, n=1):
 
 class PaiementLeaseAPIView(APIView):
     permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
+
 
     def post(self, request, *args, **kwargs):
         serializer = LeasePaymentLiteSerializer(data=request.data)
@@ -228,7 +228,7 @@ def _sort_key(item: dict) -> datetime:
 
 class LeaseCombinedListAPIView(APIView):
     permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
+
 
     # --- util arrondi 2 décimales ---
     def _q2(self, val) -> Decimal:
@@ -642,7 +642,7 @@ from django.http.response import HttpResponse
 class LeaseCombinedExportCSV(APIView):
 
     permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
+
 
     def get(self, request, *args, **kwargs):
         # ⬇️ dépaqueter (lignes, agrégats)
@@ -680,7 +680,7 @@ class LeaseCombinedExportCSV(APIView):
 
 class LeaseCombinedExportXLSX(APIView):
     permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
+
 
     def get(self, request, *args, **kwargs):
         # ⬇️ dépaqueter
@@ -772,7 +772,7 @@ def _day_bounds(d: date):
 
 class LeaseCombinedExportDOCX(APIView):
     permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
+
 
     def get(self, request, *args, **kwargs):
         # 1) Même fusion payés/non-payés que la liste (avec ses filtres backend)
@@ -921,6 +921,7 @@ class LeaseCombinedExportDOCX(APIView):
 
 
 class CalendrierPaiementsAPIView(APIView):
+    permission_classes = [IsAuthenticated]
     """
     🔹 API calendrier global des paiements (par chauffeur)
     - Liste paginée de tous les chauffeurs avec résumé de leurs paiements et congés.

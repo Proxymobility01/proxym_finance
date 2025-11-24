@@ -50,6 +50,14 @@ class CustomUser(AbstractUser, PermissionsMixin,TimeStampedModel):
     email = models.EmailField("Email",max_length=100, unique=True)
     tel = models.CharField("Telephone",max_length=100)
 
+    auth_user_id_central = models.IntegerField(
+        unique=True,
+        null=True,
+        blank=True,
+        db_index=True,
+        verbose_name="ID Utilisateur Central (Auth-Service)"
+    )
+
     role =  models.ForeignKey(
         Role,
         on_delete=models.SET_NULL,

@@ -10,7 +10,7 @@ from .serializers import CongeCreateSerializer, CongeUpdateSerializer, CongeBase
 
 class CongeViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
+
     queryset = Conge.objects.all().select_related(
         "contrat", "contrat__association_user_moto__validated_user"
     )

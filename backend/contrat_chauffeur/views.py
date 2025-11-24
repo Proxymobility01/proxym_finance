@@ -103,7 +103,6 @@ class ContractChauffeurDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
     queryset = ContratChauffeur.objects.all()
     permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
     parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_serializer_class(self):
@@ -118,7 +117,7 @@ from django.db import transaction
 from django.utils import timezone
 class ModifierStatutContratAPIView(APIView):
     permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
+
 
     def post(self, request, pk, *args, **kwargs):
         """
@@ -188,7 +187,7 @@ class ContratChauffeurUpdateAPIView(generics.UpdateAPIView):
     queryset = ContratChauffeur.objects.all()
     serializer_class = ContractDriverUpdateSerializer
     permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
+
     parser_classes = (MultiPartParser, FormParser, JSONParser)
 
     def get_queryset(self):

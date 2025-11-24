@@ -1,9 +1,7 @@
-
-
-
 import { Component, HostListener, inject, signal, computed, OnInit } from '@angular/core';
 import {Router, NavigationEnd, RouterLink, RouterLinkActive} from '@angular/router';
 import {AuthService} from '../../core/auth/auth';
+
 
 type DropKey = 'contrats' | 'paiements' | 'stations' | 'profile' | null;
 
@@ -16,6 +14,7 @@ interface Notification {
 
 @Component({
   selector: 'app-navbar',
+  standalone: true,
   templateUrl: './navbar.html',
   imports: [
     RouterLink,
@@ -34,14 +33,23 @@ export class Navbar implements OnInit {
   private readonly auth = inject(AuthService);
 
 
+  // --- MODIFICATION 1 : Nom complet ---
+  // On se connecte directement au signal 'fullname' du service
+  readonly fullname = this.auth.fullname;
 
-  // ⚡️ Initiales calculées depuis AuthService
+  // --- MODIFICATION 2 : Initiales ---
+  // On calcule les initiales à partir du signal 'currentUser'
   readonly initials = computed(() => {
-    const nom = this.auth.nom();
-    const prenom = this.auth.prenom();
+    const user = this.auth.currentUser(); // Récupère le LocalProfile | null
+    const nom = user?.nom;
+    const prenom = user?.prenom;
+
     const firstNom = nom ? nom.charAt(0).toUpperCase() : '';
     const firstPrenom = prenom ? prenom.charAt(0).toUpperCase() : '';
-    return `${firstNom}${firstPrenom}`;
+
+    // Si pas de nom/prenom (ex: pendant le chargement), retourne '?'
+    const result = `${firstPrenom}${firstNom}`;
+    return result.length > 0 ? result : '?';
   });
 
   // Notifications (exemple)
@@ -88,11 +96,22 @@ export class Navbar implements OnInit {
     this.notificationsSig.set(next);
   }
 
-  // Déconnexion (placeholder)
+  // --- MODIFICATION 3 : Déconnexion ---
   logout() {
-    this.auth.logout(); // purge tokens + signaux
-    this.router.navigate(['/login']);
+    // on s'abonne ici — le service ne navigue plus automatiquement
+    this.auth.logout().subscribe({
+      next: () => {
+        // optional: navigation ou message
+        this.router.navigate(['/login']);
+      },
+      error: (err) => {
+        console.error('Erreur lors de la déconnexion', err);
+        // on force la navigation quand même
+        this.router.navigate(['/login']);
+      }
+    });
   }
+
 
 
 

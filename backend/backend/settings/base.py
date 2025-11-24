@@ -86,7 +86,7 @@ SIMPLE_JWT = {
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'accounts.authentication.OIDCAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
@@ -193,4 +193,11 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_ENABLE_UTC = False
+# URL de votre service d'authentification
+AUTH_SERVICE_BASE_URL = "http://127.0.0.1:8000/api" # Le port de votre auth-service
 
+# L'identifiant "Issuer" que vous avez défini (doit correspondre)
+AUTH_ISSUER = "http://127.0.0.1:8000"
+
+# L'URL du JWKS pour vérifier les tokens
+AUTH_JWKS_URL = f"{AUTH_SERVICE_BASE_URL}/auth/.well-known/jwks.json/"

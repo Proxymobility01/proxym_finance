@@ -18,7 +18,7 @@ def _abs_url(request, rel_path):
 
 class GarantListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
+
     queryset = Garant.objects.all().order_by("-created")
     parser_classes = [MultiPartParser, FormParser, JSONParser]  # accept files & JSON
 

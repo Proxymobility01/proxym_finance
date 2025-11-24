@@ -1,4 +1,4 @@
-# gestion_hospitaliere/settings/dev.py
+# backend/settings/dev.py
 from pathlib import Path
 import os
 from dotenv import load_dotenv
