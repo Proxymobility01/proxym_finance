@@ -17,6 +17,34 @@ from decouple import config, Csv
 
 from backend.celery import app
 
+# -------------------------------------------------------------------
+# Logging configuration (safe default)
+# -------------------------------------------------------------------
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {"format": "[{asctime}] {levelname} {name}: {message}", "style": "{"},
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+    },
+    "loggers": {
+        "django": {"handlers": ["console"], "level": "INFO"},
+    },
+}
+
+# ✅ Ajout du logger wallet (si pas déjà présent)
+LOGGING.setdefault("loggers", {})
+LOGGING["loggers"]["wallet"] = {
+    "handlers": ["console"],
+    "level": "INFO",
+    "propagate": False,
+}
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 MEDIA_URL = "/media/"
@@ -37,6 +65,29 @@ ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=Csv())
 #Cors
 CORS_ALLOWED_ORIGINS = config("CORS_ALLOWED_ORIGINS", cast=Csv())
 
+
+
+
+# === Smobilpay S3P (Staging) ===
+# settings.py
+S3P_BASE_URL   = os.getenv("S3P_BASE_URL", "https://s3p.smobilpay.staging.maviance.info/v2")
+S3P_PUBLIC_KEY = os.getenv("S3P_PUBLIC_KEY")
+S3P_SECRET     = os.getenv("S3P_SECRET")
+
+# Logger (optionnel mais recommandé)
+LOGGING.setdefault("loggers", {})
+LOGGING["loggers"]["wallet"] = {
+    "handlers": ["console"],
+    "level": "INFO",
+    "propagate": False,
+}
+
+# ServiceIDs (ex. doc S3P) – ajuste selon ton catalogue
+S3P_SERVICEID_ORANGE = os.getenv("S3P_SERVICEID_ORANGE", "20052")
+S3P_SERVICEID_MTN    = os.getenv("S3P_SERVICEID_MTN",    "20053")
+
+# Callback (si tu l’utilises)
+S3P_CALLBACK_URL = os.getenv("S3P_CALLBACK_URL", "https://ton-domaine/api/wallets/maviance/webhook/")
 
 # Application definition
 
@@ -85,17 +136,19 @@ SIMPLE_JWT = {
 
 
 REST_FRAMEWORK = {
-  'DEFAULT_AUTHENTICATION_CLASSES': [
-    'rest_framework_simplejwt.authentication.JWTAuthentication',
-  ],
-  'DEFAULT_PERMISSION_CLASSES': [
-    'rest_framework.permissions.IsAuthenticated',
-  ],
-'DEFAULT_FILTER_BACKENDS': [
-        'django_filters.rest_framework.DjangoFilterBackend',
-        'rest_framework.filters.OrderingFilter',
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
     ],
-
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "user": "60/min",
+    },
 }
 
 

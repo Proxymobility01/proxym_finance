@@ -1,5 +1,7 @@
 from django.db import models
 from django.utils import timezone
+from datetime import datetime
+
 
 
 # ============================================================
@@ -95,44 +97,37 @@ class Wallet(TimeStampedModel):
 #                    TRANSACTION MAVIANCE
 # ============================================================
 
-class Transaction(TimeStampedModel):
-    TYPE_CHOICES = [
-        ("depot", "Dépôt"),
-        ("retrait", "Retrait"),
-    ]
-    STATUT_CHOICES = [
-        ("pending", "En attente"),
-        ("success", "Succès"),
-        ("failed", "Échec"),
-    ]
+# wallet/models.py (extrait pertinent)
+from django.db import models
+from django.utils import timezone
 
-    reference_proxym = models.CharField(max_length=50, unique=True, editable=False,null=True)
-    reference = models.CharField(max_length=50, unique=True, editable=False)
-    wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE, related_name="transactions_maviance")
-    montant = models.DecimalField(max_digits=15, decimal_places=2)
-    frais_transaction = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    statut = models.CharField(max_length=20, choices=STATUT_CHOICES, default="pending")
-    type = models.CharField(max_length=20, choices=TYPE_CHOICES)
-    description = models.TextField(blank=True, null=True)
-    initiated_at = models.DateTimeField(default=timezone.now)
-    completed_at = models.DateTimeField(blank=True, null=True)
+class Transaction(models.Model):
+    TYPE_CHOICES = [("depot", "Dépôt"), ("retrait", "Retrait")]
+    STATUT_CHOICES = [("pending", "En attente"), ("success", "Succès"), ("failed", "Échec")]
 
-    def save(self, *args, **kwargs):
-        if not self.reference_proxym:
-            today = datetime.now().strftime("%Y%m%d")
-            count_today = Transaction.objects.filter(
-                created_at__date=datetime.now().date()
-            ).count() + 1
-            self.reference_proxym = f"PXM{today}{count_today:02d}"
-        super().save(*args, **kwargs)
+    reference_proxym = models.CharField(max_length=50, unique=True, editable=False, null=True)
+    reference        = models.CharField(max_length=50, unique=True, editable=False, null=True)
+    wallet           = models.ForeignKey("wallet.Wallet", on_delete=models.CASCADE, related_name="transactions_maviance")
+    montant          = models.DecimalField(max_digits=15, decimal_places=2)
+    frais_transaction= models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    statut           = models.CharField(max_length=20, choices=STATUT_CHOICES, default="pending")
+    type             = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    description      = models.TextField(blank=True, null=True)
+    initiated_at     = models.DateTimeField(default=timezone.now)
+    completed_at     = models.DateTimeField(blank=True, null=True)
+
+    # 🔽 Ajouts recommandés
+    s3p_quote_id     = models.CharField(max_length=100, blank=True, null=True, db_index=True)
+    s3p_trid         = models.CharField(max_length=100, blank=True, null=True, db_index=True)
+    channel          = models.CharField(max_length=20, blank=True, null=True)   # "mtn" | "orange"
+    idempotency_key  = models.CharField(max_length=64, blank=True, null=True, db_index=True)
+    raw_last_response= models.JSONField(blank=True, null=True)
 
     class Meta:
         db_table = "transaction"
 
     def __str__(self):
         return f"[{self.reference_proxym}] {self.wallet} - {self.montant} XAF ({self.type})"
-
-
 
 # ============================================================
 #                    TRANSACTION PROXYM
