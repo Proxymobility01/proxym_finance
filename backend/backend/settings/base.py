@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 import os
 from datetime import timedelta
+from email.policy import default
 from pathlib import Path
 from celery.schedules import crontab
 from decouple import config, Csv
@@ -141,9 +142,6 @@ DATABASES = {
 }
 
 
-
-
-
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
@@ -179,25 +177,9 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-
-# Redis
-REDIS_HOST = os.environ.get("REDIS_HOST") or ("redis" if not DEBUG else "127.0.0.1")
-REDIS_PORT = os.environ.get("REDIS_PORT") or "6379"
-
-# Celery
-CELERY_BROKER_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}/0"
-CELERY_RESULT_BACKEND = f"redis://{REDIS_HOST}:{REDIS_PORT}/0"
-
-CELERY_ACCEPT_CONTENT = ["json"]
-CELERY_TASK_SERIALIZER = "json"
-CELERY_RESULT_SERIALIZER = "json"
-CELERY_TIMEZONE = TIME_ZONE
-CELERY_ENABLE_UTC = False
-# URL de votre service d'authentification
-AUTH_SERVICE_BASE_URL = "http://127.0.0.1:8000/api" # Le port de votre auth-service
-
-# L'identifiant "Issuer" que vous avez défini (doit correspondre)
-AUTH_ISSUER = "http://127.0.0.1:8000"
-
+AUTH_SERVICE_BASE_URL = config("AUTH_SERVICE_BASE_URL", default="http://127.0.0.1:8000/api")
+AUTH_ISSUER = config("AUTH_ISSUER", default="http://127.0.0.1:8000")
 # L'URL du JWKS pour vérifier les tokens
 AUTH_JWKS_URL = f"{AUTH_SERVICE_BASE_URL}/auth/.well-known/jwks.json/"
+AUTH_SERVICE_PROVISION_URL = f"{AUTH_SERVICE_BASE_URL}/auth/users/provision/"
+SERVICE_API_KEY = config("SERVICE_API_KEY")

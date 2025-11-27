@@ -10,8 +10,6 @@ from .serializers import (
     PenaliteListSerializer, PaiementPenaliteCreateSerializer,
 )
 from django.db import transaction
-from rest_framework_simplejwt.authentication import JWTAuthentication
-# penalite/views.py
 from django.utils import timezone
 
 

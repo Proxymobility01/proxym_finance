@@ -343,8 +343,8 @@ export class PenaliteList implements OnInit {
     });
   }
   openCancelDialog(p: Penalite) {
-    const canCancel = p.type_penalite === 'legere' && p.statut_penalite === 'non_paye';
-    if (!canCancel) return; // guard
+    // const canCancel = p.type_penalite === 'legere' && p.statut_penalite === 'non_paye';
+    // if (!canCancel) return; // guard
 
     this.dialog.open(AnnulerPenalite, {
       width: '300px',
