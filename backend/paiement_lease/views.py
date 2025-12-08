@@ -9,10 +9,8 @@ from django.db.models.expressions import F, Exists, OuterRef
 from django.db.models.fields import DecimalField
 from django.db.models.functions.comparison import Coalesce
 from decimal import Decimal, ROUND_HALF_UP
-from datetime import  timedelta
 from django.conf import settings
 from django.db import transaction
-from django.db.models.functions.datetime import TruncDate
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -25,11 +23,11 @@ from shared.models import StandardResultsSetPagination
 from .filters import PaiementLeaseFilter, NonPaiementLeaseFilter
 from .serializers import  LeasePaymentLiteSerializer, \
     LeaseNonPayeLiteSerializer
-from contrat_chauffeur.models import ContratChauffeur, StatutContrat
+from contrat_chauffeur.models import ContratChauffeur
 from paiement_lease.models import PaiementLease
-from datetime import datetime, date, time, timezone as py_timezone
+from datetime import datetime, time, timezone as py_timezone
 from django.utils.dateparse import parse_datetime, parse_date
-from rest_framework_simplejwt.authentication import JWTAuthentication
+
 
 # --- Calendrier Paiements ---
 from datetime import date, timedelta

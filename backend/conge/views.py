@@ -2,7 +2,6 @@ from django.shortcuts import render
 
 # Create your views here.
 # conge/views.py
-from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import  IsAuthenticated
 from rest_framework import viewsets
 from .models import Conge

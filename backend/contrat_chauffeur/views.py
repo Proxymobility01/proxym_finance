@@ -4,7 +4,6 @@ from django.db.models import Q
 from rest_framework import generics
 from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 from rest_framework.permissions import  IsAuthenticated
-from rest_framework_simplejwt.authentication import JWTAuthentication
 from .models import ContratBatterie, ContratChauffeur, StatutContrat
 from .serializers import (
     ContractBatteryListSerializer,
@@ -27,7 +26,6 @@ class ContratBatterieListCreateView(generics.ListCreateAPIView):
     """
     queryset = ContratBatterie.objects.all().order_by("-created")
     permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
     parser_classes = (JSONParser, MultiPartParser, FormParser)
 
     def get_serializer_class(self):
@@ -58,7 +56,6 @@ class ContratBatterieDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
     queryset = ContratBatterie.objects.all()
     permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
     parser_classes = (JSONParser, MultiPartParser, FormParser)
 
     def get_serializer_class(self):

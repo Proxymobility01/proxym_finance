@@ -3,7 +3,6 @@ from rest_framework import generics, status
 from rest_framework.permissions import  IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
-from rest_framework_simplejwt.authentication import JWTAuthentication
 from .models import Garant
 from .serializers import (
     GarantCreateSerializer,
