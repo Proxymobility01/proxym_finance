@@ -4,7 +4,7 @@ from rest_framework import viewsets, mixins
 from rest_framework.permissions import  IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from .models import  StatutPenalite, TypePenalite
+from .models import  StatutPenalite
 from .models import Penalite, PaiementPenalite
 from .serializers import (
     PenaliteListSerializer, PaiementPenaliteCreateSerializer,
@@ -38,32 +38,12 @@ class PaiementPenaliteViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
     def perform_create(self, serializer):
         paiement = serializer.save()
         penalite = paiement.penalite
-        contrat = penalite.contrat_chauffeur
-        assoc = getattr(contrat, "association_user_moto", None)
-
         # ✅ Étape 1 : Si la pénalité vient d'être payée, on met à jour son statut
         penalite.statut_penalite = StatutPenalite.PAYE
         penalite.montant_paye = penalite.montant_penalite
         penalite.montant_restant = 0
         penalite.save(update_fields=["statut_penalite", "montant_paye", "montant_restant", "updated"])
 
-        # ✅ Étape 2 : Vérifier s’il reste une autre pénalité non payée ET en retard (> 72h)
-        now = timezone.now()
-        penalite_en_retard = Penalite.objects.filter(
-            contrat_chauffeur=contrat,
-            statut_penalite__in=[StatutPenalite.NON_PAYE, StatutPenalite.PARTIELLEMENT_PAYE],
-            echeance_paiement_penalite__lt=now
-        ).exists()
-
-        # ✅ Étape 3 : Si aucune pénalité en retard → on débloque le swap
-        if assoc and not penalite_en_retard:
-            assoc.swap_bloque = 1  # 1 = débloqué
-            assoc.save(update_fields=["swap_bloque"])
-
-        # ✅ Étape 4 : Sinon, on garde le blocage
-        elif assoc:
-            assoc.swap_bloque = 0  # toujours bloqué
-            assoc.save(update_fields=["swap_bloque"])
 
 
 class AnnulerPenaliteAPIView(APIView):
@@ -125,15 +105,9 @@ class AnnulerPenaliteAPIView(APIView):
                     "updated",
                 ])
 
-                # 🚀 4️⃣ Débloquer le swap de l'association liée
-                contrat = pen.contrat_chauffeur
-                if contrat and contrat.association_user_moto:
-                    assoc = contrat.association_user_moto
-                    assoc.swap_bloque = 1  # ✅ Débloquer
-                    assoc.save(update_fields=["swap_bloque"])
 
             return Response(
-                {"success": True, "message": "Pénalité annulée et swap débloqué."},
+                {"success": True, "message": "Pénalité annulée ."},
                 status=status.HTTP_200_OK
             )
 

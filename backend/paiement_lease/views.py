@@ -184,30 +184,6 @@ class PaiementLeaseAPIView(APIView):
                         (batt.montant_total or Decimal("0")) - batt.montant_paye
                     )
                     batt.save(update_fields=["montant_paye", "montant_restant", "updated"])
-
-                # 🟩 --- Nouvelle logique : débloquer le swap si plus de pénalité échue ---
-                from penalite.models import Penalite, StatutPenalite
-                now = timezone.now()
-                penalite_en_retard = Penalite.objects.filter(
-                    contrat_chauffeur=contrat,
-                    statut_penalite__in=[StatutPenalite.NON_PAYE, StatutPenalite.PARTIELLEMENT_PAYE],
-                    echeance_paiement_penalite__lt=now
-                ).exists()
-
-                assoc = getattr(contrat, "association_user_moto", None)
-
-                if assoc:
-                    if not penalite_en_retard:
-                        assoc.swap_bloque = 1  # ✅ Débloqué
-                        msg = f"✅ Swap débloqué automatiquement pour chauffeur {assoc.validated_user_id}"
-                    else:
-                        assoc.swap_bloque = 0  # 🚫 Toujours bloqué
-                        msg = f"⛔ Swap maintenu bloqué (pénalité échue) pour chauffeur {assoc.validated_user_id}"
-
-                    assoc.save(update_fields=["swap_bloque"])
-                    print(msg)
-                # 🟩 --- Fin ajout ---
-
             return Response({"success": True, "message": "Paiement enregistré avec succès."},
                             status=status.HTTP_201_CREATED)
 

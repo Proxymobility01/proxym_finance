@@ -122,17 +122,6 @@ def apply_penalties_for_now(force_window: str | None = None) -> dict:
 
                     if was_created:
                         created += 1
-
-                        # 🔒 Bloquer le swap
-                        try:
-                            assoc = contrat.association_user_moto
-                            if assoc:
-                                assoc.swap_bloque = 0
-                                assoc.save(update_fields=["swap_bloque"])
-                                logger.info(f"Swap bloqué pour chauffeur {assoc.validated_user_id}")
-                        except Exception as e:
-                            logger.warning(f"Erreur blocage swap (contrat {contrat.id}): {e}")
-
                     else:
                         unchanged += 1
 
@@ -190,15 +179,6 @@ def apply_penalties_for_now(force_window: str | None = None) -> dict:
             ])
             escalated += 1
 
-            # 🔒 Bloquer le swap aussi en cas d’escalade
-            try:
-                assoc = contrat.association_user_moto
-                if assoc:
-                    assoc.swap_bloque = 0
-                    assoc.save(update_fields=["swap_bloque"])
-                    logger.info(f"Swap bloqué (escalade grave) pour chauffeur {assoc.validated_user_id}")
-            except Exception as e:
-                logger.warning(f"Erreur blocage swap (contrat {contrat.id}): {e}")
 
     res = {
         "window": window,

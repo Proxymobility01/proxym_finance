@@ -10,7 +10,7 @@ from .services import fetch_association_summary, fetch_all_association_summaries
 
 class AssociationSummaryView(APIView):
     permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
+
     def get(self, request, pk: int):
         data = fetch_association_summary(pk)
         if not data:
@@ -20,7 +20,7 @@ class AssociationSummaryView(APIView):
 
 class AssociationSummaryListView(APIView):
     permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
+
 
     def get(self, request):
         data = fetch_all_association_summaries()
