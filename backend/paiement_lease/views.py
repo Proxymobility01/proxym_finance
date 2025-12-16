@@ -98,7 +98,6 @@ def add_days_skip_sunday(d, n=1):
             result += timedelta(days=1)
     return result
 
-
 class PaiementLeaseAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -182,6 +181,30 @@ class PaiementLeaseAPIView(APIView):
                         (batt.montant_total or Decimal("0")) - batt.montant_paye
                     )
                     batt.save(update_fields=["montant_paye", "montant_restant", "updated"])
+
+                # 🟩 --- Nouvelle logique : débloquer le swap si plus de pénalité échue ---
+                from penalite.models import Penalite, StatutPenalite
+                now = timezone.now()
+                penalite_en_retard = Penalite.objects.filter(
+                    contrat_chauffeur=contrat,
+                    statut_penalite__in=[StatutPenalite.NON_PAYE, StatutPenalite.PARTIELLEMENT_PAYE],
+                    echeance_paiement_penalite__lt=now
+                ).exists()
+
+                assoc = getattr(contrat, "association_user_moto", None)
+
+                if assoc:
+                    if not penalite_en_retard:
+                        assoc.swap_bloque = 1  # ✅ Débloqué
+                        msg = f"✅ Swap débloqué automatiquement pour chauffeur {assoc.validated_user_id}"
+                    else:
+                        assoc.swap_bloque = 0  # 🚫 Toujours bloqué
+                        msg = f"⛔ Swap maintenu bloqué (pénalité échue) pour chauffeur {assoc.validated_user_id}"
+
+                    assoc.save(update_fields=["swap_bloque"])
+                    print(msg)
+                # 🟩 --- Fin ajout ---
+
             return Response({"success": True, "message": "Paiement enregistré avec succès."},
                             status=status.HTTP_201_CREATED)
 
@@ -192,6 +215,101 @@ class PaiementLeaseAPIView(APIView):
             return Response({"success": False, "message": str(e)},
 
                             status=status.HTTP_400_BAD_REQUEST)
+
+
+# class PaiementLeaseAPIView(APIView):
+#     permission_classes = [IsAuthenticated]
+#
+#
+#     def post(self, request, *args, **kwargs):
+#         serializer = LeasePaymentLiteSerializer(data=request.data)
+#         serializer.is_valid(raise_exception=True)
+#         data = serializer.validated_data
+#
+#         try:
+#             with transaction.atomic():
+#                 contrat = ContratChauffeur.objects.select_for_update().get(pk=data["contrat_id"])
+#
+#                 base_concernee = data.get("date_paiement_concerne") or contrat.date_concernee
+#                 base_limite = data.get("date_limite_paiement") or contrat.date_limite
+#
+#                 today = timezone.localdate()
+#                 today_start = timezone.make_aware(datetime.combine(today, time.min))
+#                 today_end = timezone.make_aware(datetime.combine(today, time.max))
+#
+#                 count_today = (
+#                     PaiementLease.objects
+#                     .select_for_update()
+#                     .filter(
+#                         contrat_chauffeur=contrat,
+#                         created__range=(today_start, today_end)
+#                     )
+#                     .count()
+#                 )
+#
+#                 if count_today >= 2:
+#                     return Response(
+#                         {"success": False, "message": "Limite de 2 paiements par jour atteinte pour ce contrat."},
+#                         status=status.HTTP_400_BAD_REQUEST
+#                     )
+#
+#                 # Montants
+#                 m_moto = Decimal(data.get("montant_moto") or 0)
+#                 m_batt = Decimal(data.get("montant_batt") or 0)
+#                 m_total = m_moto + m_batt
+#
+#                 now = timezone.now()
+#                 reference = f"PL-{now.strftime('%Y%m%d-%H%M%S')}-{uuid.uuid4().hex[:5].upper()}"
+#                 statut_global = "PAYE" if m_total > 0 else "IMPAYE"
+#
+#                 PaiementLease.objects.create(
+#                     reference_paiement=reference,
+#                     montant_moto=m_moto,
+#                     montant_batt=m_batt,
+#                     montant_total=m_total,
+#                     methode_paiement=data["methode_paiement"],
+#                     reference_transaction=data.get("reference_transaction"),
+#                     type_contrat="CHAUFFEUR",
+#                     statut=statut_global,
+#                     contrat_chauffeur=contrat,
+#                     date_concernee=base_concernee,
+#                     date_limite=base_limite,
+#                     employe=request.user,
+#                     user_agence=None,
+#                 )
+#
+#                 # ✅ Mise à jour du contrat chauffeur
+#                 contrat.montant_paye = (contrat.montant_paye or Decimal("0")) + m_total
+#                 contrat.montant_restant = max(
+#                     Decimal("0"),
+#                     (contrat.montant_total or Decimal("0")) - contrat.montant_paye
+#                 )
+#
+#                 next_concernee = next_working_day(base_concernee)
+#                 next_limite = add_days_skip_sunday(next_concernee, 1)
+#
+#                 contrat.date_concernee = next_concernee
+#                 contrat.date_limite = next_limite
+#                 contrat.save()
+#
+#                 if contrat.contrat_batt:
+#                     batt = contrat.contrat_batt
+#                     batt.montant_paye = (batt.montant_paye or Decimal("0")) + m_batt
+#                     batt.montant_restant = max(
+#                         Decimal("0"),
+#                         (batt.montant_total or Decimal("0")) - batt.montant_paye
+#                     )
+#                     batt.save(update_fields=["montant_paye", "montant_restant", "updated"])
+#             return Response({"success": True, "message": "Paiement enregistré avec succès."},
+#                             status=status.HTTP_201_CREATED)
+#
+#         except ContratChauffeur.DoesNotExist:
+#             return Response({"success": False, "message": "Contrat introuvable."},
+#                             status=status.HTTP_404_NOT_FOUND)
+#         except Exception as e:
+#             return Response({"success": False, "message": str(e)},
+#
+#                             status=status.HTTP_400_BAD_REQUEST)
 
 
 def _sort_key(item: dict) -> datetime:
